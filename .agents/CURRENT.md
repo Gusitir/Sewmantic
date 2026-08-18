@@ -1,12 +1,12 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-17T23:30:00-05:00
-source_commit: [STATE] configure multiagent orchestration and refined plan
+updated_at: 2026-08-17T23:43:00-05:00
+source_commit: [T-01] setup typescript project, build scripts and pattern making rules
 assurance: Lean
 active_plan: PLAN_v0.1-mvp.md
-active_task: T-01
-last_verdict: none
+active_task: T-02
+last_verdict: APTO
 backup: local-only
 ```
 
@@ -18,7 +18,7 @@ backup: local-only
 
 ## Next action
 
-1. Despachar **T-01** al Obrero / Scripts con supervisión de Ingeniero (Setup de proyecto TypeScript, scripts mecánicos en `scripts/`, `rules_pattern_making.md` y dependencias base).
+1. Despachar **T-02** al **Ingeniero** (Diseño de tipos TypeScript, Esquema Zod de ADN paramétrico con límites numéricos, sanitizador de respuestas LLM y tests unitarios en `tests/schema.test.ts`).
 
 ## Blockers
 
@@ -28,6 +28,7 @@ backup: local-only
 
 - Arquitectura completa y detallada en `APPCORE.md`.
 - Plan de trabajo desglosado en 8 tareas granulares (`T-01` a `T-08`) en `PLAN_v0.1-mvp.md`.
+- Tarea `T-01` completada y verificada con veredicto APTO (`npm run build` OK).
 - Subagentes `ingeniero` y `obrero` definidos y listos para orquestación.
 
 ## Open findings

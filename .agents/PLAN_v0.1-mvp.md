@@ -23,16 +23,16 @@ Assurance: Lean
 
 ### T-01 - Setup del proyecto TypeScript, automatizaciones y reglas de patronaje
 
-- Status: ready
+- Status: done
 - Depends on: none
 - Scope: `package.json`, `tsconfig.json`, `.gitignore`, `rules_pattern_making.md`, `scripts/build.ps1`, `scripts/test_gate.ps1`, `src/index.ts`
 - Rol: Obrero (Scaffolding y dependencias) con supervisión de Ingeniero.
 - Acceptance:
-  - [ ] Proyecto Node.js/TypeScript inicializado con dependencias: `@freesewing/core`, `zod`, `commander`, `pdfkit`, `svg-to-pdfkit`, `dotenv`, `vitest`, `typescript`, `@types/node`.
-  - [ ] `tsconfig.json` configurado estrictamente (`strict: true`, `target: ES2022`, `moduleResolution: NodeNext`).
-  - [ ] `rules_pattern_making.md` creado con las reglas textiles maestras (holguras de confort vs diseño, marcas técnicas, piquetes, márgenes, proporciones).
-  - [ ] Scripts mecánicos en `scripts/` para compilación (`build.ps1`) y verificación de puertas (`test_gate.ps1`).
-  - [ ] `npm run build` compila limpiamente sin advertencias.
+  - [x] Proyecto Node.js/TypeScript inicializado con dependencias: `@freesewing/core`, `zod`, `commander`, `pdfkit`, `svg-to-pdfkit`, `dotenv`, `vitest`, `typescript`, `@types/node`.
+  - [x] `tsconfig.json` configurado estrictamente (`strict: true`, `target: ES2022`, `moduleResolution: NodeNext`).
+  - [x] `rules_pattern_making.md` creado con las reglas textiles maestras (holguras de confort vs diseño, marcas técnicas, piquetes, márgenes, proporciones).
+  - [x] Scripts mecánicos en `scripts/` para compilación (`build.ps1`) y verificación de puertas (`test_gate.ps1`).
+  - [x] `npm run build` compila limpiamente sin advertencias.
 - Gates: `npm run build`
 - Human checks: none
 - Risk triggers: none
