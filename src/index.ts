@@ -22,6 +22,9 @@ export * from "./schema/pattern_schema.js";
 export * from "./engine/geometry.js";
 export * from "./engine/base_blocks/index.js";
 export * from "./engine/modifier.js";
+export * from "./engine/calibration_box.js";
+export * from "./utils/tiler.js";
+export * from "./engine/exporter.js";
 
 // Exportación del Subsistema de Proveedores de IA
 export * from "./ai/base_provider.js";
