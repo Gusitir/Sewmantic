@@ -21,6 +21,7 @@ export * from "./schema/pattern_schema.js";
 // Exportación del Motor Geométrico y Bloques Base (Slopers)
 export * from "./engine/geometry.js";
 export * from "./engine/base_blocks/index.js";
+export * from "./engine/modifier.js";
 
 // Exportación del Subsistema de Proveedores de IA
 export * from "./ai/base_provider.js";

@@ -52,6 +52,8 @@ export interface PatternPart {
   area_mm2: number;
   grainline: TechnicalGrainline;
   notches: TechnicalNotch[];
+  seamAllowance_mm?: number;
+  hemAllowance_mm?: number;
 }
 
 export function createPoint(x: number, y: number, name?: string): Point2D {
@@ -70,6 +72,11 @@ export function distance(p1: Point2D, p2: Point2D): number {
 
 export function midpoint(p1: Point2D, p2: Point2D): Point2D {
   return createPoint((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+}
+
+export function calculateAngle(p1: Point2D, p2: Point2D): number {
+  const rad = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+  return Math.round(((rad * 180) / Math.PI) * 100) / 100;
 }
 
 export function bezierPoint(
@@ -104,6 +111,81 @@ export function sampleBezier(
     pts.push(bezierPoint(start, cp1, cp2, end, t));
   }
   return pts;
+}
+
+/**
+ * Calcula la longitud de arco real de una curva Bezier cúbica por aproximación numérica
+ */
+export function bezierLength(
+  start: Point2D,
+  cp1: Point2D,
+  cp2: Point2D,
+  end: Point2D,
+  steps = 60
+): number {
+  let len = 0;
+  let prev = start;
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    const curr = bezierPoint(start, cp1, cp2, end, t);
+    len += distance(prev, curr);
+    prev = curr;
+  }
+  return Math.round(len * 100) / 100;
+}
+
+/**
+ * Calcula la longitud total de una polilínea o secuencia de puntos muestreados
+ */
+export function polylineLength(points: Point2D[]): number {
+  if (points.length < 2) return 0;
+  let total = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    total += distance(points[i], points[i + 1]);
+  }
+  return Math.round(total * 100) / 100;
+}
+
+/**
+ * Encuentra un punto a una distancia de longitud de arco específica a lo largo de una polilínea
+ */
+export function pointAlongPolyline(points: Point2D[], targetLength: number): Point2D {
+  if (points.length === 0) return createPoint(0, 0);
+  if (points.length === 1 || targetLength <= 0) return points[0];
+
+  let accumulated = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const segLen = distance(p1, p2);
+
+    if (accumulated + segLen >= targetLength) {
+      const remaining = targetLength - accumulated;
+      const ratio = segLen > 0 ? remaining / segLen : 0;
+      return createPoint(
+        p1.x + (p2.x - p1.x) * ratio,
+        p1.y + (p2.y - p1.y) * ratio
+      );
+    }
+    accumulated += segLen;
+  }
+
+  return points[points.length - 1];
+}
+
+/**
+ * Encuentra un punto a una distancia de longitud de arco específica a lo largo de una curva Bezier
+ */
+export function pointAlongBezier(
+  start: Point2D,
+  cp1: Point2D,
+  cp2: Point2D,
+  end: Point2D,
+  targetLength: number,
+  steps = 60
+): Point2D {
+  const samples = sampleBezier(start, cp1, cp2, end, steps);
+  return pointAlongPolyline(samples, targetLength);
 }
 
 /**
