@@ -18,6 +18,14 @@ export interface CoreConfig {
 export * from "./types/pattern.js";
 export * from "./schema/pattern_schema.js";
 
+// Exportación del Subsistema de Proveedores de IA
+export * from "./ai/base_provider.js";
+export * from "./ai/prompt_builder.js";
+export * from "./ai/agy_cli_provider.js";
+export * from "./ai/opencode_cli_provider.js";
+export * from "./ai/direct_api_provider.js";
+export * from "./ai/mock_provider.js";
+export * from "./ai/factory.js";
 
 export function getVersion(): string {
   return "0.1.0";
