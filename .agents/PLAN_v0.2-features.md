@@ -19,16 +19,16 @@ Assurance: Lean
 
 ### T-09 - Sloper Base de Pantalon / Shorts Parametrico (Delantero y Espalda)
 
-- Status: active
+- Status: done
 - Depends on: T-04, T-05
 - Scope: `src/engine/base_blocks/trousers.ts`, `src/engine/base_blocks/index.ts`, `tests/trousers.test.ts`
 - Rol: Ingeniero (Calculo geometrico de curvas de tiro y entrepierna).
 - Acceptance:
-  - [ ] Generador de bloques de pantalon/bermuda con delantero (`front_leg`) y espalda (`back_leg`).
-  - [ ] Curvas de tiro anatomicas: tiro delantero mas corto y vertical; tiro de espalda mas inclinado y profundo con prolongacion de entrepierna segun contorno de cadera.
-  - [ ] Puntos de anclaje parametricos: `waist_center`, `waist_side`, `hip_side`, `crotch_point`, `knee_side`, `knee_inseam`, `hem_side`, `hem_inseam`.
-  - [ ] Soporte para tiro alto, medio y bajo; largo de pantalon completo, pescador/capri y bermuda/short.
-  - [ ] Piquetes de coincidencia en rodilla y entrepierna; grainlines verticales paralelos a la linea de aplomo / centro de pierna.
+  - [x] Generador de bloques de pantalon/bermuda con delantero (`front_leg`) y espalda (`back_leg`).
+  - [x] Curvas de tiro anatomicas: tiro delantero mas corto y vertical; tiro de espalda mas inclinado y profundo con prolongacion de entrepierna segun contorno de cadera.
+  - [x] Puntos de anclaje parametricos: `waist_center`, `waist_side`, `hip_side`, `crotch_point`, `knee_side`, `knee_inseam`, `hem_side`, `hem_inseam`.
+  - [x] Soporte para tiro alto, medio y bajo; largo de pantalon completo, pescador/capri y bermuda/short.
+  - [x] Piquetes de coincidencia en rodilla y entrepierna; grainlines verticales paralelos a la linea de aplomo / centro de pierna.
 - Gates: `npm test`
 - Human checks: none
 - Risk triggers: Proporcion incorrecta del tiro de espalda causando tirantez al sentarse.

@@ -141,3 +141,15 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
   - T-11: Motor de Personalización Antropométrica por Medidas Exactas.
   - T-12: Empaquetador Comercial Automatizado para Etsy (ZIP Bundler & Assets).
 - Active Task: `[T-09] Sloper Base de Pantalón / Shorts Paramétrico`. Asignado al subagente Ingeniero.
+
+## 2026-08-18T02:16:00-05:00 - TASK T-09 AUDIT: TROUSER & SHORTS SLOPER (Arquitecto / Ingeniero)
+
+- Decision and reason: El Ingeniero completó la implementación del sloper paramétrico de pantalón y shorts (`src/engine/base_blocks/trousers.ts`), tablas antropométricas de tren inferior (`src/engine/base_blocks/measurements.ts`) y registro en la fábrica unificada.
+- Verification:
+  - 35 nuevos tests en `tests/trousers.test.ts` (Total: 228/228 tests passing al 100% en Vitest).
+  - Invariante matemático de entrepierna: longitud entrepierna delantera vs trasera igualada con precisión $< 0.05\text{ mm}$ ($\Delta \le 3\text{ mm}$) en todas las tallas XS a 3XL.
+  - Soporte de variantes `full`, `shorts` / `bermuda` y `cropped`.
+  - Grainline vertical en línea de aplomo y piquetes simples/dobles en el 100% de las piezas.
+- Evidence: Commit `[T-09] implement parametric trouser and shorts sloper base block` (hash: `be3f4b9`).
+- Verdict: **APTO**.
+- Next: Tarea `[T-10] Integración de Pantalones/Bermudas en Modifier Engine y ADN`.

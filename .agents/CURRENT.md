@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-18T02:10:00-05:00
-source_commit: [STATE] start phase 2.0 (PLAN_v0.2-features.md)
+updated_at: 2026-08-18T02:16:00-05:00
+source_commit: [T-09] implement parametric trouser and shorts sloper base block
 assurance: Lean
 active_plan: PLAN_v0.2-features.md
-active_task: T-09
+active_task: T-10
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,16 +18,16 @@ backup: local-only
 
 ## Next action
 
-1. **FASE 2 ACTIVA - TAREA [T-09]:** El Ingeniero implementará el Sloper Base Paramétrico de Pantalón / Shorts (`src/engine/base_blocks/trousers.ts`, `src/engine/base_blocks/index.ts`, `tests/trousers.test.ts`) con curvas de tiro anatómicas, aplomo y entrepierna.
+1. **FASE 2 ACTIVA - TAREA [T-10]:** El Ingeniero integrará el soporte completo de pantalones y bermudas en el Modifier Engine (`src/engine/modifier.ts`), tipos y esquemas Zod (`src/types/pattern.ts`, `src/schema/pattern_schema.ts`), permitiendo generar tanto prendas inferiores individuales como conjuntos de 2 piezas (ej. Chaleco + Bermuda).
 
 ## Blockers
 
-- Ninguno. Todas las pruebas automatizadas (193/193) y verificaciones digitales de ensamble han sido superadas con éxito.
+- Ninguno. Todas las pruebas automatizadas (228/228) pasando al 100%.
 
 ## Current facts
 
-- 100% de tareas del MVP (`T-01` a `T-08`) implementadas, mini-auditadas y auditadas con veredicto **APTO**.
-- Suite determinista completa con **193/193 tests pasando al 100%** en Vitest.
+- Tarea `T-09` completada y auditada con veredicto **APTO**: Sloper base de pantalón/shorts implementado con coincidencia de entrepiernas $< 0.05\text{ mm}$ en todas las tallas XS-3XL.
+- Suite determinista completa con **228/228 tests pasando al 100%** en Vitest.
 - Reconstrucción digital de ensamble de hojas A4 verificada al 100% en PDFStitcher (curvas continuas sin desfases).
 - Generación de muestra completa en `output/streetwear_oversize_hoodie/` con 8 entregables válidos de alta calidad comercial para Etsy.
 - Sistema CLI con 5 comandos operativos (`generate`, `calibrate`, `inspect`, `techpack`, `status`).
