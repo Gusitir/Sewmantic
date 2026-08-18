@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-17T23:49:00-05:00
-source_commit: [T-03] implement AI provider subsystem with Agy CLI, OpenCode, Direct API, Mock and Factory
+updated_at: 2026-08-17T23:52:00-05:00
+source_commit: [T-04] implement base sloper blocks for torso, sleeve, hood and pockets with standard size tables
 assurance: Lean
 active_plan: PLAN_v0.1-mvp.md
-active_task: T-04
+active_task: T-05
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,7 +18,7 @@ backup: local-only
 
 ## Next action
 
-1. Despachar **T-04** al **Ingeniero** (Integración de Slopers Base FreeSewing v3 para Torso, Manga, Capucha y Bolsillo con tablas de medidas estándar XS a 3XL).
+1. Despachar **T-05** al **Ingeniero** (Motor de Modificación Paramétrica: transformaciones de holgura, ajuste armónico sisa-manga con tolerancia < 3mm, grainlines, notches automáticos y márgenes de costura).
 
 ## Blockers
 
@@ -26,10 +26,10 @@ backup: local-only
 
 ## Current facts
 
-- Fase 1.1 (Setup, Contratos y AI Provider) completada con éxito.
-- 59 tests unitarios pasando al 100% en Vitest (`schema.test.ts` y `ai_provider.test.ts`).
-- `AgyCliProvider` funcional con Gemini 3.7 Flash y streaming `stdin` sin restricciones de buffer en Windows.
-- Subagentes `ingeniero` y `obrero` definidos y listos para Fase 1.2 (Motor Geométrico FreeSewing).
+- 110 tests unitarios pasando al 100% en Vitest (`schema.test.ts`, `ai_provider.test.ts`, `base_blocks.test.ts`).
+- Bloques base de Torso, Manga, Capucha y Bolsillo verificados para todas las tallas XS a 3XL.
+- Geometría 2D validada con áreas Shoelace positivas y paths SVG cerrados.
+- Subagentes `ingeniero` y `obrero` listos para T-05.
 
 ## Open findings
 

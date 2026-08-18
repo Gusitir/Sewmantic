@@ -51,3 +51,11 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-03] implement AI provider subsystem with Agy CLI, OpenCode, Direct API, Mock and Factory` (hash: `df6a672`).
 - Unresolved: Ninguno.
 - Next: Despachar T-04 al Ingeniero (Fase 1.2: Slopers Base de FreeSewing v3).
+
+## 2026-08-17T23:52:00-05:00 - TASK T-04 VERDICT APTO (Arquitecto / Ingeniero)
+
+- Changed: Implementación de slopers base anatómicos (`src/engine/base_blocks/`): tablas antropométricas estándar XS a 3XL (`measurements.ts`), bloque de torso delantero y espalda con escotes/sisas anatómicas (`torso.ts`), bloque de manga con copa y ancho de bíceps (`sleeve.ts`), capucha estándar y cruzada (`hood.ts`), bolsillos canguro y parche (`pocket.ts`) y motor geométrico 2D (`geometry.ts`). Suite de 51 tests en `tests/base_blocks.test.ts`.
+- Decision and reason: El Ingeniero implementó y auditó los slopers base. Puerta determinista `npm test` superada al 100% (110/110 tests pasando en 618ms). Geometría cerrada válida y anclajes consistentes. Arquitecto emite veredicto APTO y realiza commit `[T-04]`.
+- Evidence: Commit `[T-04] implement base sloper blocks for torso, sleeve, hood and pockets with standard size tables` (hash: `a9f729a`).
+- Unresolved: Ninguno.
+- Next: Despachar T-05 al Ingeniero (Motor de Modificación Paramétrica y Ajuste Sisa-Manga).

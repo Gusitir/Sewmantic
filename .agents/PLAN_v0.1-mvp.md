@@ -81,15 +81,15 @@ Assurance: Lean
 
 ### T-04 - Slopers Base de FreeSewing v3 (Torso, Manga, Capucha, Bolsillo)
 
-- Status: ready
+- Status: done
 - Depends on: T-02
 - Scope: `src/engine/base_blocks/torso.ts`, `src/engine/base_blocks/sleeve.ts`, `src/engine/base_blocks/hood.ts`, `src/engine/base_blocks/pocket.ts`, `src/engine/base_blocks/index.ts`, `tests/base_blocks.test.ts`
 - Rol: Ingeniero (Cálculos de FreeSewing y puntos de anclaje paramétricos).
 - Acceptance:
-  - [ ] Implementación o adaptación de slopers base usando la API de FreeSewing v3 (delantero, espalda, manga, capucha de 2/3 piezas, bolsillo canguro).
-  - [ ] Definición clara de puntos geométricos de anclaje (`neck`, `shoulder`, `armhole`, `sideSeam`, `wrist`, `hem`).
-  - [ ] Tablas de medidas estándar (XS a 3XL) en milímetros integradas.
-  - [ ] Tests unitarios que verifiquen que los bloques base generen geometría cerrada y válida.
+  - [x] Implementación o adaptación de slopers base usando la API de FreeSewing v3 (delantero, espalda, manga, capucha de 2/3 piezas, bolsillo canguro).
+  - [x] Definición clara de puntos geométricos de anclaje (`neck`, `shoulder`, `armhole`, `sideSeam`, `wrist`, `hem`).
+  - [x] Tablas de medidas estándar (XS a 3XL) en milímetros integradas.
+  - [x] Tests unitarios que verifiquen que los bloques base generen geometría cerrada y válida.
 - Gates: `npm test`
 - Human checks: none
 - Risk triggers: Incompatibilidades con métodos internos de FreeSewing.
