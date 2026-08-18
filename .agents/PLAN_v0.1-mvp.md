@@ -60,18 +60,18 @@ Assurance: Lean
 
 ### T-03 - AI Provider Subsystem & Factory (Agy CLI, OpenCode CLI, Direct API)
 
-- Status: ready
+- Status: done
 - Depends on: T-02
 - Scope: `src/ai/base_provider.ts`, `src/ai/agy_cli_provider.ts`, `src/ai/opencode_cli_provider.ts`, `src/ai/direct_api_provider.ts`, `src/ai/prompt_builder.ts`, `src/ai/factory.ts`, `src/ai/mock_provider.ts`, `tests/ai_provider.test.ts`
 - Rol: Ingeniero (Lógica de proveedor y prompts) / Obrero (Implementación SDK/CLI).
 - Acceptance:
-  - [ ] Interfaz `IAiProvider` con método `generatePatternDna(prompt: string, imagePath?: string): Promise<PatternDna>`.
-  - [ ] `PromptBuilder` que inyecta automáticamente `rules_pattern_making.md` y restringe la respuesta a JSON puro sin alucinaciones.
-  - [ ] `AgyCliProvider` para ejecución directa usando `agy.exe -p ... --model "gemini-3.7-flash"` para tareas de razonamiento y análisis visual.
-  - [ ] `OpencodeCliProvider` para ejecución desacoplada invocando el CLI de OpenCode / ChatGPT.
-  - [ ] `DirectApiProvider` para integración directa con OpenAI / Anthropic Claude.
-  - [ ] `MockProvider` para pruebas deterministas sin consumo de cuota ni dependencia de internet.
-  - [ ] `AiProviderFactory` que selecciona el proveedor vía `process.env.AI_PROVIDER` (por defecto `agy` durante pruebas).
+  - [x] Interfaz `IAiProvider` con método `generatePatternDna(prompt: string, imagePath?: string): Promise<PatternDna>`.
+  - [x] `PromptBuilder` que inyecta automáticamente `rules_pattern_making.md` y restringe la respuesta a JSON puro sin alucinaciones.
+  - [x] `AgyCliProvider` para ejecución directa usando `agy.exe -p ... --model "gemini-3.7-flash"` para tareas de razonamiento y análisis visual.
+  - [x] `OpencodeCliProvider` para ejecución desacoplada invocando el CLI de OpenCode / ChatGPT.
+  - [x] `DirectApiProvider` para integración directa con OpenAI / Anthropic Claude.
+  - [x] `MockProvider` para pruebas deterministas sin consumo de cuota ni dependencia de internet.
+  - [x] `AiProviderFactory` que selecciona el proveedor vía `process.env.AI_PROVIDER` (por defecto `agy` durante pruebas).
 - Gates: `npm test`
 - Human checks: none
 - Risk triggers: Manejo de errores en CLI externo y sanitización de salida LLM.

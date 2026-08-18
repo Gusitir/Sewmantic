@@ -43,3 +43,11 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-02] define parametric DNA TypeScript contracts, Zod schema validation and LLM sanitization suite` (hash: `3e1207e`).
 - Unresolved: Ninguno.
 - Next: Despachar T-03 al Ingeniero / Obrero (AI Provider Subsystem & Factory con Agy CLI, Gemini 3.7 Flash, OpenCode y Direct API).
+
+## 2026-08-17T23:49:00-05:00 - TASK T-03 VERDICT APTO & CLOSE PHASE 1.1 (Arquitecto / Ingeniero)
+
+- Changed: Implementación completa de la capa de proveedores IA (`src/ai/`): `IAiProvider`, `AgyCliProvider` con streaming `stdin` y Gemini 3.7 Flash, `OpencodeCliProvider`, `DirectApiProvider`, `MockAiProvider`, `PromptBuilder` y `AiProviderFactory`. Suite de 28 tests en `tests/ai_provider.test.ts`.
+- Decision and reason: El Ingeniero implementó y auditó la capa de proveedores. Puerta determinista `npm test` superada al 100% (59/59 tests unitarios totales pasando). Fase 1.1 (Setup, Contratos y AI Provider) completada satisfactoriamente.
+- Evidence: Commit `[T-03] implement AI provider subsystem with Agy CLI, OpenCode, Direct API, Mock and Factory` (hash: `df6a672`).
+- Unresolved: Ninguno.
+- Next: Despachar T-04 al Ingeniero (Fase 1.2: Slopers Base de FreeSewing v3).
