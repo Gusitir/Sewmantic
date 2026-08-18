@@ -83,3 +83,11 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-07] implement tech pack generator with fabric consumption costing, assembly guide and PDF/Markdown/JSON export` (hash: `cce7482`).
 - Unresolved: Ninguno.
 - Next: Despachar T-08 al Obrero / Ingeniero (Fase 1.4: CLI y Pipeline End-to-End).
+
+## 2026-08-18T00:06:00-05:00 - TASK T-08 VERDICT APTO & ENTER HUMAN VERIFICATION BARRIER (Arquitecto / Ingeniero)
+
+- Changed: Implementación del orquestador del pipeline end-to-end (`src/pipeline.ts`), CLI Commander completo con 5 comandos (`src/index.ts`), script de automatización (`scripts/gen_sample.ps1`) y suite de pruebas e2e (`tests/e2e.test.ts`). Generación y verificación de 8 entregables en `output/streetwear_oversize_hoodie/`.
+- Decision and reason: El Ingeniero implementó y auditó el pipeline end-to-end. Puerta determinista `npm test` superada con 193/193 tests (100% éxito) y `scripts/gen_sample.ps1` verificado. Todas las tareas de ingeniería y código del MVP (`T-01` a `T-08`) han concluido con éxito. Se activa la BARRERA DE PARADA HUMANA obligatoria para pruebas físicas (`H-01` y `H-02`).
+- Evidence: Commit `[T-08] implement unified CLI, end-to-end pattern pipeline and sample automation` (hash: `bd16a53`).
+- Unresolved: Pruebas físicas de impresión H-01 y ensamble H-02 pendientes de ejecución por el usuario.
+- Next: Veredicto BLOCKED: Awaiting Human Verification. Esperar confirmación manual del usuario para cierre formal del hito MVP.

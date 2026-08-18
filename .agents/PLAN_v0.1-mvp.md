@@ -157,18 +157,18 @@ Assurance: Lean
 
 ### T-08 - CLI Entrypoint, Automatizaciones y Pipeline End-to-End
 
-- Status: ready
+- Status: done
 - Depends on: T-03, T-06, T-07
 - Scope: `src/index.ts`, `scripts/gen_sample.ps1`, `tests/e2e.test.ts`
 - Rol: Obrero (Comandos CLI y scripts) / Ingeniero (Auditoría final y pruebas e2e).
 - Acceptance:
-  - [ ] CLI implementado con subcomandos:
+  - [x] CLI implementado con subcomandos:
     - `pattern generate -p "hoodie oversize con capucha cruzada" --format a4,letter,a0 --sizes S,M,L,XL`
     - `pattern calibrate --format a4` (exporta hoja de prueba rápida).
     - `pattern inspect <dna.json>` (valida y previsualiza).
-  - [ ] Pipeline end-to-end probado: Concepto/Prompt -> ADN JSON validado -> Sloper modificado -> PDF A4 paginado con calibrador + PDF A0 + Ficha técnica en `output/`.
-  - [ ] Script automatizado `scripts/gen_sample.ps1` que genera un set de prueba completo con un solo comando.
-- Gates: `npm test`
+  - [x] Pipeline end-to-end probado: Concepto/Prompt -> ADN JSON validado -> Sloper modificado -> PDF A4 paginado con calibrador + PDF A0 + Ficha técnica en `output/`.
+  - [x] Script automatizado `scripts/gen_sample.ps1` que genera un set de prueba completo con un solo comando.
+- Gates: `npm test && powershell scripts/gen_sample.ps1`
 - Human checks: H-01, H-02, H-03, H-04
 - Risk triggers: Error de integración general entre módulos.
 - STOP when: El CLI falle en cualquier etapa del pipeline o no genere los archivos esperados en `output/`.
@@ -177,7 +177,7 @@ Assurance: Lean
 
 ## Closure gate
 
-- [ ] Todas las tareas (`T-01` a `T-08`) con veredicto APTO.
-- [ ] Pruebas humanas (`H-01`, `H-02`, `H-03`, `H-04`) completadas y documentadas en `TESTING.md`.
-- [ ] Barrido de coherencia de fase y estado completado.
-- [ ] `CURRENT.md`, `INDEX.md`, `APPCORE.md`, `TESTING.md` y Git en perfecto acuerdo.
+- [x] Todas las tareas (`T-01` a `T-08`) con veredicto APTO.
+- [ ] Pruebas humanas (`H-01`, `H-02`, `H-03`, `H-04`) completadas y documentadas en `TESTING.md` [PAUSADO EN BARRERA HUMANA].
+- [x] Barrido de coherencia de fase y estado completado.
+- [x] `CURRENT.md`, `INDEX.md`, `APPCORE.md`, `TESTING.md` y Git en perfecto acuerdo.
