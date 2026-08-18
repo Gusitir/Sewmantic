@@ -25,6 +25,9 @@ Verified: 2026-08-17 at multiagent-init
    - Márgenes de costura (*seam allowances*) configurables (10 mm estándar, 25-30 mm en dobladillos).
 5. **Estratificación por Capas (*PDF Layers*):** Exportación con tallas separadas en capas (XS a 3XL) para permitir impresión selectiva sin saturación visual.
 6. **Blindaje Legal de Propiedad Intelectual:** Los metadatos y nombres generados usan exclusivamente terminología descriptiva sin marcas registradas de terceros.
+7. **Escala Vectorial de Impresión Exacta:** Factor de conversión estricto $1\text{ mm} = 72 / 25.4 \approx 2.834645669\text{ pt}$. El recuadro de calibración de $100\text{ mm}$ se genera con exactamente $283.465\text{ pt}$ sin distorsiones de márgenes.
+8. **Módulos ESM / NodeNext:** Configuración TypeScript obligatoria en `NodeNext` para compatibilidad completa con `@freesewing/core` v3.
+9. **Factor de Merma Textil:** Todo cálculo de consumo de tela debe incluir un factor de merma y desperdicio de corte de al menos un 10% a 15% sobre el área neta.
 
 ## Mapa de Arquitectura
 
