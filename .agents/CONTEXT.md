@@ -91,3 +91,15 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-08] implement unified CLI, end-to-end pattern pipeline and sample automation` (hash: `bd16a53`).
 - Unresolved: Pruebas físicas de impresión H-01 y ensamble H-02 pendientes de ejecución por el usuario.
 - Next: Veredicto BLOCKED: Awaiting Human Verification. Esperar confirmación manual del usuario para cierre formal del hito MVP.
+
+## 2026-08-18T00:18:00-05:00 - TILING ENHANCEMENT & ASSEMBLY GUIDES REFINEMENT (Arquitecto / Ingeniero)
+
+- Changed: Rediseño y enriquecimiento visual de las marcas de ensamble en todas las hojas paginadas A4 y Letter (`src/utils/tiler.ts`, `src/engine/exporter.ts`).
+- Enhancements:
+  1. Marco perimetral sólido de alto contraste con franja punteada de solape.
+  2. Diamantes de alineación $\blacktriangleright$, $\blacktriangleleft$, $\blacktriangledown$, $\blacktriangle$ en los 4 bordes para ensamble emparejado con etiquetas claras (`▲ UNIR CON [A1]`, etc.).
+  3. Dianas ópticas con doble círculo y cruces de registro de 16pt en las 4 esquinas con etiqueta en negrita `[ A1 ]`.
+  4. Marca de agua central grande y Brújula de Cuadrícula en cada hoja indicando posición (`HOJA A2`) y sus 4 vecinos (`▲ A1`, `◄ A1`, `A3 ►`, `▼ B2`).
+  5. Banner superior e instrucción inferior explícita de corte y solape.
+  6. Filtrado de intersección de piezas y etiquetas sobreimpresas con badge blanco para eliminar texto flotante en hojas adyacentes.
+- Evidence: Commit `[T-06] upgrade tiling registration marks with edge alignment diamonds, high-contrast frames, and central orientation compass` (hash: `41e9ae6`), 193 tests PASS, `gen_sample.ps1` regenerado.
