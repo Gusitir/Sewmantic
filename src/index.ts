@@ -14,6 +14,11 @@ export interface CoreConfig {
   debug?: boolean;
 }
 
+// Exportación de tipos y contratos de ADN Paramétrico
+export * from "./types/pattern.js";
+export * from "./schema/pattern_schema.js";
+
+
 export function getVersion(): string {
   return "0.1.0";
 }

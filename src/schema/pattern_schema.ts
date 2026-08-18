@@ -1,0 +1,460 @@
+/**
+ * src/schema/pattern_schema.ts
+ * Esquemas Zod y validadores para ADN Paramétrico de Moldería
+ * pattern-ai-core
+ */
+
+import { z } from "zod";
+import type { PatternDna } from "../types/pattern.js";
+
+/**
+ * Esquema de tallas estándar
+ */
+export const StandardSizeSchema = z.enum([
+  "XS",
+  "S",
+  "M",
+  "L",
+  "XL",
+  "2XL",
+  "3XL",
+]);
+
+/**
+ * Esquema de holguras textiles (Ease) en mm con límites físicos de seguridad
+ */
+export const EaseSettingsSchema = z.object({
+  chest_ease_mm: z
+    .number({ required_error: "chest_ease_mm is required" })
+    .min(0, "Chest ease (chest_ease_mm) cannot be negative")
+    .max(500, "Chest ease exceeds realistic apparel threshold (max 500mm)"),
+  bicep_ease_mm: z
+    .number()
+    .min(0, "Bicep ease cannot be negative")
+    .max(300, "Bicep ease exceeds threshold (max 300mm)")
+    .optional(),
+  waist_ease_mm: z
+    .number()
+    .min(0, "Waist ease cannot be negative")
+    .max(400, "Waist ease exceeds threshold (max 400mm)")
+    .optional(),
+  hip_ease_mm: z
+    .number()
+    .min(0, "Hip ease cannot be negative")
+    .max(400, "Hip ease exceeds threshold (max 400mm)")
+    .optional(),
+  shoulder_ease_mm: z
+    .number()
+    .min(0, "Shoulder ease cannot be negative")
+    .max(200, "Shoulder ease exceeds threshold (max 200mm)")
+    .optional(),
+});
+
+/**
+ * Esquema de modificaciones de escote y cuello
+ */
+export const NecklineModSchema = z.object({
+  type: z.enum(
+    [
+      "crew",
+      "v_neck",
+      "crossover_hood",
+      "hood",
+      "scoop",
+      "boat",
+      "high_neck",
+      "collar",
+      "square",
+      "sweetheart",
+      "custom",
+    ],
+    {
+      errorMap: () => ({
+        message: "Invalid neckline type",
+      }),
+    }
+  ),
+  depth_mm: z
+    .number()
+    .min(0, "Neckline depth cannot be negative")
+    .max(400, "Neckline depth exceeds maximum limit (400mm)")
+    .optional(),
+  width_mm: z
+    .number()
+    .min(0, "Neckline width cannot be negative")
+    .max(300, "Neckline width exceeds maximum limit (300mm)")
+    .optional(),
+  drop_mm: z
+    .number()
+    .min(0, "Neckline drop cannot be negative")
+    .max(300, "Neckline drop exceeds maximum limit (300mm)")
+    .optional(),
+  band_height_mm: z
+    .number()
+    .min(0, "Band height cannot be negative")
+    .max(150, "Band height exceeds maximum limit (150mm)")
+    .optional(),
+  collar_height_mm: z
+    .number()
+    .min(0, "Collar height cannot be negative")
+    .max(200, "Collar height exceeds maximum limit (200mm)")
+    .optional(),
+});
+
+/**
+ * Esquema de modificaciones de manga
+ */
+export const SleeveModSchema = z.object({
+  type: z.enum(
+    [
+      "set_in",
+      "drop_shoulder",
+      "raglan",
+      "kimono",
+      "sleeveless",
+      "oversized",
+      "bishop",
+      "puff",
+      "custom",
+    ],
+    {
+      errorMap: () => ({
+        message: "Invalid sleeve type",
+      }),
+    }
+  ),
+  drop_mm: z
+    .number()
+    .min(0, "Sleeve shoulder drop cannot be negative")
+    .max(300, "Sleeve shoulder drop exceeds maximum limit (300mm)")
+    .optional(),
+  length_type: z
+    .enum(["sleeveless", "short", "three_quarter", "full", "custom"])
+    .optional(),
+  length_mm: z
+    .number()
+    .min(0, "Sleeve length cannot be negative")
+    .max(1200, "Sleeve length exceeds maximum limit (1200mm)")
+    .optional(),
+  bicep_ease_mm: z
+    .number()
+    .min(0, "Sleeve bicep ease cannot be negative")
+    .max(300, "Sleeve bicep ease exceeds maximum limit (300mm)")
+    .optional(),
+  cuff_elastic: z.boolean().optional(),
+  cuff_rib_mm: z
+    .number()
+    .min(0, "Cuff rib height cannot be negative")
+    .max(200, "Cuff rib height exceeds maximum limit (200mm)")
+    .optional(),
+  cuff_width_mm: z
+    .number()
+    .min(0, "Cuff width cannot be negative")
+    .max(500, "Cuff width exceeds maximum limit (500mm)")
+    .optional(),
+});
+
+/**
+ * Esquema de modificaciones de bajo / dobladillo
+ */
+export const HemModSchema = z.object({
+  type: z.enum(
+    [
+      "straight",
+      "curved_tail",
+      "split",
+      "ribbed",
+      "cropped",
+      "drawstring",
+      "asymmetric",
+      "flared",
+      "custom",
+    ],
+    {
+      errorMap: () => ({
+        message: "Invalid hem type",
+      }),
+    }
+  ),
+  drop_mm: z
+    .number()
+    .min(0, "Hem drop cannot be negative")
+    .max(350, "Hem drop exceeds maximum limit (350mm)")
+    .optional(),
+  back_drop_mm: z
+    .number()
+    .min(0, "Hem back drop cannot be negative")
+    .max(350, "Hem back drop exceeds maximum limit (350mm)")
+    .optional(),
+  split_height_mm: z
+    .number()
+    .min(0, "Split height cannot be negative")
+    .max(400, "Split height exceeds maximum limit (400mm)")
+    .optional(),
+  rib_height_mm: z
+    .number()
+    .min(0, "Rib height cannot be negative")
+    .max(200, "Rib height exceeds maximum limit (200mm)")
+    .optional(),
+  allowance_mm: z
+    .number()
+    .min(5, "Hem allowance must be at least 5mm")
+    .max(100, "Hem allowance exceeds maximum limit (100mm)")
+    .optional(),
+});
+
+/**
+ * Esquema de modificaciones de bolsillo
+ */
+export const PocketModSchema = z.object({
+  type: z.enum(
+    [
+      "kangaroo",
+      "welt",
+      "patch",
+      "seam",
+      "cargo",
+      "flap",
+      "hidden",
+      "none",
+      "custom",
+    ],
+    {
+      errorMap: () => ({
+        message: "Invalid pocket type",
+      }),
+    }
+  ),
+  width_mm: z
+    .number()
+    .min(30, "Pocket width must be at least 30mm")
+    .max(600, "Pocket width exceeds maximum limit (600mm)")
+    .optional(),
+  height_mm: z
+    .number()
+    .min(30, "Pocket height must be at least 30mm")
+    .max(600, "Pocket height exceeds maximum limit (600mm)")
+    .optional(),
+  placement_y_mm: z
+    .number()
+    .min(0, "Pocket placement Y cannot be negative")
+    .max(1000, "Pocket placement Y exceeds maximum limit")
+    .optional(),
+  placement_x_mm: z
+    .number()
+    .min(0, "Pocket placement X cannot be negative")
+    .max(1000, "Pocket placement X exceeds maximum limit")
+    .optional(),
+  flap: z.boolean().optional(),
+  zip: z.boolean().optional(),
+});
+
+/**
+ * Esquema de modificaciones de capucha
+ */
+export const HoodModSchema = z.object({
+  type: z.enum(
+    [
+      "standard",
+      "crossover",
+      "ninja",
+      "oversized",
+      "three_piece",
+      "scuba",
+      "pointed",
+      "none",
+      "custom",
+    ],
+    {
+      errorMap: () => ({
+        message: "Invalid hood type",
+      }),
+    }
+  ),
+  height_mm: z
+    .number()
+    .min(150, "Hood height must be at least 150mm")
+    .max(700, "Hood height exceeds maximum limit (700mm)")
+    .optional(),
+  depth_mm: z
+    .number()
+    .min(100, "Hood depth must be at least 100mm")
+    .max(600, "Hood depth exceeds maximum limit (600mm)")
+    .optional(),
+  overlap_mm: z
+    .number()
+    .min(0, "Hood overlap cannot be negative")
+    .max(250, "Hood overlap exceeds maximum limit (250mm)")
+    .optional(),
+  center_panel_width_mm: z
+    .number()
+    .min(0, "Center panel width cannot be negative")
+    .max(250, "Center panel width exceeds maximum limit (250mm)")
+    .optional(),
+  drawcord: z.boolean().optional(),
+  eyelets: z.boolean().optional(),
+});
+
+/**
+ * Esquema de árbol de modificaciones
+ */
+export const ModificationTreeSchema = z.object({
+  neckline: NecklineModSchema.optional(),
+  sleeves: SleeveModSchema.optional(),
+  hem: HemModSchema.optional(),
+  pocket: PocketModSchema.optional(),
+  pockets: z.array(PocketModSchema).optional(),
+  hood: HoodModSchema.optional(),
+  custom: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Esquema de configuración de tallaje
+ */
+export const SizingSettingsSchema = z.object({
+  size: StandardSizeSchema.default("M"),
+  height_mm: z
+    .number()
+    .min(800, "Height must be at least 800mm")
+    .max(2500, "Height exceeds 2500mm")
+    .optional(),
+  chest_circ_mm: z
+    .number()
+    .min(500, "Chest circumference must be at least 500mm")
+    .max(2000, "Chest circumference exceeds 2000mm")
+    .optional(),
+  waist_circ_mm: z
+    .number()
+    .min(400, "Waist circumference must be at least 400mm")
+    .max(2000, "Waist circumference exceeds 2000mm")
+    .optional(),
+  hip_circ_mm: z
+    .number()
+    .min(500, "Hip circumference must be at least 500mm")
+    .max(2000, "Hip circumference exceeds 2000mm")
+    .optional(),
+  target_layers: z.array(StandardSizeSchema).optional(),
+});
+
+/**
+ * Esquema de especificaciones técnicas y consumo
+ */
+export const TechSpecsSchema = z.object({
+  notions: z.array(z.string()).default([]),
+  estimated_fabric_meters: z
+    .number({ required_error: "estimated_fabric_meters is required" })
+    .min(0.05, "Fabric meters must be at least 0.05m")
+    .max(50, "Fabric meters exceeds realistic garment threshold (max 50m)"),
+  seam_allowance_mm: z
+    .number()
+    .min(0, "Seam allowance cannot be negative")
+    .max(50, "Seam allowance exceeds standard threshold (max 50mm)")
+    .default(10),
+  hem_allowance_mm: z
+    .number()
+    .min(0, "Hem allowance cannot be negative")
+    .max(100, "Hem allowance exceeds threshold (max 100mm)")
+    .default(25),
+  fabric_type: z.string().optional(),
+  fabric_width_mm: z
+    .number()
+    .min(500, "Fabric width must be at least 500mm")
+    .max(3000, "Fabric width exceeds 3000mm")
+    .default(1500),
+});
+
+/**
+ * Esquema maestro para el ADN Paramétrico (PatternDna)
+ */
+export const PatternDnaSchema = z.object({
+  concept_name: z
+    .string({ required_error: "concept_name is required" })
+    .min(2, "concept_name must be at least 2 characters")
+    .max(120, "concept_name cannot exceed 120 characters")
+    .regex(
+      /^[a-zA-Z0-9_-]+$/,
+      "concept_name must contain only alphanumeric characters, underscores or hyphens"
+    ),
+  description: z.string().max(1000).optional(),
+  base_block: z
+    .string({ required_error: "base_block is required" })
+    .min(2, "base_block is required"),
+  ease: EaseSettingsSchema,
+  modifications: ModificationTreeSchema.default({}),
+  sizing: SizingSettingsSchema.optional(),
+  tech_specs: TechSpecsSchema.optional(),
+  notions: z.array(z.string()).optional(),
+  estimated_fabric_meters: z
+    .number()
+    .min(0.05, "Fabric meters must be at least 0.05m")
+    .max(50, "Fabric meters exceeds realistic garment threshold (max 50m)")
+    .optional(),
+});
+
+/**
+ * Valida un objeto desconocido contra el esquema PatternDnaSchema
+ * @param input Objeto a validar
+ * @returns PatternDna tipado y validado
+ */
+export function parsePatternDna(input: unknown): PatternDna {
+  return PatternDnaSchema.parse(input) as PatternDna;
+}
+
+/**
+ * Extrae y limpia el bloque JSON contenido dentro de una respuesta cruda de LLM
+ * (Soporta bloques markdown ```json ... ```, preámbulos conversacionales y espacios envolventes)
+ * @param rawOutput Texto crudo devuelto por el LLM
+ * @returns Cadena de texto JSON limpia
+ */
+export function extractJsonFromText(rawOutput: string): string {
+  if (typeof rawOutput !== "string" || rawOutput.trim().length === 0) {
+    throw new Error("Input to sanitizeAndParseLlmJson must be a non-empty string");
+  }
+
+  let text = rawOutput.trim();
+
+  // 1. Extraer contenido de bloques de código markdown si existen
+  const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/gi;
+  const codeBlockMatches = Array.from(text.matchAll(codeBlockRegex));
+
+  if (codeBlockMatches.length > 0) {
+    for (const match of codeBlockMatches) {
+      const candidate = match[1].trim();
+      if (candidate.includes("{") && candidate.includes("}")) {
+        text = candidate;
+        break;
+      }
+    }
+  }
+
+  // 2. Extraer el objeto JSON delimitado por el primer '{' y el último '}'
+  const firstBrace = text.indexOf("{");
+  const lastBrace = text.lastIndexOf("}");
+
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    throw new Error("No valid JSON object structure found in LLM output");
+  }
+
+  return text.substring(firstBrace, lastBrace + 1).trim();
+}
+
+/**
+ * Desinfecta texto crudo de LLM, extrae el JSON y valida la estructura de ADN Paramétrico
+ * @param rawOutput Respuesta de LLM con posible markdown o texto envolvente
+ * @returns PatternDna tipado y validado
+ */
+export function sanitizeAndParseLlmJson(rawOutput: string): PatternDna {
+  const jsonString = extractJsonFromText(rawOutput);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonString);
+  } catch (err) {
+    throw new Error(
+      `Failed to parse sanitized JSON: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
+  }
+
+  return parsePatternDna(parsed);
+}
