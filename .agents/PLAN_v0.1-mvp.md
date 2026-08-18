@@ -42,15 +42,15 @@ Assurance: Lean
 
 ### T-02 - Contrato de datos y validador de ADN Paramétrico (Zod + TypeScript)
 
-- Status: ready
+- Status: done
 - Depends on: T-01
 - Scope: `src/types/pattern.ts`, `src/schema/pattern_schema.ts`, `tests/schema.test.ts`
 - Rol: Ingeniero (Diseño de tipos y validación exhaustiva).
 - Acceptance:
-  - [ ] Definición de tipos estáticos TypeScript para `PatternDna`, `EaseSettings`, `ModificationTree`, `SizeGrading` y `TechSpecs`.
-  - [ ] Esquema Zod robusto con validaciones de límites numéricos (ej: holguras mínimas/máximas válidas, márgenes tolerables).
-  - [ ] Función sanitizadora y parseadora que acepte respuestas JSON de LLMs, limpie bloques markdown y valide la estructura.
-  - [ ] Suite de pruebas unitarias cubriendo casos válidos, casos límites y rechazo explícito de esquemas inválidos.
+  - [x] Definición de tipos estáticos TypeScript para `PatternDna`, `EaseSettings`, `ModificationTree`, `SizeGrading` y `TechSpecs`.
+  - [x] Esquema Zod robusto con validaciones de límites numéricos (ej: holguras mínimas/máximas válidas, márgenes tolerables).
+  - [x] Función sanitizadora y parseadora que acepte respuestas JSON de LLMs, limpie bloques markdown y valide la estructura.
+  - [x] Suite de pruebas unitarias cubriendo casos válidos, casos límites y rechazo explícito de esquemas inválidos.
 - Gates: `npm test`
 - Human checks: none
 - Risk triggers: Definición incompleta de modificaciones requeridas por los slopers.

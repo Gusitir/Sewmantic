@@ -35,3 +35,11 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-01] setup typescript project, build scripts and pattern making rules` (hash: `66d2ef8`).
 - Unresolved: Ninguno.
 - Next: Despachar T-02 al Ingeniero (Esquemas Zod y Contratos de Datos Paramétricos).
+
+## 2026-08-17T23:46:00-05:00 - TASK T-02 VERDICT APTO (Arquitecto / Ingeniero)
+
+- Changed: Definición de tipos estáticos TypeScript (`src/types/pattern.ts`), esquemas de validación Zod con límites físicos textiles (`src/schema/pattern_schema.ts`), desinfectador/sanitizador de salidas LLM y suite de 31 pruebas unitarias (`tests/schema.test.ts`).
+- Decision and reason: El Ingeniero diseñó e implementó los esquemas Zod con validaciones de límites de holguras y sanitización de markdown LLM. Puerta determinista `npm test` superada al 100% (31/31 tests pasando en 13ms). Arquitecto emite veredicto APTO y realiza commit `[T-02]`.
+- Evidence: Commit `[T-02] define parametric DNA TypeScript contracts, Zod schema validation and LLM sanitization suite` (hash: `3e1207e`).
+- Unresolved: Ninguno.
+- Next: Despachar T-03 al Ingeniero / Obrero (AI Provider Subsystem & Factory con Agy CLI, Gemini 3.7 Flash, OpenCode y Direct API).

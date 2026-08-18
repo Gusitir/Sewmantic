@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-17T23:43:00-05:00
-source_commit: [T-01] setup typescript project, build scripts and pattern making rules
+updated_at: 2026-08-17T23:46:00-05:00
+source_commit: [T-02] define parametric DNA TypeScript contracts, Zod schema validation and LLM sanitization suite
 assurance: Lean
 active_plan: PLAN_v0.1-mvp.md
-active_task: T-02
+active_task: T-03
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,7 +18,7 @@ backup: local-only
 
 ## Next action
 
-1. Despachar **T-02** al **Ingeniero** (Diseño de tipos TypeScript, Esquema Zod de ADN paramétrico con límites numéricos, sanitizador de respuestas LLM y tests unitarios en `tests/schema.test.ts`).
+1. Despachar **T-03** al **Ingeniero / Obrero** (Implementación de `AgyCliProvider` con Gemini 3.7 Flash, `OpencodeCliProvider`, `DirectApiProvider`, `MockProvider`, `PromptBuilder` y `AiProviderFactory`).
 
 ## Blockers
 
@@ -28,7 +28,7 @@ backup: local-only
 
 - Arquitectura completa y detallada en `APPCORE.md`.
 - Plan de trabajo desglosado en 8 tareas granulares (`T-01` a `T-08`) en `PLAN_v0.1-mvp.md`.
-- Tarea `T-01` completada y verificada con veredicto APTO (`npm run build` OK).
+- Tareas `T-01` y `T-02` completadas con veredicto APTO y 31 tests unitarios pasando al 100%.
 - Subagentes `ingeniero` y `obrero` definidos y listos para orquestación.
 
 ## Open findings
