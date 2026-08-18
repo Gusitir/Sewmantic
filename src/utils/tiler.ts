@@ -58,10 +58,20 @@ export const PAGE_FORMATS: Record<'A4' | 'letter' | 'A0', PaperDimensions> = {
 export const DEFAULT_MARGIN_MM = 10;
 export const DEFAULT_MARGIN_PT = DEFAULT_MARGIN_MM * MM_TO_PT;
 
+export interface TilePiecePlacement {
+  name: string;
+  part?: any;
+  bounds_mm: BoundingBox;
+  offsetX_mm: number;
+  offsetY_mm: number;
+}
+
 export interface TileGridConfig {
   format?: PaperFormat;
   margin_mm?: number;
   padding_mm?: number;
+  pieces?: TilePiecePlacement[];
+  filterEmpty?: boolean;
 }
 
 export interface TileSheetNeighbors {
@@ -78,7 +88,9 @@ export interface TileSheetInfo {
   rowLabel: string; // "A", "B", "C"...
   colLabel: string; // "1", "2", "3"...
   tileIndex: number; // 0, 1, 2, ...
-  pageNumber: number; // 2, 3, 4... (la portada con resumen y calibración es la pág 1)
+  pageNumber: number; // 2, 3, 4... (número consecutivo real en el PDF para impresión)
+  hasContent?: boolean; // True si contiene piezas de moldería textil
+  containedPieces?: string[]; // Lista de piezas que cruzan esta hoja
   viewBox_mm: {
     minX: number;
     minY: number;
@@ -114,8 +126,10 @@ export interface TileGridResult {
   cols: number;
   rows: number;
   totalTiles: number;
-  totalPages: number; // totalTiles + 1 (Pág 1 = Portada técnica y calibración)
+  activeTilesCount: number; // Cantidad de hojas con contenido real
+  totalPages: number; // activeTilesCount + 1 (Pág 1 = Portada técnica y calibración)
   tiles: TileSheetInfo[];
+  activeTiles: TileSheetInfo[];
   patternBounds_mm: BoundingBox;
   patternBounds_pt: BoundingBox;
 }
@@ -149,9 +163,10 @@ export function getPaperDimensions(format: PaperFormat | string = 'A4'): PaperDi
 
 /**
  * Calcula la grilla de tiling multipágina (A4 / Letter) para un bounding box de moldería
+ * con soporte de omisión inteligente de hojas vacías (Smart Empty Tile Pruning).
  *
  * @param patternBounds Caja delimitadora del patrón en milímetros (mm)
- * @param config Configuración de formato y márgenes
+ * @param config Configuración de formato, márgenes y piezas de moldería
  */
 export function calculateTileGrid(
   patternBounds: BoundingBox,
@@ -174,7 +189,6 @@ export function calculateTileGrid(
   const cols = Math.max(1, Math.ceil(patternW_mm / printable_width_mm));
   const rows = Math.max(1, Math.ceil(patternH_mm / printable_height_mm));
   const totalTiles = rows * cols;
-  const totalPages = totalTiles + 1; // Página 1 = portada + calibración
 
   const tiles: TileSheetInfo[] = [];
 
@@ -184,7 +198,6 @@ export function calculateTileGrid(
       const colLabel = `${c + 1}`;
       const id = `${rowLabel}${colLabel}`;
       const tileIndex = r * cols + c;
-      const pageNumber = tileIndex + 2; // Inicia en la página 2
 
       const minX_mm = patternBounds.minX + c * printable_width_mm;
       const minY_mm = patternBounds.minY + r * printable_height_mm;
@@ -202,6 +215,35 @@ export function calculateTileGrid(
       if (c > 0) neighbors.left = `${rowLabel}${c}`;
       if (c < cols - 1) neighbors.right = `${rowLabel}${c + 2}`;
 
+      // Comprobar si esta hoja intersecta con alguna pieza real del patrón
+      let hasContent = true;
+      const containedPieces: string[] = [];
+
+      if (config.pieces && config.pieces.length > 0) {
+        hasContent = false;
+        for (const piece of config.pieces) {
+          const pieceBounds = piece.bounds_mm || piece.part?.bounds;
+          if (!pieceBounds) continue;
+
+          const pMinX = piece.offsetX_mm + pieceBounds.minX;
+          const pMinY = piece.offsetY_mm + pieceBounds.minY;
+          const pMaxX = piece.offsetX_mm + pieceBounds.maxX;
+          const pMaxY = piece.offsetY_mm + pieceBounds.maxY;
+
+          const intersects = !(
+            pMaxX < minX_mm ||
+            pMinX > maxX_mm ||
+            pMaxY < minY_mm ||
+            pMinY > maxY_mm
+          );
+
+          if (intersects) {
+            hasContent = true;
+            containedPieces.push(piece.name);
+          }
+        }
+      }
+
       tiles.push({
         id,
         row: r,
@@ -209,7 +251,9 @@ export function calculateTileGrid(
         rowLabel,
         colLabel,
         tileIndex,
-        pageNumber,
+        pageNumber: tileIndex + 2, // Asignación inicial provisional
+        hasContent,
+        containedPieces,
         viewBox_mm: {
           minX: minX_mm,
           minY: minY_mm,
@@ -237,6 +281,23 @@ export function calculateTileGrid(
     }
   }
 
+  // Filtrado de hojas activas y reasignación de números de página correlativos
+  const shouldFilter = config.pieces && config.pieces.length > 0 && config.filterEmpty !== false;
+  const activeTiles = shouldFilter ? tiles.filter((t) => t.hasContent === true) : tiles;
+
+  // Re-enumerar las páginas correlativas (Pág 2, 3, 4...) solo para las hojas activas que se imprimirán
+  let currentPage = 2;
+  for (const tile of tiles) {
+    if (tile.hasContent !== false) {
+      tile.pageNumber = currentPage++;
+    } else {
+      tile.pageNumber = -1; // Hoja vacía omitida
+    }
+  }
+
+  const activeTilesCount = activeTiles.length;
+  const totalPages = activeTilesCount + 1; // 1 Portada técnica + Hojas activas
+
   const patternBounds_pt: BoundingBox = {
     minX: patternBounds.minX * MM_TO_PT,
     minY: patternBounds.minY * MM_TO_PT,
@@ -256,8 +317,10 @@ export function calculateTileGrid(
     cols,
     rows,
     totalTiles,
+    activeTilesCount,
     totalPages,
     tiles,
+    activeTiles,
     patternBounds_mm: patternBounds,
     patternBounds_pt,
   };
@@ -660,11 +723,12 @@ export function drawAssemblyMapPdf(
       align: 'center',
     });
 
+  const activeCount = grid.activeTilesCount ?? grid.tiles.filter(t => t.hasContent !== false).length;
   doc
     .fontSize(6)
     .font('Helvetica')
     .fillColor('#6b7280')
-    .text(`Grilla de ${rows} Filas x ${cols} Columnas (${grid.totalTiles} hojas de patrón)`, x, y + 16, {
+    .text(`Grilla de ${rows}x${cols} — ${activeCount} hojas activas a imprimir (Págs 2 a ${grid.totalPages})`, x, y + 16, {
       width,
       align: 'center',
     });
@@ -673,31 +737,62 @@ export function drawAssemblyMapPdf(
   for (const tile of tiles) {
     const cellX = startX + tile.col * cellW;
     const cellY = startY + tile.row * cellH;
+    const isActive = tile.hasContent !== false;
 
-    // Celda
-    doc
-      .rect(cellX + 1, cellY + 1, cellW - 2, cellH - 2)
-      .fillAndStroke('#ffffff', '#2563eb');
+    if (isActive) {
+      // Celda Activa con moldería
+      doc
+        .rect(cellX + 1, cellY + 1, cellW - 2, cellH - 2)
+        .fillAndStroke('#ffffff', '#2563eb');
 
-    // Identificador de hoja (e.g. "A1")
-    doc
-      .fontSize(7.5)
-      .font('Helvetica-Bold')
-      .fillColor('#1e40af')
-      .text(tile.id, cellX, cellY + (cellH * 0.2), {
-        width: cellW,
-        align: 'center',
-      });
+      // Identificador de hoja (e.g. "A1")
+      doc
+        .fontSize(7.5)
+        .font('Helvetica-Bold')
+        .fillColor('#1e40af')
+        .text(tile.id, cellX, cellY + (cellH * 0.18), {
+          width: cellW,
+          align: 'center',
+        });
 
-    // Número de página (e.g. "Pág 2")
-    doc
-      .fontSize(5.5)
-      .font('Helvetica')
-      .fillColor('#6b7280')
-      .text(`Pág ${tile.pageNumber}`, cellX, cellY + (cellH * 0.6), {
-        width: cellW,
-        align: 'center',
-      });
+      // Número de página real en el PDF (e.g. "Pág 2")
+      doc
+        .fontSize(5.5)
+        .font('Helvetica')
+        .fillColor('#059669')
+        .text(`Pág ${tile.pageNumber}`, cellX, cellY + (cellH * 0.58), {
+          width: cellW,
+          align: 'center',
+        });
+    } else {
+      // Celda Vacía / Omitida (no se imprime en el PDF para ahorrar papel)
+      doc.save();
+      doc.lineWidth(0.5);
+      doc.dash(2, { space: 2 });
+      doc
+        .rect(cellX + 1, cellY + 1, cellW - 2, cellH - 2)
+        .fillAndStroke('#f1f5f9', '#cbd5e1');
+      doc.undash();
+
+      doc
+        .fontSize(6.5)
+        .font('Helvetica-Bold')
+        .fillColor('#94a3b8')
+        .text(tile.id, cellX, cellY + (cellH * 0.20), {
+          width: cellW,
+          align: 'center',
+        });
+
+      doc
+        .fontSize(5)
+        .font('Helvetica')
+        .fillColor('#94a3b8')
+        .text('(Vacío)', cellX, cellY + (cellH * 0.60), {
+          width: cellW,
+          align: 'center',
+        });
+      doc.restore();
+    }
   }
 
   doc.restore();

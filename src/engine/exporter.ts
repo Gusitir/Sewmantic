@@ -815,6 +815,8 @@ export async function exportTiledPdf(
   const grid = calculateTileGrid(layout.totalBounds_mm, {
     format,
     margin_mm,
+    pieces: layout.pieces,
+    filterEmpty: true,
   });
 
   const { paper, margin_pt, printable_pt } = grid;
@@ -833,9 +835,11 @@ export async function exportTiledPdf(
   drawTiledPdfCoverPage(doc, pattern, grid);
 
   // ==========================================
-  // PÁGINAS 2 a N+1: HOJAS DE PATRÓN (A1, A2...)
+  // PÁGINAS 2 a N+1: HOJAS DE PATRÓN ACTIVAS (OMITE HOJAS VACÍAS)
   // ==========================================
-  for (const tile of grid.tiles) {
+  const tilesToPrint = grid.activeTiles || grid.tiles.filter((t) => t.hasContent !== false);
+
+  for (const tile of tilesToPrint) {
     doc.addPage({
       size: [paper.width_pt, paper.height_pt],
       margin: 0,
