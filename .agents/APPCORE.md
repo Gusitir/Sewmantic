@@ -37,11 +37,12 @@ pattern-ai-core/
 │   ├── index.ts                       # Entrypoint del CLI (Commander)
 │   ├── ai/                            # Capa de Proveedores de Inteligencia Artificial
 │   │   ├── base_provider.ts           # Interfaz común IAiProvider
+│   │   ├── agy_cli_provider.ts        # Integración con Antigravity CLI (agy.exe con Gemini 3.7 Flash)
 │   │   ├── opencode_cli_provider.ts   # Integración por CLI con ChatGPT (OpenCode)
 │   │   ├── direct_api_provider.ts     # Integración SDK HTTP directa (Claude, OpenAI)
 │   │   ├── prompt_builder.ts          # Inyector de reglas textiles y system prompts
 │   │   ├── mock_provider.ts           # Proveedor Mock para tests offline deterministas
-│   │   └── factory.ts                 # Factory según variable AI_PROVIDER
+│   │   └── factory.ts                 # Factory según variable AI_PROVIDER (default: agy)
 │   ├── types/                         # Definiciones de tipos TypeScript del ADN
 │   │   └── pattern.ts                 # Interfaces del JSON de ADN, medidas y bloques
 │   ├── schema/                        # Validación de Esquemas en Runtime (Zod)
