@@ -269,8 +269,8 @@ export interface SheetMarksOptions {
 }
 
 /**
- * Dibuja las cruces de registro, bordes de corte punteados, indicadores de solape
- * y encabezados de página en una hoja de corte individual
+ * Dibuja las cruces de registro, bordes de corte, indicadores de solape alfanuméricos,
+ * diamantes de alineación de borde, brújula de orientación y encabezados en cada hoja A4/Letter.
  */
 export function drawSheetRegistrationMarks(
   doc: PDFKit.PDFDocument,
@@ -278,34 +278,277 @@ export function drawSheetRegistrationMarks(
   grid: TileGridResult,
   options: SheetMarksOptions = {}
 ): void {
-  const { patternName = 'Pattern AI', sizeName = 'M' } = options;
+  const { patternName = 'PATTERN AI', sizeName = 'M' } = options;
   const { margin_pt, printable_pt, paper } = grid;
   const { x, y, width: w, height: h } = tile.printableArea_pt;
 
   doc.save();
 
-  // 1. Líneas de corte perimetrales punteadas (recuadro del área imprimible)
-  doc.lineWidth(0.5);
-  doc.dash(4, { space: 3 });
-  doc.rect(x, y, w, h).stroke('#9ca3af');
-  doc.undash();
+  // =========================================================================
+  // 1. MARCA DE AGUA CENTRAL Y BRÚJULA DE ORIENTACIÓN (FONDO)
+  // =========================================================================
+  doc.save();
+  const centerX = x + w / 2;
+  const centerY = y + h / 2;
 
-  // 2. Cruces de registro en las 4 esquinas del área imprimible
-  const crossArm = 12; // pt
-  const circleR = 3; // pt
+  // Letra de agua gigante en el centro para identificación instantánea
+  doc
+    .fontSize(42)
+    .font('Helvetica-Bold')
+    .fillColor('#f1f5f9')
+    .text(tile.id, centerX - 100, centerY - 24, {
+      width: 200,
+      align: 'center',
+    });
+
+  // Brújula / Badge de orientación de cuadrícula
+  const badgeW = 160;
+  const badgeH = 46;
+  const badgeX = centerX - badgeW / 2;
+  const badgeY = centerY - badgeH / 2;
+
+  doc
+    .roundedRect(badgeX, badgeY, badgeW, badgeH, 4)
+    .fillAndStroke('#ffffff', '#e2e8f0');
+
+  doc
+    .fontSize(11)
+    .font('Helvetica-Bold')
+    .fillColor('#1e3a8a')
+    .text(`HOJA [ ${tile.id} ]`, badgeX, badgeY + 6, {
+      width: badgeW,
+      align: 'center',
+    });
+
+  doc
+    .fontSize(6.5)
+    .font('Helvetica')
+    .fillColor('#64748b')
+    .text(
+      `Fila ${tile.rowLabel}, Columna ${tile.colLabel}  •  Pág ${tile.pageNumber} de ${grid.totalPages}`,
+      badgeX,
+      badgeY + 20,
+      { width: badgeW, align: 'center' }
+    );
+
+  const neighborsSummary = [
+    tile.neighbors.top ? `▲ ${tile.neighbors.top}` : '▲ Borde',
+    tile.neighbors.left ? `◄ ${tile.neighbors.left}` : '◄ Borde',
+    tile.neighbors.right ? `${tile.neighbors.right} ►` : 'Borde ►',
+    tile.neighbors.bottom ? `▼ ${tile.neighbors.bottom}` : '▼ Borde',
+  ].join('   ');
+
+  doc
+    .fontSize(5.5)
+    .font('Helvetica-Bold')
+    .fillColor('#475569')
+    .text(neighborsSummary, badgeX, badgeY + 32, {
+      width: badgeW,
+      align: 'center',
+    });
+  doc.restore();
+
+  // =========================================================================
+  // 2. RECUADRO DE CORTE Y SOLAPE PERIMETRAL (ALTO CONTRASTE)
+  // =========================================================================
+  doc.save();
+  // Marco sólido oscuro del área útil de ensamble
+  doc.lineWidth(1.0);
+  doc.strokeColor('#1e293b');
+  doc.rect(x, y, w, h).stroke();
+
+  // Franja de corte en bordes DERECHO e INFERIOR (solape estándar de confección)
+  const overlapMargin = 15; // pt ≈ 5.3 mm
+  doc.lineWidth(0.5);
+  doc.dash(3, { space: 3 });
+  doc.strokeColor('#94a3b8');
+
+  // Línea de corte interna derecha (si tiene vecino derecho)
+  if (tile.neighbors.right) {
+    doc.moveTo(x + w - overlapMargin, y).lineTo(x + w - overlapMargin, y + h).stroke();
+  }
+  // Línea de corte interna inferior (si tiene vecino inferior)
+  if (tile.neighbors.bottom) {
+    doc.moveTo(x, y + h - overlapMargin).lineTo(x + w, y + h - overlapMargin).stroke();
+  }
+  doc.undash();
+  doc.restore();
+
+  // =========================================================================
+  // 3. DIAMANTES DE ALINEACIÓN Y GUÍAS DIRECCIONALES EN LOS 4 BORDES
+  // =========================================================================
+  const diamondR = 8; // Radio del diamante (pt)
+
+  // --- BORDE SUPERIOR ---
+  doc.save();
+  if (tile.neighbors.top) {
+    // Medio diamante hacia abajo
+    doc.save();
+    doc.fillColor('#2563eb').strokeColor('#1e3a8a').lineWidth(0.8);
+    doc
+      .moveTo(centerX - diamondR, y)
+      .lineTo(centerX, y + diamondR)
+      .lineTo(centerX + diamondR, y)
+      .closePath()
+      .fillAndStroke();
+    doc.restore();
+
+    doc
+      .fontSize(6)
+      .font('Helvetica-Bold')
+      .fillColor('#1e3a8a')
+      .text(`▲ UNIR CON [ ${tile.neighbors.top} ]`, x, y + diamondR + 2, {
+        width: w,
+        align: 'center',
+      });
+  } else {
+    doc
+      .fontSize(5.5)
+      .font('Helvetica-Bold')
+      .fillColor('#94a3b8')
+      .text('─── BORDE SUPERIOR DEL PATRÓN ───', x, y + 2, {
+        width: w,
+        align: 'center',
+      });
+  }
+  doc.restore();
+
+  // --- BORDE INFERIOR ---
+  doc.save();
+  if (tile.neighbors.bottom) {
+    // Medio diamante hacia arriba
+    doc.save();
+    doc.fillColor('#2563eb').strokeColor('#1e3a8a').lineWidth(0.8);
+    doc
+      .moveTo(centerX - diamondR, y + h)
+      .lineTo(centerX, y + h - diamondR)
+      .lineTo(centerX + diamondR, y + h)
+      .closePath()
+      .fillAndStroke();
+    doc.restore();
+
+    doc
+      .fontSize(6)
+      .font('Helvetica-Bold')
+      .fillColor('#1e3a8a')
+      .text(`▼ UNIR CON [ ${tile.neighbors.bottom} ]`, x, y + h - diamondR - 9, {
+        width: w,
+        align: 'center',
+      });
+  } else {
+    doc
+      .fontSize(5.5)
+      .font('Helvetica-Bold')
+      .fillColor('#94a3b8')
+      .text('─── BORDE INFERIOR DEL PATRÓN ───', x, y + h - 8, {
+        width: w,
+        align: 'center',
+      });
+  }
+  doc.restore();
+
+  // --- BORDE IZQUIERDO ---
+  doc.save();
+  if (tile.neighbors.left) {
+    // Medio diamante hacia la derecha
+    doc.save();
+    doc.fillColor('#2563eb').strokeColor('#1e3a8a').lineWidth(0.8);
+    doc
+      .moveTo(x, centerY - diamondR)
+      .lineTo(x + diamondR, centerY)
+      .lineTo(x, centerY + diamondR)
+      .closePath()
+      .fillAndStroke();
+    doc.restore();
+
+    doc.save();
+    doc.translate(x + diamondR + 10, centerY);
+    doc.rotate(-90);
+    doc
+      .fontSize(6)
+      .font('Helvetica-Bold')
+      .fillColor('#1e3a8a')
+      .text(`◄ UNIR CON [ ${tile.neighbors.left} ]`, -60, -3, {
+        width: 120,
+        align: 'center',
+      });
+    doc.restore();
+  } else {
+    doc.save();
+    doc.translate(x + 6, centerY);
+    doc.rotate(-90);
+    doc
+      .fontSize(5.5)
+      .font('Helvetica-Bold')
+      .fillColor('#94a3b8')
+      .text('─── BORDE IZQUIERDO ───', -60, -3, {
+        width: 120,
+        align: 'center',
+      });
+    doc.restore();
+  }
+  doc.restore();
+
+  // --- BORDE DERECHO ---
+  doc.save();
+  if (tile.neighbors.right) {
+    // Medio diamante hacia la izquierda
+    doc.save();
+    doc.fillColor('#2563eb').strokeColor('#1e3a8a').lineWidth(0.8);
+    doc
+      .moveTo(x + w, centerY - diamondR)
+      .lineTo(x + w - diamondR, centerY)
+      .lineTo(x + w, centerY + diamondR)
+      .closePath()
+      .fillAndStroke();
+    doc.restore();
+
+    doc.save();
+    doc.translate(x + w - diamondR - 10, centerY);
+    doc.rotate(90);
+    doc
+      .fontSize(6)
+      .font('Helvetica-Bold')
+      .fillColor('#1e3a8a')
+      .text(`UNIR CON [ ${tile.neighbors.right} ] ►`, -60, -3, {
+        width: 120,
+        align: 'center',
+      });
+    doc.restore();
+  } else {
+    doc.save();
+    doc.translate(x + w - 6, centerY);
+    doc.rotate(90);
+    doc
+      .fontSize(5.5)
+      .font('Helvetica-Bold')
+      .fillColor('#94a3b8')
+      .text('─── BORDE DERECHO ───', -60, -3, {
+        width: 120,
+        align: 'center',
+      });
+    doc.restore();
+  }
+  doc.restore();
+
+  // =========================================================================
+  // 4. DIANAS Y CRUCES DE REGISTRO EN LAS 4 ESQUINAS
+  // =========================================================================
+  const crossArm = 16; // pt
+  const circleR = 5; // pt
   const corners = [
-    { cx: x, cy: y, label: `${tile.id}-TL`, alignX: 4, alignY: 4 },
-    { cx: x + w, cy: y, label: `${tile.id}-TR`, alignX: -22, alignY: 4 },
-    { cx: x, cy: y + h, label: `${tile.id}-BL`, alignX: 4, alignY: -10 },
-    { cx: x + w, cy: y + h, label: `${tile.id}-BR`, alignX: -22, alignY: -10 },
+    { cx: x, cy: y, label: `[ ${tile.id} ]`, alignX: 7, alignY: 6 },
+    { cx: x + w, cy: y, label: `[ ${tile.id} ]`, alignX: -32, alignY: 6 },
+    { cx: x, cy: y + h, label: `[ ${tile.id} ]`, alignX: 7, alignY: -14 },
+    { cx: x + w, cy: y + h, label: `[ ${tile.id} ]`, alignX: -32, alignY: -14 },
   ];
 
   for (const corner of corners) {
     doc.save();
-    doc.lineWidth(0.6);
+    doc.lineWidth(1.0);
     doc.strokeColor('#dc2626');
 
-    // Cruz
+    // Cruz de alineación en esquina
     doc
       .moveTo(corner.cx - crossArm, corner.cy)
       .lineTo(corner.cx + crossArm, corner.cy)
@@ -315,111 +558,64 @@ export function drawSheetRegistrationMarks(
       .lineTo(corner.cx, corner.cy + crossArm)
       .stroke();
 
-    // Círculos de alineación
+    // Doble círculo de mira óptica
     doc.circle(corner.cx, corner.cy, circleR).stroke();
-    doc.circle(corner.cx, corner.cy, 1).fill('#dc2626');
+    doc.circle(corner.cx, corner.cy, 1.5).fill('#dc2626');
 
-    // Etiqueta alfanumérica de esquina
+    // Etiqueta destacada en esquina
     doc
-      .fontSize(5)
+      .fontSize(7)
       .font('Helvetica-Bold')
       .fillColor('#dc2626')
       .text(corner.label, corner.cx + corner.alignX, corner.cy + corner.alignY, {
-        width: 25,
+        width: 30,
       });
     doc.restore();
   }
 
-  // 3. Indicadores de unión direccional con hojas vecinas (solapes)
+  // =========================================================================
+  // 5. BANNER SUPERIOR DE IDENTIFICACIÓN
+  // =========================================================================
   doc.save();
-  doc.fontSize(6).font('Helvetica-Bold').fillColor('#4b5563');
+  const bannerH = 14;
+  const bannerY = Math.max(2, margin_pt - bannerH - 2);
 
-  // Borde superior
-  if (tile.neighbors.top) {
-    doc.text(`▲ UNIR CON [${tile.neighbors.top}] (ARRIBA)`, x, y - 8, {
-      width: w,
-      align: 'center',
-    });
-  }
+  doc
+    .rect(margin_pt, bannerY, printable_pt.width, bannerH)
+    .fillAndStroke('#1e293b', '#1e293b');
 
-  // Borde inferior
-  if (tile.neighbors.bottom) {
-    doc.text(`▼ UNIR CON [${tile.neighbors.bottom}] (ABAJO)`, x, y + h + 2, {
-      width: w,
-      align: 'center',
-    });
-  }
-
-  // Borde izquierdo
-  if (tile.neighbors.left) {
-    doc.save();
-    doc.rotate(-90, { origin: [x - 4, y + h / 2] });
-    doc.text(`◄ UNIR CON [${tile.neighbors.left}]`, x - 40, y + h / 2 - 3, {
-      width: 80,
-      align: 'center',
-    });
-    doc.restore();
-  }
-
-  // Borde derecho
-  if (tile.neighbors.right) {
-    doc.save();
-    doc.rotate(90, { origin: [x + w + 4, y + h / 2] });
-    doc.text(`UNIR CON [${tile.neighbors.right}] ►`, x + w - 40, y + h / 2 - 3, {
-      width: 80,
-      align: 'center',
-    });
-    doc.restore();
-  }
-  doc.restore();
-
-  // 4. Encabezado técnico superior de la hoja
-  doc.save();
-  const headerY = Math.max(3, margin_pt - 18);
   doc
     .fontSize(7)
     .font('Helvetica-Bold')
-    .fillColor('#111827')
-    .text(`${patternName} — Talla: ${sizeName}`, margin_pt, headerY, {
-      continued: true,
-      width: printable_pt.width,
-    });
-
-  doc
-    .font('Helvetica-Bold')
-    .fillColor('#2563eb')
-    .text(`  |  HOJA [ ${tile.id} ]  `, { continued: true });
+    .fillColor('#ffffff')
+    .text(
+      `PATRÓN: ${patternName.toUpperCase()}  |  TALLA: ${sizeName}  |  HOJA [ ${tile.id} ] (Fila ${tile.rowLabel}, Col ${tile.colLabel})`,
+      margin_pt + 6,
+      bannerY + 3.5,
+      { continued: true, width: printable_pt.width - 12 }
+    );
 
   doc
     .font('Helvetica')
-    .fillColor('#6b7280')
-    .text(
-      `(Fila ${tile.rowLabel}, Col ${tile.colLabel} de ${grid.rows}x${grid.cols}) — Pág ${tile.pageNumber} de ${grid.totalPages}`,
-      { align: 'right' }
-    );
+    .fillColor('#93c5fd')
+    .text(`Página ${tile.pageNumber} de ${grid.totalPages}`, { align: 'right' });
   doc.restore();
 
-  // 5. Pie de página inferior de la hoja
+  // =========================================================================
+  // 6. PIE DE PÁGINA INFERIOR CON INSTRUCCIÓN DE ESCALA Y CORTE
+  // =========================================================================
   doc.save();
-  const footerY = paper.height_pt - Math.max(8, margin_pt - 4);
+  const footerY = paper.height_pt - Math.max(10, margin_pt - 2);
   doc
-    .fontSize(5.5)
-    .font('Helvetica')
-    .fillColor('#9ca3af')
+    .fontSize(6)
+    .font('Helvetica-Bold')
+    .fillColor('#dc2626')
     .text(
-      `Escala 100% (1:1) — 1 mm = 2.835 pt | NO ESCALAR AL IMPRIMIR (Imprimir a tamaño real) | pattern-ai-core`,
+      '✂ CORTAR BORDES DERECHO E INFERIOR POR LÍNEA SÓLIDA • SOLAPAR SOBRE LAS HOJAS ADYACENTES • IMPRIMIR A TAMAÑO REAL (100% ESCALA)',
       margin_pt,
       footerY,
       { width: printable_pt.width, align: 'center' }
     );
-  doc.restore();
-
-  // 6. Tijeras / Marcador de corte en esquinas
-  doc.save();
-  doc
-    .fontSize(6)
-    .fillColor('#9ca3af')
-    .text('✂ Cortar', x + 5, y + 2);
   doc.restore();
 
   doc.restore();

@@ -663,9 +663,28 @@ export async function exportTiledPdf(
       margin_pt - tile.viewBox_pt.minY
     );
 
+    let piecesOnThisTile = 0;
+
     // Dibujar cada pieza posicionada
     for (const piece of layout.pieces) {
       const { part, offsetX_mm, offsetY_mm } = piece;
+
+      // Comprobar si la pieza intersecta la ventana de visualización de esta hoja
+      const pieceMinX_mm = offsetX_mm + part.bounds.minX;
+      const pieceMinY_mm = offsetY_mm + part.bounds.minY;
+      const pieceMaxX_mm = offsetX_mm + part.bounds.maxX;
+      const pieceMaxY_mm = offsetY_mm + part.bounds.maxY;
+
+      const intersects = !(
+        pieceMaxX_mm < tile.viewBox_mm.minX ||
+        pieceMinX_mm > tile.viewBox_mm.maxX ||
+        pieceMaxY_mm < tile.viewBox_mm.minY ||
+        pieceMinY_mm > tile.viewBox_mm.maxY
+      );
+
+      if (!intersects) continue;
+      piecesOnThisTile++;
+
       const pieceX_pt = offsetX_mm * MM_TO_PT;
       const pieceY_pt = offsetY_mm * MM_TO_PT;
 
@@ -673,14 +692,14 @@ export async function exportTiledPdf(
       doc.translate(pieceX_pt, pieceY_pt);
       doc.scale(MM_TO_PT, MM_TO_PT);
 
-      // Trazo de corte
-      doc.lineWidth(1.2 / MM_TO_PT);
-      doc.strokeColor('#111827');
+      // Trazo de corte principal (Línea negra nítida 1.4 pt)
+      doc.lineWidth(1.4 / MM_TO_PT);
+      doc.strokeColor('#0f172a');
       doc.path(part.pathD).stroke();
 
-      // Hilo de tela
+      // Hilo de tela (Grainline)
       if (part.grainline) {
-        doc.lineWidth(0.8 / MM_TO_PT);
+        doc.lineWidth(1.0 / MM_TO_PT);
         doc.strokeColor('#2563eb');
         doc
           .moveTo(part.grainline.start.x, part.grainline.start.y)
@@ -688,51 +707,84 @@ export async function exportTiledPdf(
           .stroke();
       }
 
-      // Piquetes
+      // Piquetes (Notches)
       if (part.notches && part.notches.length > 0) {
-        doc.lineWidth(0.8 / MM_TO_PT);
+        doc.lineWidth(1.0 / MM_TO_PT);
         doc.strokeColor('#dc2626');
         for (const notch of part.notches) {
           doc
-            .moveTo(notch.point.x - 2, notch.point.y - 2)
-            .lineTo(notch.point.x + 2, notch.point.y + 2)
+            .moveTo(notch.point.x - 3, notch.point.y - 3)
+            .lineTo(notch.point.x + 3, notch.point.y + 3)
             .stroke();
           doc
-            .moveTo(notch.point.x - 2, notch.point.y + 2)
-            .lineTo(notch.point.x + 2, notch.point.y - 2)
+            .moveTo(notch.point.x - 3, notch.point.y + 3)
+            .lineTo(notch.point.x + 3, notch.point.y - 3)
             .stroke();
         }
       }
 
       doc.restore();
 
-      // Etiquetas de pieza
-      doc.save();
-      const cX_pt = pieceX_pt + (part.bounds.minX + part.bounds.width / 2) * MM_TO_PT;
-      const cY_pt = pieceY_pt + (part.bounds.minY + part.bounds.height / 2) * MM_TO_PT;
-      const cutText = part.onFold ? `CORTAR x${part.cutCount} (AL LOMO)` : `CORTAR x${part.cutCount}`;
+      // Etiquetas de pieza (renderizadas si el centro de la pieza cae cerca de este tile)
+      const cX_mm = offsetX_mm + part.bounds.minX + part.bounds.width / 2;
+      const cY_mm = offsetY_mm + part.bounds.minY + part.bounds.height / 2;
 
-      doc
-        .fontSize(9)
-        .font('Helvetica-Bold')
-        .fillColor('#111827')
-        .text(part.label || part.name.toUpperCase(), cX_pt - 70, cY_pt - 10, {
-          width: 140,
-          align: 'center',
-        });
+      const isLabelInTile = (
+        cX_mm >= tile.viewBox_mm.minX - 20 &&
+        cX_mm <= tile.viewBox_mm.maxX + 20 &&
+        cY_mm >= tile.viewBox_mm.minY - 20 &&
+        cY_mm <= tile.viewBox_mm.maxY + 20
+      );
 
-      doc
-        .fontSize(7.5)
-        .font('Helvetica')
-        .fillColor('#4b5563')
-        .text(`TALLA ${pattern.size} | ${cutText}`, cX_pt - 70, cY_pt + 3, {
-          width: 140,
-          align: 'center',
-        });
-      doc.restore();
+      if (isLabelInTile) {
+        doc.save();
+        const cX_pt = pieceX_pt + (part.bounds.minX + part.bounds.width / 2) * MM_TO_PT;
+        const cY_pt = pieceY_pt + (part.bounds.minY + part.bounds.height / 2) * MM_TO_PT;
+        const cutText = part.onFold ? `CORTAR x${part.cutCount} (AL LOMO)` : `CORTAR x${part.cutCount}`;
+
+        // Badge de fondo blanco semitransparente para que la etiqueta sea 100% legible
+        doc
+          .roundedRect(cX_pt - 75, cY_pt - 14, 150, 30, 3)
+          .fillAndStroke('rgba(255, 255, 255, 0.85)', '#cbd5e1');
+
+        doc
+          .fontSize(9.5)
+          .font('Helvetica-Bold')
+          .fillColor('#0f172a')
+          .text(part.label || part.name.toUpperCase(), cX_pt - 70, cY_pt - 10, {
+            width: 140,
+            align: 'center',
+          });
+
+        doc
+          .fontSize(7.5)
+          .font('Helvetica')
+          .fillColor('#334155')
+          .text(`TALLA ${pattern.size} | ${cutText}`, cX_pt - 70, cY_pt + 3, {
+            width: 140,
+            align: 'center',
+          });
+        doc.restore();
+      }
     }
 
     doc.restore();
+
+    // Si la hoja no tiene trazos de piezas, mostrar aviso claro en el centro
+    if (piecesOnThisTile === 0) {
+      doc.save();
+      doc
+        .fontSize(8)
+        .font('Helvetica-Bold')
+        .fillColor('#94a3b8')
+        .text(
+          '─── HOJA DE MARGEN / ESPACIO LIBRE ───',
+          tile.printableArea_pt.x,
+          tile.printableArea_pt.y + tile.printableArea_pt.height / 2 + 28,
+          { width: tile.printableArea_pt.width, align: 'center' }
+        );
+      doc.restore();
+    }
   }
 
   doc.end();
