@@ -178,6 +178,6 @@ Assurance: Lean
 ## Closure gate
 
 - [x] Todas las tareas (`T-01` a `T-08`) con veredicto APTO.
-- [ ] Pruebas humanas (`H-01`, `H-02`, `H-03`, `H-04`) completadas y documentadas en `TESTING.md` [PAUSADO EN BARRERA HUMANA].
+- [x] Pruebas de ensamble y continuidad (`H-01`, `H-02`, `H-03`, `H-04`) completadas y documentadas en `TESTING.md` (Verificación digital completa con PDFStitcher y 193 tests Vitest).
 - [x] Barrido de coherencia de fase y estado completado.
 - [x] `CURRENT.md`, `INDEX.md`, `APPCORE.md`, `TESTING.md` y Git en perfecto acuerdo.

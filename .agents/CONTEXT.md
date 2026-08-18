@@ -115,3 +115,19 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
   2. Se trasladó el dibujo de etiquetas a coordenadas locales de página no transformadas con `lineBreak: false`, eliminando el 100% de los saltos de página espurios.
   3. Resultados exactos verificados: A4 = 24 páginas exactas (1 Portada + 23 Hojas con moldería activa), Letter = 27 páginas exactas (1 Portada + 26 Hojas con moldería activa), 0 páginas en blanco intercaladas.
 - Evidence: Commits `[T-06]` (hashes `f5feecf`, `ef5a55c`), 193 tests PASS, `gen_sample.ps1` regenerado.
+
+## 2026-08-18T00:50:00-05:00 - CLOSE PHASE 1.0 (MVP SAVEPOINT ENTREGADO Y VALIDADO) (Arquitecto)
+
+- Decision and reason: Cierre formal del hito MVP Fase 1 (`T-01` a `T-08`). El usuario realizó la verificación digital completa del ensamble de hojas A4 mediante **PDFStitcher**, confirmando continuidad geométrica absoluta de curvas Bézier en todas las piezas (delantero, espalda, manga, capucha y bolsillo), alineación precisa de notches y grainlines, y exactitud de escala 1:1.
+- Deliverables Verified:
+  1. `output/streetwear_oversize_hoodie/streetwear_oversize_hoodie_tiled_a4.pdf` (Multi-página A4 con portada comercial, 5 pasos de ensamble y cuadro de calibración de 10x10 cm).
+  2. `output/streetwear_oversize_hoodie/streetwear_oversize_hoodie_tiled_letter.pdf` (Multi-página US Letter).
+  3. `output/streetwear_oversize_hoodie/streetwear_oversize_hoodie_plotter_a0.pdf` (Plano continuo A0 con reglas métricas continuas y cartela técnica).
+  4. `output/streetwear_oversize_hoodie/streetwear_oversize_hoodie_continuous.svg` (SVG vectorial por capas de tallas).
+  5. `output/streetwear_oversize_hoodie/streetwear_oversize_hoodie_techpack.pdf` (Ficha técnica de corte y confección en PDF editorial).
+  6. `output/streetwear_oversize_hoodie/streetwear_oversize_hoodie_techpack.md` (Ficha técnica estructurada en Markdown).
+  7. `output/streetwear_oversize_hoodie/streetwear_oversize_hoodie_dna.json` (ADN paramétrico validado con Zod).
+  8. `output/streetwear_oversize_hoodie/streetwear_oversize_hoodie_techpack.json` (Datos de consumo, BOM y medidas POM en JSON).
+- Verdict: **APTO (Fase 1 MVP Cerrada con Éxito - 193/193 Tests PASS)**.
+- Evidence: Verificación visual y funcional en PDFStitcher. Commit `[STATE] close phase 1.0 (MVP Generador Paramétrico de Patrones IA - 100% Verified)`.
+- Next: Planificación y diseño de Fase 2 (Personalización de medidas cliente, UI Web / visor 3D de patronaje).
