@@ -25,6 +25,7 @@ export * from "./engine/modifier.js";
 export * from "./engine/calibration_box.js";
 export * from "./utils/tiler.js";
 export * from "./engine/exporter.js";
+export * from "./engine/tech_sheet.js";
 
 // Exportación del Subsistema de Proveedores de IA
 export * from "./ai/base_provider.js";
