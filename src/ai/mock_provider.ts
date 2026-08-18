@@ -205,6 +205,48 @@ export const MOCK_PRESETS: Record<string, PatternDna> = {
     notions: ["2x broches tácticos", "cinta reflectante 2m"],
     estimated_fabric_meters: 1.3,
   },
+
+  pirate_vest: {
+    concept_name: "straw_pirate_adventurer_vest",
+    description: "Anime pirate captain sleeveless red waistcoat vest with deep V-neck, 3-button front closure, and pointed hem",
+    base_block: "menswear_torso_fitted",
+    ease: {
+      chest_ease_mm: 50,
+      waist_ease_mm: 40,
+      hip_ease_mm: 35,
+      shoulder_ease_mm: 0,
+    },
+    modifications: {
+      neckline: {
+        type: "v_neck",
+        depth_mm: 130,
+        width_mm: 35,
+      },
+      sleeves: {
+        type: "sleeveless",
+      },
+      hem: {
+        type: "curved_tail",
+        drop_mm: 45,
+        back_drop_mm: 0,
+      },
+    },
+    sizing: {
+      size: "M",
+      chest_circ_mm: 980,
+      target_layers: ["S", "M", "L", "XL", "2XL"],
+    },
+    tech_specs: {
+      notions: ["3x botones negros 20mm", "0.4m entretela termoadhesiva para vistas"],
+      estimated_fabric_meters: 0.85,
+      seam_allowance_mm: 10,
+      hem_allowance_mm: 20,
+      fabric_type: "rustic_red_linen_canvas_260gsm",
+      fabric_width_mm: 1500,
+    },
+    notions: ["3x botones negros 20mm", "0.4m entretela termoadhesiva para vistas"],
+    estimated_fabric_meters: 0.85,
+  },
 };
 
 /**
@@ -221,6 +263,15 @@ export class MockAiProvider implements IAiProvider {
     let selectedPreset: PatternDna;
 
     if (
+      query.includes("luffy") ||
+      query.includes("lufi") ||
+      query.includes("pirata") ||
+      query.includes("straw_pirate") ||
+      query.includes("sombrero de paja") ||
+      query.includes("one piece")
+    ) {
+      selectedPreset = MOCK_PRESETS.pirate_vest;
+    } else if (
       query.includes("hoodie") ||
       query.includes("sudadera") ||
       query.includes("capucha") ||
