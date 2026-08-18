@@ -926,66 +926,58 @@ export async function exportTiledPdf(
       }
 
       doc.restore();
+    }
 
-      // Etiquetas de pieza (renderizadas si el centro de la pieza cae cerca de este tile)
+    // Restaurar el contexto sin traslación global
+    doc.restore();
+
+    // 3. Etiquetas de pieza (renderizadas en coordenadas locales de la página para evitar auto page breaks en PDFKit)
+    for (const piece of layout.pieces) {
+      const { part, offsetX_mm, offsetY_mm } = piece;
       const cX_mm = offsetX_mm + part.bounds.minX + part.bounds.width / 2;
       const cY_mm = offsetY_mm + part.bounds.minY + part.bounds.height / 2;
+      const labelW_mm = 55;
+      const labelH_mm = 14;
 
-      const isLabelInTile = (
-        cX_mm >= tile.viewBox_mm.minX - 20 &&
-        cX_mm <= tile.viewBox_mm.maxX + 20 &&
-        cY_mm >= tile.viewBox_mm.minY - 20 &&
-        cY_mm <= tile.viewBox_mm.maxY + 20
+      const isLabelFullyInsideTile = (
+        cX_mm - labelW_mm / 2 >= tile.viewBox_mm.minX &&
+        cX_mm + labelW_mm / 2 <= tile.viewBox_mm.maxX &&
+        cY_mm - labelH_mm / 2 >= tile.viewBox_mm.minY &&
+        cY_mm + labelH_mm / 2 <= tile.viewBox_mm.maxY
       );
 
-      if (isLabelInTile) {
-        doc.save();
-        const cX_pt = pieceX_pt + (part.bounds.minX + part.bounds.width / 2) * MM_TO_PT;
-        const cY_pt = pieceY_pt + (part.bounds.minY + part.bounds.height / 2) * MM_TO_PT;
+      if (isLabelFullyInsideTile) {
+        const localX_pt = margin_pt + (cX_mm - tile.viewBox_mm.minX) * MM_TO_PT;
+        const localY_pt = margin_pt + (cY_mm - tile.viewBox_mm.minY) * MM_TO_PT;
         const cutText = part.onFold ? `CORTAR x${part.cutCount} (AL LOMO)` : `CORTAR x${part.cutCount}`;
 
-        // Badge de fondo blanco semitransparente para que la etiqueta sea 100% legible
+        doc.save();
+        // Badge semitransparente
         doc
-          .roundedRect(cX_pt - 75, cY_pt - 14, 150, 30, 3)
-          .fillAndStroke('rgba(255, 255, 255, 0.85)', '#cbd5e1');
+          .roundedRect(localX_pt - 75, localY_pt - 14, 150, 28, 3)
+          .fillAndStroke('rgba(255, 255, 255, 0.90)', '#94a3b8');
 
         doc
-          .fontSize(9.5)
+          .fontSize(9)
           .font('Helvetica-Bold')
           .fillColor('#0f172a')
-          .text(part.label || part.name.toUpperCase(), cX_pt - 70, cY_pt - 10, {
+          .text(part.label || part.name.toUpperCase(), localX_pt - 70, localY_pt - 10, {
             width: 140,
             align: 'center',
+            lineBreak: false,
           });
 
         doc
-          .fontSize(7.5)
+          .fontSize(7)
           .font('Helvetica')
           .fillColor('#334155')
-          .text(`TALLA ${pattern.size} | ${cutText}`, cX_pt - 70, cY_pt + 3, {
+          .text(`TALLA ${pattern.size} | ${cutText}`, localX_pt - 70, localY_pt + 2.5, {
             width: 140,
             align: 'center',
+            lineBreak: false,
           });
         doc.restore();
       }
-    }
-
-    doc.restore();
-
-    // Si la hoja no tiene trazos de piezas, mostrar aviso claro en el centro
-    if (piecesOnThisTile === 0) {
-      doc.save();
-      doc
-        .fontSize(8)
-        .font('Helvetica-Bold')
-        .fillColor('#94a3b8')
-        .text(
-          '─── HOJA DE MARGEN / ESPACIO LIBRE ───',
-          tile.printableArea_pt.x,
-          tile.printableArea_pt.y + tile.printableArea_pt.height / 2 + 28,
-          { width: tile.printableArea_pt.width, align: 'center' }
-        );
-      doc.restore();
     }
   }
 

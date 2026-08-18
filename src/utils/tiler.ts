@@ -222,13 +222,10 @@ export function calculateTileGrid(
       if (config.pieces && config.pieces.length > 0) {
         hasContent = false;
         for (const piece of config.pieces) {
-          const pieceBounds = piece.bounds_mm || piece.part?.bounds;
-          if (!pieceBounds) continue;
-
-          const pMinX = piece.offsetX_mm + pieceBounds.minX;
-          const pMinY = piece.offsetY_mm + pieceBounds.minY;
-          const pMaxX = piece.offsetX_mm + pieceBounds.maxX;
-          const pMaxY = piece.offsetY_mm + pieceBounds.maxY;
+          const pMinX = piece.bounds_mm ? piece.bounds_mm.minX : piece.offsetX_mm + (piece.part?.bounds?.minX ?? 0);
+          const pMinY = piece.bounds_mm ? piece.bounds_mm.minY : piece.offsetY_mm + (piece.part?.bounds?.minY ?? 0);
+          const pMaxX = piece.bounds_mm ? piece.bounds_mm.maxX : piece.offsetX_mm + (piece.part?.bounds?.maxX ?? 0);
+          const pMaxY = piece.bounds_mm ? piece.bounds_mm.maxY : piece.offsetY_mm + (piece.part?.bounds?.maxY ?? 0);
 
           const intersects = !(
             pMaxX < minX_mm ||
