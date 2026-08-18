@@ -9,28 +9,31 @@
 - Backup: local-only
 - Sibling systems outside scope: MyPetCreature 3D/AR WebGL viewer (Fase 2)
 
-## Roles y Jerarquia de Agentes
+## Roles y Jerarquía de Agentes (Modelo: Gemini 3.7 Flash High)
 
 1. **Arquitecto (Lead / Planner / Auditor General)**:
-   - Dueno exclusivo del plano de control (.agents/).
+   - Modelo: **Gemini 3.7 Flash High**
+   - Dueño exclusivo del plano de control (`.agents/`).
    - Planifica hitos, desglosa tareas y gestiona el flujo global del proyecto.
-   - Orquesta la asignacion de tareas a **Ingeniero** y **Obrero**.
-   - Realiza auditorias de fase y emite veredictos finales (APTO, NO APTO, BLOCKED).
-   - Realiza commits de control con prefijo [STATE] ....
+   - Orquesta la asignación de tareas a **Ingeniero** y **Obrero**.
+   - Realiza auditorías de fase y emite veredictos finales (APTO, NO APTO, BLOCKED).
+   - Realiza commits de control con prefijo `[STATE] ...`.
 
-2. **Ingeniero (Subagente de Razonamiento, Geometria y Auditoria Tecnica)**:
-   - Resuelve problemas de alta complejidad logica, formulas matematicas y patronaje computacional en FreeSewing v3.
-   - Disena contratos de datos (Zod schemas, interfaces TypeScript) y arquitecturas de modulos.
-   - Ejecuta mini-auditorias localizadas por tarea y genera Audit Capsules con evidencia verificada.
-   - Especifica directivas tecnicas precisas para la implementacion por parte del Obrero.
+2. **Ingeniero (Subagente de Razonamiento, Geometría y Auditoría Técnica)**:
+   - Modelo: **Gemini 3.7 Flash High** (`Model: inherit`)
+   - Resuelve problemas de alta complejidad lógica, fórmulas matemáticas y patronaje computacional en FreeSewing v3.
+   - Diseña contratos de datos (Zod schemas, interfaces TypeScript) y arquitecturas de módulos.
+   - Ejecuta mini-auditorías localizadas por tarea y genera Audit Capsules con evidencia verificada.
+   - Especifica directivas técnicas precisas para la implementación por parte del Obrero.
 
-3. **Obrero (Subagente de Codigo y Ejecucion)**:
-   - Implementa codigo fuente TypeScript/Node.js de manera directa, limpia y eficiente siguiendo las especificaciones.
-   - Realiza tareas de refactorizacion y adicion de archivos.
-   - Ejecuta pruebas locales y comandos de compilacion (npm run build, npm test).
+3. **Obrero (Subagente de Código y Ejecución)**:
+   - Modelo: **Gemini 3.7 Flash High** (`Model: inherit`)
+   - Implementa código fuente TypeScript/Node.js de manera directa, limpia y eficiente siguiendo las especificaciones.
+   - Realiza tareas de refactorización y adición de archivos.
+   - Ejecuta pruebas locales y comandos de compilación (`npm run build`, `npm test`).
 
-4. **Automatizacion Mecanica (Scripts)**:
-   - Todas las tareas repetitivas o mecanicas (generacion de esqueletos, ejecucion de matrices de pruebas, formateo, empaquetado) se ejecutan mediante scripts versionados en scripts/ (PowerShell / Node.js).
+4. **Automatización Mecánica (Scripts)**:
+   - Todas las tareas repetitivas o mecánicas (generación de esqueletos, ejecución de matrices de pruebas, formateo, empaquetado) se ejecutan mediante scripts versionados en `scripts/` (PowerShell / Node.js).
 
 ## Verification surface
 
