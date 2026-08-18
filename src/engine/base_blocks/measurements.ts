@@ -19,6 +19,13 @@ export interface BodyMeasurements {
   bicep_circumference_mm: number;
   wrist_circumference_mm: number;
   head_circumference_mm: number;
+  // Medidas antropométricas de tren inferior (Sloper de pantalón / shorts)
+  waist_to_floor_mm: number;
+  crotch_depth_mm: number;
+  inseam_mm: number;
+  thigh_circumference_mm: number;
+  knee_circumference_mm: number;
+  ankle_circumference_mm: number;
 }
 
 export const STANDARD_SIZES: StandardSize[] = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
@@ -40,6 +47,12 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     bicep_circumference_mm: 290,
     wrist_circumference_mm: 165,
     head_circumference_mm: 540,
+    waist_to_floor_mm: 1000,
+    crotch_depth_mm: 260,
+    inseam_mm: 740,
+    thigh_circumference_mm: 530,
+    knee_circumference_mm: 360,
+    ankle_circumference_mm: 220,
   },
   S: {
     chest_circumference_mm: 920,
@@ -54,6 +67,12 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     bicep_circumference_mm: 310,
     wrist_circumference_mm: 175,
     head_circumference_mm: 555,
+    waist_to_floor_mm: 1020,
+    crotch_depth_mm: 270,
+    inseam_mm: 750,
+    thigh_circumference_mm: 560,
+    knee_circumference_mm: 375,
+    ankle_circumference_mm: 230,
   },
   M: {
     chest_circumference_mm: 1000,
@@ -68,6 +87,12 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     bicep_circumference_mm: 335,
     wrist_circumference_mm: 185,
     head_circumference_mm: 570,
+    waist_to_floor_mm: 1045,
+    crotch_depth_mm: 280,
+    inseam_mm: 765,
+    thigh_circumference_mm: 600,
+    knee_circumference_mm: 395,
+    ankle_circumference_mm: 240,
   },
   L: {
     chest_circumference_mm: 1080,
@@ -82,6 +107,12 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     bicep_circumference_mm: 360,
     wrist_circumference_mm: 195,
     head_circumference_mm: 585,
+    waist_to_floor_mm: 1065,
+    crotch_depth_mm: 290,
+    inseam_mm: 775,
+    thigh_circumference_mm: 640,
+    knee_circumference_mm: 415,
+    ankle_circumference_mm: 250,
   },
   XL: {
     chest_circumference_mm: 1160,
@@ -96,6 +127,12 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     bicep_circumference_mm: 385,
     wrist_circumference_mm: 205,
     head_circumference_mm: 600,
+    waist_to_floor_mm: 1085,
+    crotch_depth_mm: 300,
+    inseam_mm: 785,
+    thigh_circumference_mm: 680,
+    knee_circumference_mm: 435,
+    ankle_circumference_mm: 260,
   },
   '2XL': {
     chest_circumference_mm: 1240,
@@ -110,6 +147,12 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     bicep_circumference_mm: 410,
     wrist_circumference_mm: 215,
     head_circumference_mm: 615,
+    waist_to_floor_mm: 1100,
+    crotch_depth_mm: 310,
+    inseam_mm: 790,
+    thigh_circumference_mm: 720,
+    knee_circumference_mm: 455,
+    ankle_circumference_mm: 270,
   },
   '3XL': {
     chest_circumference_mm: 1320,
@@ -124,6 +167,12 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     bicep_circumference_mm: 435,
     wrist_circumference_mm: 225,
     head_circumference_mm: 630,
+    waist_to_floor_mm: 1115,
+    crotch_depth_mm: 320,
+    inseam_mm: 795,
+    thigh_circumference_mm: 760,
+    knee_circumference_mm: 475,
+    ankle_circumference_mm: 280,
   },
 };
 

@@ -16,12 +16,20 @@ import { TorsoBlockOptions, TorsoBlockResult, generateTorsoBlock } from './torso
 import { SleeveBlockOptions, SleeveBlockResult, generateSleeveBlock } from './sleeve.js';
 import { HoodBlockOptions, HoodBlockResult, generateHoodBlock } from './hood.js';
 import { PocketBlockOptions, PocketBlockResult, generatePocketBlock } from './pocket.js';
+import {
+  TrouserSloperOptions,
+  TrouserBlockResult,
+  TrouserLengthType,
+  generateTrouserBlock,
+  getTrouserSloper,
+} from './trousers.js';
 
 export * from './measurements.js';
 export * from './torso.js';
 export * from './sleeve.js';
 export * from './hood.js';
 export * from './pocket.js';
+export * from './trousers.js';
 
 export interface BaseBlockResult {
   blockType: string;
@@ -35,6 +43,7 @@ export interface GenerateBlockOptions {
   chest_ease_mm?: number;
   shoulder_ease_mm?: number;
   waist_ease_mm?: number;
+  hip_ease_mm?: number;
   length_delta_mm?: number;
   neckline_depth_delta_mm?: number;
   neckline_width_delta_mm?: number;
@@ -47,6 +56,15 @@ export interface GenerateBlockOptions {
   pocket_type?: 'kangaroo' | 'patch';
   pocket_width_mm?: number;
   pocket_height_mm?: number;
+  // Opciones de Pantalón / Shorts
+  length_type?: TrouserLengthType;
+  crotch_ease_mm?: number;
+  thigh_ease_mm?: number;
+  knee_ease_mm?: number;
+  ankle_ease_mm?: number;
+  back_rise_mm?: number;
+  seam_allowance_mm?: number;
+  hem_allowance_mm?: number;
   measurements?: BodyMeasurements;
 }
 
@@ -129,7 +147,46 @@ export function generateBaseBlock(
     });
     parts.pocket = pocketRes.pocket;
   }
-  // 4. Bloques de Torso / Slopers completos
+  // 4. Bloques de Pantalón / Shorts / Bermuda
+  else if (
+    normalizedType === 'pants' ||
+    normalizedType === 'pants_sloper' ||
+    normalizedType === 'trousers' ||
+    normalizedType === 'trouser' ||
+    normalizedType === 'trouser_sloper' ||
+    normalizedType === 'trousers_sloper' ||
+    normalizedType === 'shorts' ||
+    normalizedType === 'shorts_sloper' ||
+    normalizedType === 'bermuda' ||
+    normalizedType === 'bermuda_sloper' ||
+    normalizedType === 'cropped_pants'
+  ) {
+    const defaultLengthType: TrouserLengthType =
+      options.length_type ??
+      (normalizedType.includes('short') || normalizedType.includes('bermuda')
+        ? 'shorts'
+        : normalizedType.includes('crop')
+          ? 'cropped'
+          : 'full');
+
+    const trouserRes = generateTrouserBlock(size, {
+      length_type: defaultLengthType,
+      waist_ease_mm: options.waist_ease_mm,
+      hip_ease_mm: options.hip_ease_mm,
+      crotch_ease_mm: options.crotch_ease_mm,
+      thigh_ease_mm: options.thigh_ease_mm,
+      knee_ease_mm: options.knee_ease_mm,
+      ankle_ease_mm: options.ankle_ease_mm,
+      length_delta_mm: options.length_delta_mm,
+      back_rise_mm: options.back_rise_mm,
+      seam_allowance_mm: options.seam_allowance_mm,
+      hem_allowance_mm: options.hem_allowance_mm,
+      measurements,
+    });
+    parts.front_leg = trouserRes.front_leg;
+    parts.back_leg = trouserRes.back_leg;
+  }
+  // 5. Bloques de Torso / Slopers completos
   else {
     const torsoRes = generateTorsoBlock(size, {
       chest_ease_mm: options.chest_ease_mm ?? defaultChestEase,
