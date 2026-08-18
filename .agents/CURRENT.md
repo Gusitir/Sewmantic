@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-18T00:50:00-05:00
-source_commit: [STATE] close phase 1.0 (MVP Generador Paramétrico de Patrones IA - 100% Verified)
+updated_at: 2026-08-18T02:10:00-05:00
+source_commit: [STATE] start phase 2.0 (PLAN_v0.2-features.md)
 assurance: Lean
-active_plan: PLAN_v0.1-mvp.md
-active_task: none
+active_plan: PLAN_v0.2-features.md
+active_task: T-09
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,8 +18,7 @@ backup: local-only
 
 ## Next action
 
-1. **FASE 1 MVP COMPLETADA Y ENTREGADA:** Todas las tareas de código, motores geométricos, proveedores IA, tiling multipágina, ficha técnica y exportadores (A4, Letter, A0, SVG, PDF, MD, JSON) están al 100% implementados, probados y validados digitalmente en PDFStitcher.
-2. Proceder a la planificación de la Fase 2 (Personalización antropométrica interactiva, graduación por medidas de cliente, UI Web / visor 3D).
+1. **FASE 2 ACTIVA - TAREA [T-09]:** El Ingeniero implementará el Sloper Base Paramétrico de Pantalón / Shorts (`src/engine/base_blocks/trousers.ts`, `src/engine/base_blocks/index.ts`, `tests/trousers.test.ts`) con curvas de tiro anatómicas, aplomo y entrepierna.
 
 ## Blockers
 

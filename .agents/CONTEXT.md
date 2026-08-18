@@ -131,3 +131,13 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Verdict: **APTO (Fase 1 MVP Cerrada con Éxito - 193/193 Tests PASS)**.
 - Evidence: Verificación visual y funcional en PDFStitcher. Commit `[STATE] close phase 1.0 (MVP Generador Paramétrico de Patrones IA - 100% Verified)`.
 - Next: Planificación y diseño de Fase 2 (Personalización de medidas cliente, UI Web / visor 3D de patronaje).
+
+## 2026-08-18T02:10:00-05:00 - PHASE 2 KICKOFF: EXPANDED SLOPERS, CUSTOM SIZING & ETSY BUNDLER (Arquitecto)
+
+- Decision and reason: Activación formal del plan de trabajo `PLAN_v0.2-features.md` tras recibir aprobación (OK) del usuario.
+- Scope:
+  - T-09: Sloper Base de Pantalón / Shorts Paramétrico (Delantero y Espalda).
+  - T-10: Integración de Pantalones/Bermudas en Modifier Engine y ADN.
+  - T-11: Motor de Personalización Antropométrica por Medidas Exactas.
+  - T-12: Empaquetador Comercial Automatizado para Etsy (ZIP Bundler & Assets).
+- Active Task: `[T-09] Sloper Base de Pantalón / Shorts Paramétrico`. Asignado al subagente Ingeniero.
