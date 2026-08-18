@@ -298,36 +298,150 @@ export interface ContinuousPdfOptions {
  * @param pattern Patrón de moldería modificado
  * @param options Opciones de formato y configuración
  */
+/**
+ * Dibuja reglas métricas calibradas continuas (en cm/mm) en los bordes superior e izquierdo del plotter
+ */
+function drawPlotterMetricRulers(
+  doc: PDFKit.PDFDocument,
+  pageW_pt: number,
+  pageH_pt: number,
+  margin_pt: number
+): void {
+  doc.save();
+
+  // Marco exterior de plotter de alta resistencia
+  doc.lineWidth(1.2);
+  doc.strokeColor('#1e293b');
+  doc.rect(margin_pt / 2, margin_pt / 2, pageW_pt - margin_pt, pageH_pt - margin_pt).stroke();
+
+  // 1. REGLA MÉTRICA SUPERIOR (Eje X)
+  const rulerY = margin_pt / 2 + 10;
+  const rulerEndX = pageW_pt - margin_pt / 2 - 10;
+
+  doc.lineWidth(0.6);
+  doc.strokeColor('#475569');
+  doc.moveTo(margin_pt, rulerY).lineTo(rulerEndX, rulerY).stroke();
+
+  const totalMmX = (rulerEndX - margin_pt) / MM_TO_PT;
+  for (let mm = 0; mm <= totalMmX; mm += 10) {
+    const curX = margin_pt + mm * MM_TO_PT;
+    const is100 = mm % 100 === 0;
+    const is50 = mm % 50 === 0;
+    const tickLen = is100 ? 10 : is50 ? 6 : 3;
+
+    doc.moveTo(curX, rulerY).lineTo(curX, rulerY + tickLen).stroke();
+
+    if (is100 && mm > 0) {
+      doc
+        .fontSize(6)
+        .font('Helvetica-Bold')
+        .fillColor('#1e293b')
+        .text(`${mm / 10} cm`, curX - 15, rulerY + 12, { width: 30, align: 'center' });
+    }
+  }
+
+  // 2. REGLA MÉTRICA IZQUIERDA (Eje Y)
+  const rulerX = margin_pt / 2 + 10;
+  const rulerEndY = pageH_pt - margin_pt / 2 - 10;
+
+  doc.moveTo(rulerX, margin_pt).lineTo(rulerX, rulerEndY).stroke();
+
+  const totalMmY = (rulerEndY - margin_pt) / MM_TO_PT;
+  for (let mm = 0; mm <= totalMmY; mm += 10) {
+    const curY = margin_pt + mm * MM_TO_PT;
+    const is100 = mm % 100 === 0;
+    const is50 = mm % 50 === 0;
+    const tickLen = is100 ? 10 : is50 ? 6 : 3;
+
+    doc.moveTo(rulerX, curY).lineTo(rulerX + tickLen, curY).stroke();
+
+    if (is100 && mm > 0) {
+      doc.save();
+      doc.translate(rulerX + 13, curY);
+      doc.rotate(-90);
+      doc
+        .fontSize(6)
+        .font('Helvetica-Bold')
+        .fillColor('#1e293b')
+        .text(`${mm / 10} cm`, -15, -3, { width: 30, align: 'center' });
+      doc.restore();
+    }
+  }
+
+  // Dianas ópticas en las 4 esquinas del plotter
+  const cornerArm = 20;
+  const corners = [
+    { cx: margin_pt / 2, cy: margin_pt / 2 },
+    { cx: pageW_pt - margin_pt / 2, cy: margin_pt / 2 },
+    { cx: margin_pt / 2, cy: pageH_pt - margin_pt / 2 },
+    { cx: pageW_pt - margin_pt / 2, cy: pageH_pt - margin_pt / 2 },
+  ];
+
+  for (const c of corners) {
+    doc.lineWidth(1.0);
+    doc.strokeColor('#dc2626');
+    doc.moveTo(c.cx - cornerArm, c.cy).lineTo(c.cx + cornerArm, c.cy).stroke();
+    doc.moveTo(c.cx, c.cy - cornerArm).lineTo(c.cx, c.cy + cornerArm).stroke();
+    doc.circle(c.cx, c.cy, 6).stroke();
+    doc.circle(c.cx, c.cy, 2).fill('#dc2626');
+  }
+
+  doc.restore();
+}
+
+/**
+ * Exporta el patrón en formato PDF Continuo (A0, Roll 900mm+ o Auto-ajustado)
+ * Diseñado para impresión en copistería técnica, plotter textil industrial o corte láser.
+ *
+ * @param pattern Resultado de patrón modificado
+ * @param options Opciones de exportación PDF continuo
+ */
 export async function exportContinuousPdf(
   pattern: ModifiedPatternResult,
   options: ContinuousPdfOptions = {}
 ): Promise<Buffer> {
   const {
-    paperFormat = 'custom',
-    margin_mm = 20,
+    paperFormat = 'A0',
+    margin_mm = 25,
     includeCalibrationBox = true,
     includeFichaTecnica = true,
   } = options;
 
   const margin_pt = margin_mm * MM_TO_PT;
-  const layout = layoutPatternParts(pattern.parts, 30);
+  const layout = layoutPatternParts(pattern.parts, 35);
 
-  // Espacio para calibración y ficha técnica
-  const headerSpace_pt = includeFichaTecnica || includeCalibrationBox ? CALIBRATION_BOX_PT + 40 : 0;
+  // Espacio para la cartela técnica y el cuadro de calibración en la parte superior
+  const headerSpace_pt = includeFichaTecnica || includeCalibrationBox ? CALIBRATION_BOX_PT + 50 : 0;
+
+  // Cálculo dinámico del tamaño de página (evita cualquier recorte en A0 u otros anchos de bobina)
+  const reqW_pt = layout.totalBounds_pt.width + 2 * margin_pt + 40; // +40 pt para la regla izquierda
+  const reqH_pt = layout.totalBounds_pt.height + headerSpace_pt + 2 * margin_pt + 40;
 
   let pageWidth_pt: number;
   let pageHeight_pt: number;
 
   if (paperFormat === 'A0') {
-    pageWidth_pt = PAGE_FORMATS.A0.width_pt;
-    pageHeight_pt = PAGE_FORMATS.A0.height_pt;
+    // Si cabe en A0 Portrait (841 x 1189 mm)
+    if (reqW_pt <= PAGE_FORMATS.A0.width_pt && reqH_pt <= PAGE_FORMATS.A0.height_pt) {
+      pageWidth_pt = PAGE_FORMATS.A0.width_pt;
+      pageHeight_pt = PAGE_FORMATS.A0.height_pt;
+    }
+    // Si cabe en A0 Landscape (1189 x 841 mm)
+    else if (reqW_pt <= PAGE_FORMATS.A0.height_pt && reqH_pt <= PAGE_FORMATS.A0.width_pt) {
+      pageWidth_pt = PAGE_FORMATS.A0.height_pt;
+      pageHeight_pt = PAGE_FORMATS.A0.width_pt;
+    }
+    // Si es más grande que A0, adaptar automáticamente el rollo manteniendo escala 1:1
+    else {
+      pageWidth_pt = Math.max(reqW_pt, PAGE_FORMATS.A0.width_pt);
+      pageHeight_pt = Math.max(reqH_pt, PAGE_FORMATS.A0.height_pt);
+    }
   } else if (paperFormat === 'roll900') {
-    pageWidth_pt = 900 * MM_TO_PT; // 2551.18 pt
-    pageHeight_pt = Math.max(layout.totalBounds_pt.height + headerSpace_pt + 2 * margin_pt, 1000);
+    pageWidth_pt = Math.max(900 * MM_TO_PT, reqW_pt);
+    pageHeight_pt = Math.max(1000, reqH_pt);
   } else {
-    // Custom auto-ajustado
-    pageWidth_pt = Math.max(layout.totalBounds_pt.width + 2 * margin_pt, CALIBRATION_BOX_PT + 350);
-    pageHeight_pt = layout.totalBounds_pt.height + headerSpace_pt + 2 * margin_pt;
+    pageWidth_pt = Math.max(reqW_pt, CALIBRATION_BOX_PT + 400);
+    pageHeight_pt = reqH_pt;
   }
 
   const doc = new PDFDocument({
@@ -338,9 +452,15 @@ export async function exportContinuousPdf(
 
   const bufferPromise = pdfDocToBuffer(doc);
 
-  // 1. Ficha Técnica y Cuadro de Calibración
+  // 1. DIBUJAR REGLAS MÉTRICAS GRADUADAS Y MARCO PERIMETRAL DE PLOTTER
+  drawPlotterMetricRulers(doc, pageWidth_pt, pageHeight_pt, margin_pt);
+
+  const contentStartX = margin_pt + 25; // espacio para la regla izquierda
+  const contentStartY = margin_pt + 25; // espacio para la regla superior
+
+  // 2. CARTELA TÉCNICA INDUSTRIAL Y CUADRO DE CALIBRACIÓN 10x10 cm
   if (includeCalibrationBox) {
-    drawCalibrationBoxPdf(doc, margin_pt, margin_pt, {
+    drawCalibrationBoxPdf(doc, contentStartX, contentStartY, {
       showWarning: true,
       showSubdivisions: true,
       showCenterCross: true,
@@ -349,69 +469,82 @@ export async function exportContinuousPdf(
   }
 
   if (includeFichaTecnica) {
-    const infoX = includeCalibrationBox ? margin_pt + CALIBRATION_BOX_PT + 20 : margin_pt;
-    const infoY = margin_pt;
-    const infoW = pageWidth_pt - infoX - margin_pt;
+    const cardX = includeCalibrationBox ? contentStartX + CALIBRATION_BOX_PT + 16 : contentStartX;
+    const cardY = contentStartY;
+    const cardW = Math.min(pageWidth_pt - cardX - margin_pt - 10, 650);
+    const cardH = CALIBRATION_BOX_PT;
 
     doc.save();
+    // Tarjeta estilizada con fondo Slate / Navy
     doc
-      .fontSize(16)
+      .roundedRect(cardX, cardY, cardW, cardH, 4)
+      .fillAndStroke('#f8fafc', '#cbd5e1');
+
+    // Barra de título
+    doc
+      .roundedRect(cardX, cardY, cardW, 26, 4)
+      .fillAndStroke('#1e3a8a', '#1e3a8a');
+
+    doc
+      .fontSize(12)
       .font('Helvetica-Bold')
-      .fillColor('#111827')
-      .text(pattern.concept_name, infoX, infoY);
+      .fillColor('#ffffff')
+      .text(
+        `PLANO DE PATRONAJE INDUSTRIAL — ${pattern.concept_name.toUpperCase()}`,
+        cardX + 12,
+        cardY + 7,
+        { width: cardW - 24 }
+      );
 
-    doc
-      .fontSize(10)
-      .font('Helvetica')
-      .fillColor('#4b5563')
-      .text(`Bloque Base: ${pattern.base_block} | Talla: ${pattern.size}`, infoX, infoY + 24);
+    let lY = cardY + 34;
+    doc.fontSize(8.5).font('Helvetica-Bold').fillColor('#1e293b');
+    doc.text(`Talla Principal: ${pattern.size}   |   Bloque Anatómico: ${pattern.base_block}`, cardX + 12, lY);
+    lY += 13;
 
-    doc.fontSize(8.5).fillColor('#374151');
-    let lineY = infoY + 44;
-    doc.text(`• Margen de costura: ${pattern.seamAllowance_mm} mm`, infoX, lineY);
-    lineY += 12;
-    doc.text(`• Dobladillo: ${pattern.hemAllowance_mm} mm`, infoX, lineY);
-    lineY += 12;
-
-    const partsList = Object.values(pattern.parts)
-      .map((p) => `${p.label || p.name} (x${p.cutCount}${p.onFold ? ' al lomo' : ''})`)
-      .join(', ');
-    doc.text(`• Desglose de piezas: ${partsList}`, infoX, lineY, { width: infoW });
-    lineY += 22;
+    doc.font('Helvetica').fontSize(8).fillColor('#334155');
+    doc.text(`• Margen de costura: ${pattern.seamAllowance_mm} mm   • Dobladillo: ${pattern.hemAllowance_mm} mm`, cardX + 12, lY);
+    lY += 12;
 
     if (pattern.tech_specs?.estimated_fabric_meters) {
-      doc.text(`• Consumo estimado de tela: ${pattern.tech_specs.estimated_fabric_meters} m`, infoX, lineY);
-      lineY += 12;
+      doc.text(`• Consumo de tela estimado: ${pattern.tech_specs.estimated_fabric_meters} m (con 15% merma)`, cardX + 12, lY);
+      lY += 12;
     }
 
+    const partsStr = Object.values(pattern.parts)
+      .map((p) => `${p.label || p.name} (x${p.cutCount}${p.onFold ? ' al lomo' : ''})`)
+      .join('  •  ');
+    doc.text(`• Piezas incluidas: ${partsStr}`, cardX + 12, lY, { width: cardW - 24 });
+    lY += 18;
+
     doc
-      .fontSize(8.5)
+      .fontSize(8)
       .font('Helvetica-Bold')
       .fillColor('#dc2626')
-      .text('ESCALA 1:1 (100%) — IMPRIMIR SIN AJUSTES DE PÁGINA (DO NOT SCALE)', infoX, lineY + 6);
+      .text('ESCALA 1:1 (100%) — IMPRESIÓN CONTINUA EN PLOTTER — NO AJUSTAR A PÁGINA', cardX + 12, lY);
+
     doc.restore();
   }
 
-  // 2. Renderizado de las Piezas Vectoriales a Escala 100%
-  const startY_pt = margin_pt + headerSpace_pt;
+  // 3. RENDERIZADO DE TODAS LAS PIEZAS VECTORIALES A ESCALA 100%
+  const startY_pt = contentStartY + headerSpace_pt;
 
   for (const piece of layout.pieces) {
     const { part, offsetX_mm, offsetY_mm } = piece;
-    const pieceX_pt = margin_pt + offsetX_mm * MM_TO_PT;
+    const pieceX_pt = contentStartX + offsetX_mm * MM_TO_PT;
     const pieceY_pt = startY_pt + offsetY_mm * MM_TO_PT;
 
     doc.save();
     doc.translate(pieceX_pt, pieceY_pt);
     doc.scale(MM_TO_PT, MM_TO_PT);
 
-    // Contorno de corte
-    doc.lineWidth(1.2 / MM_TO_PT);
-    doc.strokeColor('#111827');
+    // Contorno de corte (trazo negro sólido de 1.4 pt)
+    doc.lineWidth(1.4 / MM_TO_PT);
+    doc.strokeColor('#0f172a');
     doc.path(part.pathD).stroke();
 
     // Hilo de tela (Grainline)
     if (part.grainline) {
-      doc.lineWidth(0.8 / MM_TO_PT);
+      doc.lineWidth(1.0 / MM_TO_PT);
       doc.strokeColor('#2563eb');
       doc
         .moveTo(part.grainline.start.x, part.grainline.start.y)
@@ -421,42 +554,46 @@ export async function exportContinuousPdf(
 
     // Piquetes (Notches)
     if (part.notches && part.notches.length > 0) {
-      doc.lineWidth(0.8 / MM_TO_PT);
+      doc.lineWidth(1.0 / MM_TO_PT);
       doc.strokeColor('#dc2626');
       for (const notch of part.notches) {
         doc
-          .moveTo(notch.point.x - 2, notch.point.y - 2)
-          .lineTo(notch.point.x + 2, notch.point.y + 2)
+          .moveTo(notch.point.x - 3, notch.point.y - 3)
+          .lineTo(notch.point.x + 3, notch.point.y + 3)
           .stroke();
         doc
-          .moveTo(notch.point.x - 2, notch.point.y + 2)
-          .lineTo(notch.point.x + 2, notch.point.y - 2)
+          .moveTo(notch.point.x - 3, notch.point.y + 3)
+          .lineTo(notch.point.x + 3, notch.point.y - 3)
           .stroke();
       }
     }
 
     doc.restore();
 
-    // Etiquetas de pieza (renderizadas en espacio pt para nitidez de texto)
+    // Etiquetas de pieza sobre badge semitransparente
     doc.save();
     const cX_pt = pieceX_pt + (part.bounds.minX + part.bounds.width / 2) * MM_TO_PT;
     const cY_pt = pieceY_pt + (part.bounds.minY + part.bounds.height / 2) * MM_TO_PT;
     const cutText = part.onFold ? `CORTAR x${part.cutCount} (AL LOMO)` : `CORTAR x${part.cutCount}`;
 
     doc
-      .fontSize(10)
+      .roundedRect(cX_pt - 85, cY_pt - 18, 170, 36, 4)
+      .fillAndStroke('rgba(255, 255, 255, 0.90)', '#cbd5e1');
+
+    doc
+      .fontSize(11)
       .font('Helvetica-Bold')
-      .fillColor('#111827')
+      .fillColor('#0f172a')
       .text(part.label || part.name.toUpperCase(), cX_pt - 80, cY_pt - 14, {
         width: 160,
         align: 'center',
       });
 
     doc
-      .fontSize(8)
+      .fontSize(8.5)
       .font('Helvetica')
-      .fillColor('#4b5563')
-      .text(`TALLA: ${pattern.size} | ${cutText}`, cX_pt - 80, cY_pt + 2, {
+      .fillColor('#334155')
+      .text(`TALLA: ${pattern.size}  |  ${cutText}`, cX_pt - 80, cY_pt + 2, {
         width: 160,
         align: 'center',
       });
