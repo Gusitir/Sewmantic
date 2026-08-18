@@ -103,3 +103,15 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
   5. Banner superior e instrucción inferior explícita de corte y solape.
   6. Filtrado de intersección de piezas y etiquetas sobreimpresas con badge blanco para eliminar texto flotante en hojas adyacentes.
 - Evidence: Commit `[T-06] upgrade tiling registration marks with edge alignment diamonds, high-contrast frames, and central orientation compass` (hash: `41e9ae6`), 193 tests PASS, `gen_sample.ps1` regenerado.
+
+## 2026-08-18T00:30:00-05:00 - FIX PDF TILED LETTER & A4 AUTO PAGE BREAKS (Arquitecto / Ingeniero)
+
+- Changed: Corrección del cálculo de intersección de piezas en `calculateTileGrid` y resolución del salto automático de página (`PDFDocument.continueOnNewPage`) en PDFKit.
+- Root Cause:
+  1. En `calculateTileGrid`, se sumaba incorrectamente `piece.offsetX_mm` a `piece.bounds_mm.minX` (que ya estaba en coordenadas globales), desplazando erróneamente piezas como capucha y bolsillo fuera de la grilla y causando omisiones erróneas.
+  2. En `exportTiledPdf`, al dibujar el texto de etiqueta de pieza con coordenadas $Y > 800\text{ pt}$ dentro de `doc.translate()`, el `LineWrapper` interno de PDFKit detectaba desbordamiento vertical e insertaba páginas en blanco intercaladas.
+- Solution:
+  1. Se corrigió el cálculo de límites globales en `calculateTileGrid` (`pMinX = piece.bounds_mm.minX`).
+  2. Se trasladó el dibujo de etiquetas a coordenadas locales de página no transformadas con `lineBreak: false`, eliminando el 100% de los saltos de página espurios.
+  3. Resultados exactos verificados: A4 = 24 páginas exactas (1 Portada + 23 Hojas con moldería activa), Letter = 27 páginas exactas (1 Portada + 26 Hojas con moldería activa), 0 páginas en blanco intercaladas.
+- Evidence: Commits `[T-06]` (hashes `f5feecf`, `ef5a55c`), 193 tests PASS, `gen_sample.ps1` regenerado.
