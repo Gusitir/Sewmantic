@@ -1,19 +1,24 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
-`yaml
-updated_at: 2026-08-17T23:20:00-05:00
-source_commit: [STATE] init agents workflow
+```yaml
+updated_at: 2026-08-17T23:30:00-05:00
+source_commit: [STATE] configure multiagent orchestration and refined plan
 assurance: Lean
 active_plan: PLAN_v0.1-mvp.md
 active_task: T-01
 last_verdict: none
 backup: local-only
-`
+```
+
+## Jerarquía Multi-Agente Activa
+
+- **Arquitecto (Lead)**: Planificación, control plane (`.agents/`), auditorías de fase, commits `[STATE]`.
+- **Ingeniero**: Razonamiento, FreeSewing, Zod/TS, mini-auditorías de tarea, Audit Capsules.
+- **Obrero**: Codificación directa, refactorizaciones, ejecución de scripts de automatización.
 
 ## Next action
 
-1. Ejecutar T-01: Inicializar el entorno Node.js / TypeScript (package.json, 	sconfig.json, .gitignore, 
-ules_pattern_making.md y estructura de carpetas src/).
+1. Despachar **T-01** al Obrero / Scripts con supervisión de Ingeniero (Setup de proyecto TypeScript, scripts mecánicos en `scripts/`, `rules_pattern_making.md` y dependencias base).
 
 ## Blockers
 
@@ -21,9 +26,9 @@ ules_pattern_making.md y estructura de carpetas src/).
 
 ## Current facts
 
-- Blueprint técnico y estratégico definido en project_blueprint.md.
-- Flujo de trabajo configurado con gents-workflow v2 en modo LEAN.
-- Repositorio Git local inicializado.
+- Arquitectura completa y detallada en `APPCORE.md`.
+- Plan de trabajo desglosado en 8 tareas granulares (`T-01` a `T-08`) en `PLAN_v0.1-mvp.md`.
+- Subagentes `ingeniero` y `obrero` definidos y listos para orquestación.
 
 ## Open findings
 
@@ -31,6 +36,6 @@ ules_pattern_making.md y estructura de carpetas src/).
 
 ## Human actions
 
-- [ ] Definir credenciales de IA en .env (si se usa API directa) o configurar OpenCode CLI al integrar el proveedor de IA.
+- [ ] Definir proveedor de IA en `.env` cuando se inicie la tarea `T-03`.
 
 Keep this concise. History belongs in CONTEXT and Git.

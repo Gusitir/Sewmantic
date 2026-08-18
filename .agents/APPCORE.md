@@ -1,55 +1,95 @@
 # APPCORE - Generador Paramétrico de Patrones IA
 
-Verified: 2026-08-17 at init
+Verified: 2026-08-17 at multiagent-init
 
 ## Purpose and users
 
-- Problem: Generar patrones textiles paramétricos listos para corte y confección a partir de conceptos o imágenes de referencia, evitando alucinaciones vectoriales de la IA mediante un motor geométrico determinista (FreeSewing).
-- Users:
-  - Diseñadores y costureros: Prototipado y confección de siluetas de autor / streetwear para MyPetCreature con ajuste a medidas exactas.
-  - Clientes digitales en Etsy: Venta de patrones digitales en PDF descargable con costo marginal de entrega  USD y márgenes > 90%.
-- Non-goals:
-  - Generación directa de SVG arbitrarios no supervisados por IA sin pasar por bloques base normalizados.
-  - Plataforma web multi-usuario en Fase 1 (se enfoca en CLI MVP).
+- **Problema:** La generación visual directa de patrones por IA (alucinación vectorial pura) produce prendas físicamente imposibles de confeccionar. Este sistema resuelve el problema desacoplando la creatividad de la IA de la precisión geométrica mediante un motor de patronaje determinista (FreeSewing).
+- **Usuarios Objetivo:**
+  - *Diseñador / Prototipador:* Generación de prendas de autor y siluetas streetwear de alta costura conceptual para el universo **MyPetCreature** adaptadas a medidas biométricas exactas.
+  - *Comercialización Digital (Etsy):* Exportación automatizada de paquetes comerciales de patrones en PDF (A4/Letter con capas por talla y A0 Plotter) con costo marginal de distribución de $0 USD y márgenes > 90%.
+- **Non-goals:**
+  - Exportación de curvas vectoriales directas no parametrizadas ni ancladas a slopers base.
+  - Infraestructura SaaS multi-usuario o servidores pesados en Fase 1 (foco en CLI de alto rendimiento).
 
-## Stable constraints and invariants
+## Invariantes y Reglas Técnicas Inmutables
 
-- La IA nunca emite curvas vectoriales arbitrarias; solo emite un JSON paramétrico de ADN con modificaciones sobre bloques base (slopers).
-- Separación de holguras: holgura de confort (+2 a +4 cm) vs holgura de diseño/oversize (+12 a +25 cm).
-- Calibración de impresión obligatoria en Página 1: Recuadro de 10 cm x 10 cm (4 in x 4 in) a escala 100%.
-- Capas de PDF por talla (XS a 3XL) para permitir impresión selectiva.
-- Marcas técnicas automatizadas: Hilo de tela (grainline) en 100% de piezas, piquetes de coincidencia (notches) y margen de costura parametrizable (10mm estándar, 20-30mm en dobladillos).
-- Blindaje legal: Uso exclusivo de nombres descriptivos sin marcas comerciales protegidas en títulos/fichas.
+1. **Determinismo Geométrico:** La IA jamás genera coordenadas SVG arbitrarias. La IA únicamente produce un **JSON Paramétrico de ADN** que parametriza bloques base (slopers) pre-validados.
+2. **Separación de Holguras (*Ease Allocation*):**
+   - *Holgura de confort:* +2 a +4 cm mínimos sobre el contorno anatómico para permitir movilidad y respiración.
+   - *Holgura de diseño (oversize/streetwear):* +12 a +25 cm adicionales según la silueta conceptual.
+3. **Calibración Obligatoria de Impresión:** La Página 1 de todo PDF paginado incluye obligatoriamente un recuadro de calibración de **10 cm x 10 cm (4 in x 4 in)** a escala 100% con advertencia visual de no aplicar escala ("Do not scale / Print at 100%").
+4. **Marcado Técnico Paramétrico:**
+   - Línea de hilo de tela (*grainline*) en el 100% de las piezas de corte.
+   - Piquetes de coincidencia (*notches*) calculados geométricamente por longitud de arco en uniones críticas (sisa-manga, costados, tiros).
+   - Márgenes de costura (*seam allowances*) configurables (10 mm estándar, 25-30 mm en dobladillos).
+5. **Estratificación por Capas (*PDF Layers*):** Exportación con tallas separadas en capas (XS a 3XL) para permitir impresión selectiva sin saturación visual.
+6. **Blindaje Legal de Propiedad Intelectual:** Los metadatos y nombres generados usan exclusivamente terminología descriptiva sin marcas registradas de terceros.
 
-## Architecture map
+## Mapa de Arquitectura
 
-- 
-ules_pattern_making.md: Reglas de patronaje técnico inyectadas al LLM.
-- src/index.ts: Entrypoint del CLI.
-- src/ai/base_provider.ts: Interfaz común IAiProvider.
-- src/ai/opencode_cli_provider.ts: Proveedor basado en OpenCode CLI / ChatGPT.
-- src/ai/direct_api_provider.ts: Proveedor API directa (Claude / OpenAI).
-- src/ai/factory.ts: Selector de proveedor según variable de entorno AI_PROVIDER.
-- src/engine/base_blocks/: Slopers base de FreeSewing (torso, falda, manga).
-- src/engine/modifier.ts: Motor que aplica el JSON paramétrico de ADN sobre los slopers.
-- src/engine/exporter.ts: Renderizado SVG y exportación a PDF (A4/Letter y A0 Plotter).
-- src/utils/tiler.ts: Generador de cruces de corte y numeración de páginas (A1, A2...).
+```
+pattern-ai-core/
+├── .agents/                           # Plano de Control (Arquitecto)
+├── scripts/                           # Automatizaciones mecánicas (build, test, scaffolding)
+├── rules_pattern_making.md            # Reglas textiles maestras inyectadas al LLM
+├── src/
+│   ├── index.ts                       # Entrypoint del CLI (Commander)
+│   ├── ai/                            # Capa de Proveedores de Inteligencia Artificial
+│   │   ├── base_provider.ts           # Interfaz común IAiProvider
+│   │   ├── opencode_cli_provider.ts   # Integración por CLI con ChatGPT (OpenCode)
+│   │   ├── direct_api_provider.ts     # Integración SDK HTTP directa (Claude, OpenAI)
+│   │   ├── prompt_builder.ts          # Inyector de reglas textiles y system prompts
+│   │   ├── mock_provider.ts           # Proveedor Mock para tests offline deterministas
+│   │   └── factory.ts                 # Factory según variable AI_PROVIDER
+│   ├── types/                         # Definiciones de tipos TypeScript del ADN
+│   │   └── pattern.ts                 # Interfaces del JSON de ADN, medidas y bloques
+│   ├── schema/                        # Validación de Esquemas en Runtime (Zod)
+│   │   └── pattern_schema.ts          # Validador determinista de modificaciones
+│   ├── engine/                        # Motor Geométrico de Patronaje (FreeSewing)
+│   │   ├── base_blocks/               # Slopers fundamentales (torso, sleeve, hood, pocket)
+│   │   ├── modifier.ts                # Aplica el JSON de ADN transformando los slopers
+│   │   ├── exporter.ts                # Renderizado SVG y conversión a PDF continuo/paginado
+│   │   └── tech_sheet.ts              # Generador de ficha técnica de armado y consumo
+│   └── utils/
+│       └── tiler.ts                   # Motor de corte vectorial en grilla A4/Letter con cruces
+└── output/                            # PDFs, SVGs y Fichas técnicas generadas
+```
 
-## Interfaces and protocols
+## Interfaces y Contrato de Datos (JSON de ADN Paramétrico)
 
-- Esquema JSON de ADN Paramétrico:
-  - concept_name: string
-  - ase_block: string
-  - ease: { chest_ease_mm: number, bicep_ease_mm: number, ... }
-  - modifications: { [component: string]: { type: string, [param: string]: any } }
-  - 
-otions: string[]
-  - estimated_fabric_meters: number
+```typescript
+interface PatternDna {
+  concept_name: string;
+  base_block: "menswear_torso_oversize" | "womenswear_bodice" | "unisex_hoodie" | string;
+  ease: {
+    chest_ease_mm: number;
+    bicep_ease_mm: number;
+    waist_ease_mm?: number;
+    hip_ease_mm?: number;
+  };
+  modifications: {
+    neckline?: { type: "crossover_hood" | "crew" | "v_neck"; depth_mm: number; width_mm?: number };
+    sleeves?: { type: "drop_shoulder" | "raglan" | "set_in"; drop_mm?: number; cuff_elastic?: boolean };
+    hem?: { type: "curved_tail" | "straight" | "cropped"; drop_mm?: number; band_elastic?: boolean };
+    pockets?: { type: "kangaroo" | "welt" | "patch"; width_mm?: number; height_mm?: number };
+    [key: string]: any;
+  };
+  sizing: {
+    target_sizes: Array<"XS" | "S" | "M" | "L" | "XL" | "2XL" | "3XL">;
+    grading_rule?: string;
+  };
+  notions: string[];
+  estimated_fabric_meters: number;
+}
+```
 
-## External systems
+## External Systems y Dependencias
 
-- OpenCode CLI / ChatGPT y Direct APIs (Claude/OpenAI).
-- Etsy: Canal de venta digital inicial (flujo de carga manual en Fase 1).
-- MyPetCreature 3D/AR Viewer: Integración de catálogo en Fase 2.
+- **FreeSewing Core v3:** Motor de patronaje paramétrico basado en Node.js / JavaScript.
+- **Zod:** Validación de esquemas en runtime.
+- **PDFKit / svg-to-pdfkit:** Ensamblado y renderizado de archivos PDF vectoriales con capas y tiling.
+- **OpenCode CLI / LLM Direct APIs:** Origen del razonamiento conceptual y traducción de bocetos a parámetros textiles.
+- **Etsy:** Canal comercial (proceso de subida manual de entregables en Fase 1).
 
 Only verified, durable facts belong here. Changing state belongs in CURRENT.
