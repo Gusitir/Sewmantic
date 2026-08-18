@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-17T23:58:00-05:00
-source_commit: [T-06] implement A4/Letter vector tiling engine with 10x10cm calibration box on page 1 and PDF/SVG exporter
+updated_at: 2026-08-18T00:02:00-05:00
+source_commit: [T-07] implement tech pack generator with fabric consumption costing, assembly guide and PDF/Markdown/JSON export
 assurance: Lean
 active_plan: PLAN_v0.1-mvp.md
-active_task: T-07
+active_task: T-08
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,18 +18,18 @@ backup: local-only
 
 ## Next action
 
-1. Despachar **T-07** al **Ingeniero** (Generador de Fichas Técnicas de Confección y Consumo: cálculo matemático de metraje con merma >= 10%, guía de ensamblado paso a paso, lista de materiales y exportación en PDF, Markdown y JSON).
+1. Despachar **T-08** al **Obrero / Ingeniero** (CLI Entrypoint unificado `pattern generate`, Pipeline End-to-End, script `scripts/gen_sample.ps1` y suite de pruebas `tests/e2e.test.ts`).
 
 ## Blockers
 
-- Ninguno.
+- Ninguno (a la espera de la barrera de parada humana H-01 / H-02 al finalizar T-08).
 
 ## Current facts
 
-- 166 tests unitarios pasando al 100% en Vitest.
-- Motor de Tiling A4 y Letter funcional con cruces alfanuméricas A1-An.
-- Cuadro de calibración 100x100 mm (283.465 pt) verificado e inyectado en Página 1.
-- Exportación PDF continuo A0 y SVG por capas probada y libre de distorsiones.
+- Fase 1.3 (Tiling, Calibración 10x10 cm y Ficha Técnica) completada con éxito.
+- 182 tests unitarios pasando al 100% en Vitest.
+- Motor de cálculo de consumo textil validado con merma $\ge 10\%$ y exportación en PDF, MD y JSON.
+- Todo listo para ensamblar el CLI final y el pipeline end-to-end en T-08.
 
 ## Open findings
 

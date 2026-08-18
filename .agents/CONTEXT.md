@@ -75,3 +75,11 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-06] implement A4/Letter vector tiling engine with 10x10cm calibration box on page 1 and PDF/SVG exporter` (hash: `2162ffd`).
 - Unresolved: Pruebas físicas de impresión H-01 y ensamble H-02 pendientes para barrera humana final en Phase 1.4.
 - Next: Despachar T-07 al Ingeniero (Generador de Fichas Técnicas de Confección y Consumo).
+
+## 2026-08-18T00:02:00-05:00 - TASK T-07 VERDICT APTO & CLOSE PHASE 1.3 (Arquitecto / Ingeniero)
+
+- Changed: Implementación del generador de fichas técnicas industriales (`src/engine/tech_sheet.ts`): fórmulas de consumo textil en metros lineales con merma $\ge 10\%$ (15% default), lista detallada de piezas de corte con orientación de grainline y márgenes, lista BOM de avíos/mercería, guía de confección en 9 pasos con maquinaria y puntadas ISO, tabla de medidas terminadas POM para tallas XS-3XL, y exportadores a Markdown, JSON y PDF. Suite de 16 tests en `tests/tech_sheet.test.ts`.
+- Decision and reason: El Ingeniero implementó y auditó la ficha técnica. Puerta determinista `npm test` superada al 100% (182/182 tests unitarios totales pasando). Fase 1.3 (Tiling, Calibración y Ficha Técnica) completada satisfactoriamente.
+- Evidence: Commit `[T-07] implement tech pack generator with fabric consumption costing, assembly guide and PDF/Markdown/JSON export` (hash: `cce7482`).
+- Unresolved: Ninguno.
+- Next: Despachar T-08 al Obrero / Ingeniero (Fase 1.4: CLI y Pipeline End-to-End).

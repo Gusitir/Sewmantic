@@ -138,13 +138,13 @@ Assurance: Lean
 
 ### T-07 - Generador de Fichas Técnicas de Armado y Consumo de Tela
 
-- Status: ready
+- Status: done
 - Depends on: T-05
 - Scope: `src/engine/tech_sheet.ts`, `tests/tech_sheet.test.ts`
 - Rol: Obrero (Plantilla y maquetación de ficha) / Ingeniero (Cálculo de consumo).
 - Acceptance:
-  - [ ] Cálculo matemático de consumo de tela estimado en metros (ancho 1.50 m estándar) según el área total de las piezas con márgenes.
-  - [ ] Generación de ficha técnica en PDF/Markdown con:
+  - [x] Cálculo matemático de consumo de tela estimado en metros (ancho 1.50 m estándar) según el área total de las piezas con márgenes.
+  - [x] Generación de ficha técnica en PDF/Markdown con:
     - Lista de piezas de corte (cantidades y material: tela principal, rib, entretela).
     - Lista de avíos y materiales requeridos (*notions*).
     - Guía secuencial de pasos de confección y orden de costura.
