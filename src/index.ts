@@ -18,6 +18,10 @@ export interface CoreConfig {
 export * from "./types/pattern.js";
 export * from "./schema/pattern_schema.js";
 
+// Exportación del Motor Geométrico y Bloques Base (Slopers)
+export * from "./engine/geometry.js";
+export * from "./engine/base_blocks/index.js";
+
 // Exportación del Subsistema de Proveedores de IA
 export * from "./ai/base_provider.js";
 export * from "./ai/prompt_builder.js";
