@@ -714,10 +714,71 @@ function drawTiledPdfCoverPage(
   }
   doc.restore();
 
-  // 4. Mapa General de Ensamble (Assembly Map) en la mitad inferior
+  // 4. Mitad inferior: Guía Rápida de Montaje (Etsy / Home Printer) + Mapa de Ensamble
   const mapY = calibY + CALIBRATION_BOX_PT + 12;
-  const mapH = paper.height_pt - mapY - margin_pt - 26;
-  drawAssemblyMapPdf(doc, grid, margin_pt, mapY, contentW, Math.max(mapH, 120));
+  const bottomH = paper.height_pt - mapY - margin_pt - 26;
+
+  const guideW = contentW * 0.42;
+  const mapW = contentW * 0.56;
+  const mapX = margin_pt + guideW + (contentW * 0.02);
+
+  // 4a. GUÍA RÁPIDA DE CORTE Y MONTAJE (PASO A PASO)
+  doc.save();
+  doc
+    .roundedRect(margin_pt, mapY, guideW, Math.max(bottomH, 120), 4)
+    .fillAndStroke('#f8fafc', '#cbd5e1');
+
+  // Encabezado de la guía
+  doc
+    .roundedRect(margin_pt, mapY, guideW, 20, 4)
+    .fillAndStroke('#0f172a', '#0f172a');
+
+  doc
+    .fontSize(7.5)
+    .font('Helvetica-Bold')
+    .fillColor('#ffffff')
+    .text('GUÍA RÁPIDA DE CORTE Y MONTAJE', margin_pt + 8, mapY + 5.5, {
+      width: guideW - 16,
+      align: 'center',
+    });
+
+  let gY = mapY + 28;
+  const steps = [
+    { num: '1', title: 'IMPRIMIR AL 100% (1:1)', desc: 'Imprima solo esta Pág 1 a tamaño real (sin ajustar márgenes).' },
+    { num: '2', title: 'VERIFICAR REGLA', desc: 'Mida el cuadro de arriba: debe medir 10.0 x 10.0 cm (4"x4").' },
+    { num: '3', title: 'CORTAR BORDES', desc: 'En cada hoja, corte los bordes derecho e inferior por la línea.' },
+    { num: '4', title: 'UNIR DIAMANTES', desc: 'Haga coincidir los medios diamantes y cruces [A1-A2, B1-B2].' },
+    { num: '5', title: 'PEGAR Y CORTAR', desc: 'Fije con cinta adhesiva y corte las piezas con 10mm de costura.' },
+  ];
+
+  for (const step of steps) {
+    // Círculo con número
+    doc.circle(margin_pt + 14, gY + 4, 6).fillAndStroke('#2563eb', '#1e40af');
+    doc
+      .fontSize(6)
+      .font('Helvetica-Bold')
+      .fillColor('#ffffff')
+      .text(step.num, margin_pt + 9, gY + 1.5, { width: 10, align: 'center' });
+
+    doc
+      .fontSize(6.5)
+      .font('Helvetica-Bold')
+      .fillColor('#1e293b')
+      .text(step.title, margin_pt + 24, gY);
+
+    doc
+      .fontSize(5.8)
+      .font('Helvetica')
+      .fillColor('#475569')
+      .text(step.desc, margin_pt + 24, gY + 8.5, { width: guideW - 32 });
+
+    gY += 21;
+    if (gY > mapY + bottomH - 10) break;
+  }
+  doc.restore();
+
+  // 4b. MAPA GENERAL DE ENSAMBLE (ASSEMBLY GRID MAP)
+  drawAssemblyMapPdf(doc, grid, mapX, mapY, mapW, Math.max(bottomH, 120));
 
   // 5. Pie de página de la portada
   doc.save();
