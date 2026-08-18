@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-17T23:55:00-05:00
-source_commit: [T-05] implement parametric pattern modifier with harmonic armhole-sleeve adjustment and technical markings
+updated_at: 2026-08-17T23:58:00-05:00
+source_commit: [T-06] implement A4/Letter vector tiling engine with 10x10cm calibration box on page 1 and PDF/SVG exporter
 assurance: Lean
 active_plan: PLAN_v0.1-mvp.md
-active_task: T-06
+active_task: T-07
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,7 +18,7 @@ backup: local-only
 
 ## Next action
 
-1. Despachar **T-06** al **Ingeniero / Obrero** (Motor de Tiling Vectorial A4/Letter con solapes y cruces de corte A1-An, Cuadro de Calibración 10x10 cm en Página 1, Capas PDF por talla XS-3XL y exportación A0 Plotter).
+1. Despachar **T-07** al **Ingeniero** (Generador de Fichas Técnicas de Confección y Consumo: cálculo matemático de metraje con merma >= 10%, guía de ensamblado paso a paso, lista de materiales y exportación en PDF, Markdown y JSON).
 
 ## Blockers
 
@@ -26,10 +26,10 @@ backup: local-only
 
 ## Current facts
 
-- Fase 1.2 (Motor Geométrico FreeSewing) completada con éxito.
-- 147 tests unitarios pasando al 100% en Vitest.
-- Armonización sisa-manga verificada con tolerancia estricta $\le 3\text{ mm}$ en todas las tallas.
-- 100% de piezas con grainline, piquetes y márgenes de costura calculados.
+- 166 tests unitarios pasando al 100% en Vitest.
+- Motor de Tiling A4 y Letter funcional con cruces alfanuméricas A1-An.
+- Cuadro de calibración 100x100 mm (283.465 pt) verificado e inyectado en Página 1.
+- Exportación PDF continuo A0 y SVG por capas probada y libre de distorsiones.
 
 ## Open findings
 

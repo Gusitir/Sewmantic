@@ -119,16 +119,16 @@ Assurance: Lean
 
 ### T-06 - Motor de Tiling (A4/Letter), Cruces de Registro y Cuadro de Calibración 10x10 cm
 
-- Status: ready
+- Status: done
 - Depends on: T-05
 - Scope: `src/utils/tiler.ts`, `src/engine/exporter.ts`, `src/engine/calibration_box.ts`, `tests/tiler.test.ts`
 - Rol: Ingeniero (Matemática de grilla vectorial) / Obrero (Generación PDF).
 - Acceptance:
-  - [ ] Algoritmo de Tiling que proyecta el patrón completo sobre una grilla paginada para A4 (210x297 mm) y US Letter (215.9x279.4 mm) con márgenes de impresión seguros.
-  - [ ] Generación de cruces de registro con coordenadas de ensamble (ej: Fila A, Columna 1 -> A1, A2... B1, B2).
-  - [ ] **Requisito Crítico:** Cuadro de calibración de **100 mm x 100 mm (10 cm x 10 cm)** en la **Página 1** con escala milimétrica/pulgadas y advertencia explícita "100% SCALE - DO NOT FIT TO PAGE".
-  - [ ] Soporte para exportación en capas PDF por talla (XS a 3XL).
-  - [ ] Exportación simultánea a SVG/PDF continuo A0 (para plotter y corte láser).
+  - [x] Algoritmo de Tiling que proyecta el patrón completo sobre una grilla paginada para A4 (210x297 mm) y US Letter (215.9x279.4 mm) con márgenes de impresión seguros.
+  - [x] Generación de cruces de registro con coordenadas de ensamble (ej: Fila A, Columna 1 -> A1, A2... B1, B2).
+  - [x] **Requisito Crítico:** Cuadro de calibración de **100 mm x 100 mm (10 cm x 10 cm)** en la **Página 1** con escala milimétrica/pulgadas y advertencia explícita "100% SCALE - DO NOT FIT TO PAGE".
+  - [x] Soporte para exportación en capas PDF por talla (XS a 3XL).
+  - [x] Exportación simultánea a SVG/PDF continuo A0 (para plotter y corte láser).
 - Gates: `npm test`
 - Human checks: H-01, H-02
 - Risk triggers: Desfase de escala en rasterizado o márgenes incorrectos en PDFKit.

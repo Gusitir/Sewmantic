@@ -67,3 +67,11 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-05] implement parametric pattern modifier with harmonic armhole-sleeve adjustment and technical markings` (hash: `2e9e947`).
 - Unresolved: Ninguno.
 - Next: Despachar T-06 al Ingeniero / Obrero (Fase 1.3: Motor de Tiling A4/Letter y Calibrador 10x10 cm).
+
+## 2026-08-17T23:58:00-05:00 - TASK T-06 VERDICT APTO (Arquitecto / Ingeniero)
+
+- Changed: Implementación del motor de Tiling y Exportación vectorial (`src/engine/calibration_box.ts`, `src/utils/tiler.ts`, `src/engine/exporter.ts`). Cuadro de calibración de 100x100 mm (283.465 pt exactos) inyectado obligatoriamente en Página 1. Tiling de hojas A4 y US Letter con cruces alfanuméricas A1-An, solapes y mapa de ensamble. Exportación continua SVG y PDF A0/Plotter y multipágina por tallas. Suite de 19 tests en `tests/tiler.test.ts`.
+- Decision and reason: El Ingeniero implementó y auditó el motor de exportación y tiling. Puerta determinista `npm test` superada al 100% (166/166 tests unitarios totales pasando). Cumple al 100% la regla textil de calibración y paginación. Arquitecto emite veredicto APTO y realiza commit `[T-06]`.
+- Evidence: Commit `[T-06] implement A4/Letter vector tiling engine with 10x10cm calibration box on page 1 and PDF/SVG exporter` (hash: `2162ffd`).
+- Unresolved: Pruebas físicas de impresión H-01 y ensamble H-02 pendientes para barrera humana final en Phase 1.4.
+- Next: Despachar T-07 al Ingeniero (Generador de Fichas Técnicas de Confección y Consumo).
