@@ -99,17 +99,17 @@ Assurance: Lean
 
 ### T-05 - Motor de Modificación Paramétrica (Modifier Engine)
 
-- Status: ready
+- Status: done
 - Depends on: T-04
 - Scope: `src/engine/modifier.ts`, `src/engine/geometry_utils.ts`, `tests/modifier.test.ts`
 - Rol: Ingeniero (Cálculos geométricos, rediseño de sisas/copas, holguras y notches).
 - Acceptance:
-  - [ ] Aplicación determinista de modificaciones del JSON sobre los slopers base (hombro caído, escote profundo, silueta oversize, dobladillo curvo).
-  - [ ] Algoritmo de ajuste armónico sisa-manga: el perímetro de la copa de manga se recalcula y ajusta automáticamente a la sisa modificada.
-  - [ ] Generación automática de **Línea de Hilo (*grainline*)** en el 100% de las piezas.
-  - [ ] Cálculo geométrico de **Piquetes de Coincidencia (*notches*)** con distancias exactas de ensamblado.
-  - [ ] Inclusión de márgenes de costura parametrizables (10 mm estándar, 25-30 mm en bajos).
-  - [ ] Tests unitarios que validen la consistencia de perímetros de unión antes y después de modificar.
+  - [x] Aplicación determinista de modificaciones del JSON sobre los slopers base (hombro caído, escote profundo, silueta oversize, dobladillo curvo).
+  - [x] Algoritmo de ajuste armónico sisa-manga: el perímetro de la copa de manga se recalcula y ajusta automáticamente a la sisa modificada.
+  - [x] Generación automática de **Línea de Hilo (*grainline*)** en el 100% de las piezas.
+  - [x] Cálculo geométrico de **Piquetes de Coincidencia (*notches*)** con distancias exactas de ensamblado.
+  - [x] Inclusión de márgenes de costura parametrizables (10 mm estándar, 25-30 mm en bajos).
+  - [x] Tests unitarios que validen la consistencia de perímetros de unión antes y después de modificar.
 - Gates: `npm test`
 - Human checks: none
 - Risk triggers: Deformación de curvatura en copas de manga o incompatibilidad de perímetros.

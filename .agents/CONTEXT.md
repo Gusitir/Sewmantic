@@ -59,3 +59,11 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-04] implement base sloper blocks for torso, sleeve, hood and pockets with standard size tables` (hash: `a9f729a`).
 - Unresolved: Ninguno.
 - Next: Despachar T-05 al Ingeniero (Motor de Modificación Paramétrica y Ajuste Sisa-Manga).
+
+## 2026-08-17T23:55:00-05:00 - TASK T-05 VERDICT APTO & CLOSE PHASE 1.2 (Arquitecto / Ingeniero)
+
+- Changed: Implementación del motor de modificación paramétrica (`src/engine/modifier.ts`): transformaciones de holgura, escotes (crossover hood, crew, v_neck), mangas (drop shoulder, set_in), dobladillos (curved tail, straight, cropped, split, ribbed), integración de bolsillos y algoritmo de armonización sisa-manga con tolerancia $\le 3\text{ mm}$. Generación de grainlines, notches pareados y márgenes de costura. Suite de 37 tests en `tests/modifier.test.ts`.
+- Decision and reason: El Ingeniero implementó y auditó el motor de modificación. Puerta determinista `npm test` superada al 100% (147/147 tests unitarios totales pasando). Fase 1.2 (Motor Geométrico FreeSewing) completada satisfactoriamente.
+- Evidence: Commit `[T-05] implement parametric pattern modifier with harmonic armhole-sleeve adjustment and technical markings` (hash: `2e9e947`).
+- Unresolved: Ninguno.
+- Next: Despachar T-06 al Ingeniero / Obrero (Fase 1.3: Motor de Tiling A4/Letter y Calibrador 10x10 cm).

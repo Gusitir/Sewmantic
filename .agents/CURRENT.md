@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-17T23:52:00-05:00
-source_commit: [T-04] implement base sloper blocks for torso, sleeve, hood and pockets with standard size tables
+updated_at: 2026-08-17T23:55:00-05:00
+source_commit: [T-05] implement parametric pattern modifier with harmonic armhole-sleeve adjustment and technical markings
 assurance: Lean
 active_plan: PLAN_v0.1-mvp.md
-active_task: T-05
+active_task: T-06
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,7 +18,7 @@ backup: local-only
 
 ## Next action
 
-1. Despachar **T-05** al **Ingeniero** (Motor de Modificación Paramétrica: transformaciones de holgura, ajuste armónico sisa-manga con tolerancia < 3mm, grainlines, notches automáticos y márgenes de costura).
+1. Despachar **T-06** al **Ingeniero / Obrero** (Motor de Tiling Vectorial A4/Letter con solapes y cruces de corte A1-An, Cuadro de Calibración 10x10 cm en Página 1, Capas PDF por talla XS-3XL y exportación A0 Plotter).
 
 ## Blockers
 
@@ -26,10 +26,10 @@ backup: local-only
 
 ## Current facts
 
-- 110 tests unitarios pasando al 100% en Vitest (`schema.test.ts`, `ai_provider.test.ts`, `base_blocks.test.ts`).
-- Bloques base de Torso, Manga, Capucha y Bolsillo verificados para todas las tallas XS a 3XL.
-- Geometría 2D validada con áreas Shoelace positivas y paths SVG cerrados.
-- Subagentes `ingeniero` y `obrero` listos para T-05.
+- Fase 1.2 (Motor Geométrico FreeSewing) completada con éxito.
+- 147 tests unitarios pasando al 100% en Vitest.
+- Armonización sisa-manga verificada con tolerancia estricta $\le 3\text{ mm}$ en todas las tallas.
+- 100% de piezas con grainline, piquetes y márgenes de costura calculados.
 
 ## Open findings
 
