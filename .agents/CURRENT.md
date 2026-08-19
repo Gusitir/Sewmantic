@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-18T23:55:00-05:00
-source_commit: [STATE] close phase 2.0 (Expanded Slopers, Custom Sizing & Etsy Bundler)
+updated_at: 2026-08-18T23:59:00-05:00
+source_commit: [STATE] start phase 3.0 (PLAN_v0.3-web-ui.md)
 assurance: Lean
-active_plan: PLAN_v0.2-features.md
-active_task: none
+active_plan: PLAN_v0.3-web-ui.md
+active_task: T-13
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,8 +18,7 @@ backup: local-only
 
 ## Next action
 
-1. **FASE 2 COMPLETADA CON ÉXITO (309/309 Tests PASS):** Todas las tareas de la Fase 2 (`T-09` a `T-12`) han sido implementadas, probadas y auditadas.
-2. Preparación para Fase 3 (Web UI / Visor WebGL 3D interactivo / API Gateway).
+1. **FASE 3 ACTIVA - TAREA [T-13]:** Implementar el Servidor API REST Local de `pattern-ai-core` (`src/server/app.ts`, `src/server/routes.ts`, `tests/server.test.ts`), proveyendo endpoints para generación de patrones, listado de entregables, previsualización de SVGs y descarga de bundles de Etsy.
 
 ## Blockers
 

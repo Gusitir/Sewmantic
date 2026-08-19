@@ -192,3 +192,13 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Verdict: **APTO (Fase 2 Cerrada con Éxito - 309/309 Tests PASS)**.
 - Evidence: Commits `[T-09]` a `[T-12]`, hash `876300a`. Commit de control `[STATE] close phase 2.0`.
 - Next: Planificación de Fase 3 (Visor WebGL / Web UI interactiva / Catálogo).
+
+## 2026-08-18T23:59:00-05:00 - PHASE 3 KICKOFF: LOCAL WEB STUDIO, 2D VIEWER & MULTI-PIECE SETS (Arquitecto)
+
+- Decision and reason: Activación del plan de trabajo `PLAN_v0.3-web-ui.md` para dotar a `pattern-ai-core` de un Web Studio visual local, servidor API REST, visor SVG 2D interactivo multi-talla y generación de conjuntos de 2 piezas (Top + Bottom).
+- Scope:
+  - T-13: Servidor API REST Local y Endpoints del Motor (`src/server/`).
+  - T-14: Visor Vectorial 2D Interactivo (Zoom, Pan, Capas XS-3XL y Cuadrícula A4).
+  - T-15: Dashboard Web Studio (Prompt IA, Sliders Antropométricos y Descarga ZIP).
+  - T-16: Generador de Conjuntos Completos de 2 Piezas (Top + Bottom / Set Pirata).
+- Active Task: `[T-13] Servidor API REST Local y Endpoints del Motor`.
