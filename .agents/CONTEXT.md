@@ -212,3 +212,21 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-13] implement native HTTP REST API server, routes, public dashboard and CLI serve command` (hash: `e0e3fb0`).
 - Verdict: **APTO**.
 - Next: Tarea `[T-14] Visor Vectorial 2D Interactivo`.
+
+## 2026-08-19T00:18:00-05:00 - TASK T-14 & T-15 AUDIT: INTERACTIVE 2D VIEWER & WEB STUDIO DASHBOARD (Arquitecto / Ingeniero)
+
+- Decision and reason: Desarrollo del Visor Vectorial 2D SVG Interactivo (`src/server/public/viewer.js`, `src/server/public/viewer.css`) y el Dashboard Web Studio (`src/server/public/index.html`, `src/server/public/style.css`, `src/server/public/app.js`).
+- Features Implemented:
+  1. Zoom centrado en cursor (+ / - y wheel) con auto-ajuste (Fit View).
+  2. Pan táctil y con ratón fluido.
+  3. Selector de visibilidad de capas por talla (`XS` a `3XL`) con paleta de colores oficial.
+  4. Cuadrícula de paginación A4 / US Letter con cruces de registro, etiquetas alfanuméricas (`A1`, `A2`...) y badges.
+  5. Regla métrica virtual en mm/cm e inspección con pulso animado del Cuadro de Calibración 10x10 cm.
+  6. Sliders biométricos interactivos en tiempo real para medidas a medida.
+  7. Botones de descarga instantánea con 1 clic para PDF A4, Letter, A0, SVG, TechPack PDF y Etsy ZIP Bundle.
+- Verification:
+  - 22 nuevos tests en `tests/viewer.test.ts` (Total: **347/347 tests passing al 100%** en Vitest).
+  - Compilación `tsc` limpia sin errores.
+- Evidence: Commit `[T-14][T-15] implement interactive 2D SVG pattern viewer and modern Web Studio dashboard` (hash: `22e6677`).
+- Verdict: **APTO**.
+- Next: Tarea `[T-16] Generador de Conjuntos Completos de 2 Piezas (Top + Bottom / Set Pirata)`.

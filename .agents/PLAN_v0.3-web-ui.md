@@ -39,30 +39,30 @@ Assurance: Lean
 
 ### T-14 - Visor Vectorial 2D Interactivo
 
-- Status: pending
+- Status: done
 - Depends on: T-13
 - Scope: `src/server/public/viewer.js`, `src/server/public/viewer.css`, `tests/viewer.test.ts`
 - Rol: Obrero (Frontend vectorial interactivo).
 - Acceptance:
-  - [ ] Renderizado SVG interactivo con soporte de Zoom in/out, Pan y Reset View.
-  - [ ] Selector de visibilidad de capas por talla (XS, S, M, L, XL, 2XL, 3XL).
-  - [ ] Superposicion de cuadricula de paginacion A4 / US Letter con visualizacion de hojas activas.
-  - [ ] Medidor metrico interactivo (regla virtual en mm y verificacion de cuadro 10x10 cm).
+  - [x] Renderizado SVG interactivo con soporte de Zoom in/out, Pan y Reset View.
+  - [x] Selector de visibilidad de capas por talla (XS, S, M, L, XL, 2XL, 3XL).
+  - [x] Superposicion de cuadricula de paginacion A4 / US Letter con visualizacion de hojas activas.
+  - [x] Medidor metrico interactivo (regla virtual en mm y verificacion de cuadro 10x10 cm).
 - Gates: `npm test`
 
 ---
 
 ### T-15 - Dashboard Web Studio
 
-- Status: pending
+- Status: done
 - Depends on: T-14
 - Scope: `src/server/public/index.html`, `src/server/public/app.js`, `src/server/public/style.css`
 - Rol: Obrero (Interfaz de usuario moderna y responsiva).
 - Acceptance:
-  - [ ] Panel de generacion por Prompt de lenguaje natural o seleccion de catalogo.
-  - [ ] Sliders biometricos interactivos en tiempo real para medidas a medida (pecho, cintura, cadera, largo).
-  - [ ] Visualizacion instantanea de la Ficha Tecnica, desglose de piezas, consumo de tela y BOM de avios.
-  - [ ] Botones de descarga con 1 clic para: PDF A4, Letter, A0, SVG, TechPack PDF y ZIP Etsy.
+  - [x] Panel de generacion por Prompt de lenguaje natural o seleccion de catalogo.
+  - [x] Sliders biometricos interactivos en tiempo real para medidas a medida (pecho, cintura, cadera, largo).
+  - [x] Visualizacion instantanea de la Ficha Tecnica, desglose de piezas, consumo de tela y BOM de avios.
+  - [x] Botones de descarga con 1 clic para: PDF A4, Letter, A0, SVG, TechPack PDF y ZIP Etsy.
 - Gates: `npm test`
 
 ---

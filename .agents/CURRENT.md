@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-19T00:06:00-05:00
-source_commit: [T-13] implement native HTTP REST API server, routes, public dashboard and CLI serve command
+updated_at: 2026-08-19T00:18:00-05:00
+source_commit: [T-14][T-15] implement interactive 2D SVG pattern viewer and modern Web Studio dashboard
 assurance: Lean
 active_plan: PLAN_v0.3-web-ui.md
-active_task: T-14
+active_task: T-16
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,16 +18,16 @@ backup: local-only
 
 ## Next action
 
-1. **FASE 3 ACTIVA - TAREA [T-14]:** Desarrollar el Visor Vectorial 2D Interactivo (`src/server/public/viewer.js`, `src/server/public/viewer.css`, `tests/viewer.test.ts`), proveyendo controles de zoom in/out, pan, visualizador de capas de tallas XS-3XL, superposición de cuadrícula A4/Letter y regla métrica virtual.
+1. **FASE 3 ACTIVA - TAREA [T-16]:** Desarrollar el Generador de Conjuntos Completos de 2 Piezas (Top + Bottom / Set Pirata) (`src/engine/modifier.ts`, `src/ai/mock_provider.ts`, `src/pipeline.ts`, `tests/two_piece_set.test.ts`), permitiendo generar simultáneamente conjuntos de moldería coordinados (ej. Chaleco + Bermuda de Luffy) con fichas técnicas unificadas y empaquetado Etsy multi-prenda.
 
 ## Blockers
 
-- Ninguno. Todas las pruebas automatizadas (325/325) pasando al 100%.
+- Ninguno. Todas las pruebas automatizadas (347/347) pasando al 100%.
 
 ## Current facts
 
-- Tarea `T-13` completada y auditada con veredicto **APTO**: Servidor HTTP REST nativo implementado con endpoints para generación, listado de moldería, visor SVG continuo, descarga de bundles Etsy ZIP y subcomando `serve`.
-- Suite determinista completa con **325/325 tests pasando al 100%** en Vitest.
+- Tareas `T-14` y `T-15` completadas y auditadas con veredicto **APTO**: Visor vectorial 2D interactivo con zoom cursor-centered, pan, selector de capas por talla XS-3XL, cuadrícula A4/Letter, regla métrica, verificador de calibración 10x10 cm y Web Studio Dashboard moderno con sliders biométricos.
+- Suite determinista completa con **347/347 tests pasando al 100%** en Vitest.
 - Reconstrucción digital de ensamble de hojas A4 verificada al 100% en PDFStitcher (curvas continuas sin desfases).
 - Generación de muestra completa en `output/streetwear_oversize_hoodie/` con 8 entregables válidos de alta calidad comercial para Etsy.
 - Sistema CLI con 5 comandos operativos (`generate`, `calibrate`, `inspect`, `techpack`, `status`).
