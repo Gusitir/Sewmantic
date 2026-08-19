@@ -230,3 +230,35 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-14][T-15] implement interactive 2D SVG pattern viewer and modern Web Studio dashboard` (hash: `22e6677`).
 - Verdict: **APTO**.
 - Next: Tarea `[T-16] Generador de Conjuntos Completos de 2 Piezas (Top + Bottom / Set Pirata)`.
+
+## 2026-08-19T00:30:00-05:00 - TASK T-16 AUDIT: TWO-PIECE COORDINATED SET GENERATOR (Arquitecto / Ingeniero)
+
+- Decision and reason: Desarrollo y verificación del generador paramétrico integral de conjuntos coordinados de 2 piezas (`garment_category: 'set'`), materializado en el preset oficial `straw_pirate_full_set` (Chaleco de Lino Rojo + Bermuda Denim Azul Deshilachada con vuelta de dobladillo).
+- Features Implemented:
+  1. Tipos y contratos Zod para `sub_garments`, `multi_piece_config`, `fabric_details` y `garment_category: 'set'`.
+  2. Modificador multi-prenda `modifySetPattern` que genera piezas coordinadas de torso (`front_torso`, `back_torso`) y pierna (`front_leg`, `back_leg`, `waistband`, `pocket`, `cuff`) con layout sin colisiones y grainlines/notches garantizados en el 100% de piezas.
+  3. Ficha Técnica unificada con desglose de consumos independientes por tela (Tela 1: Lino Rojo vs Tela 2: Denim Azul), BOM consolidado (botones dorados + avíos jeans) y 10 cotas de control POM (chaleco + bermuda).
+  4. Generación de PDFs y empaquetado Etsy ZIP multi-prenda (`01_Print_At_Home_A4`, etc.).
+- Verification:
+  - 28 nuevos tests en `tests/two_piece_set.test.ts` (Total: **375/375 tests passing al 100%** en Vitest across 13 suites).
+  - Compilación `tsc` limpia con 0 errores.
+- Evidence: Commit `[T-16] implement two-piece coordinated set pattern generator and multi-fabric techpack` (hash: `bcb7fae`).
+- Verdict: **APTO**.
+- Next: Cierre formal de la Fase 3.0.
+
+## 2026-08-19T00:32:00-05:00 - CLOSE PHASE 3.0 (LOCAL WEB STUDIO, 2D VIEWER & MULTI-PIECE SETS) (Arquitecto)
+
+- Decision and reason: Cierre formal del hito Fase 3 (`T-13` a `T-16`). Todas las tareas han sido completadas, probadas exhaustivamente y auditadas con veredicto **APTO**.
+- Deliverables & Features Added in Phase 3:
+  1. `src/server/app.ts` & `src/server/routes.ts`: Servidor HTTP REST nativo con CORS universal y endpoints de generación, catálogo, SVG y descarga de paquetes comerciales.
+  2. `src/server/public/viewer.js` & `viewer.css`: Visor Vectorial 2D Interactivo de alta precisión con zoom centrado en cursor, pan, selección de tallas XS-3XL, cuadrícula A4/Letter numerada y verificador de escala 10x10 cm.
+  3. `src/server/public/index.html`, `app.js`, `style.css`: Dashboard Web Studio moderno Cyberpunk/Studio con catálogo, sliders biométricos y descarga directa 1-clic.
+  4. `src/engine/modifier.ts` & `src/engine/tech_sheet.ts`: Motor de conjuntos coordinados de 2 piezas (Top + Bottom / Luffy Pirate Set) con Ficha Técnica multi-tela y BOM consolidado.
+  5. Subcomando CLI `pattern-ai-core serve [-p <port>] [-o]` para levantar el estudio web local.
+- Verification:
+  - Suite completa de **375/375 tests pasando al 100%** en Vitest (13/13 suites).
+  - Verificación de renderizado en vivo y servidor REST efímero.
+- Verdict: **APTO (Fase 3.0 Cerrada con Éxito - 375/375 Tests PASS)**.
+- Evidence: Commits `[T-13]` a `[T-16]`, hash `bcb7fae`. Commit de control `[STATE] close phase 3.0`.
+- Next: Planificación de Fase 4 (Graduación Femenina, Presets Avanzados Cosplay/Anime y Renderizado 3D/glTF para Visor WebGL).
+

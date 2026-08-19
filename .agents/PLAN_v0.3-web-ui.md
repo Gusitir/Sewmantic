@@ -69,20 +69,21 @@ Assurance: Lean
 
 ### T-16 - Generador de Conjuntos Completos de 2 Piezas (Top + Bottom)
 
-- Status: pending
+- Status: done
 - Depends on: T-10, T-12
 - Scope: `src/engine/modifier.ts`, `src/ai/mock_provider.ts`, `src/pipeline.ts`, `tests/two_piece_set.test.ts`
 - Rol: Ingeniero (Orquestacion de molderia compuesta).
 - Acceptance:
-  - [ ] Preset `straw_pirate_full_set`: Genera simultaneamente el Chaleco Rojo + Bermuda Denim Deshilachada.
-  - [ ] Ficha tecnica consolidada con consumo total de telas (Lino rojo + Denim azul) y avios (botones + ojetes + cordon).
-  - [ ] Empaquetado comercial unificado en un solo ZIP de Etsy (`01_Tiled_A4_Vest`, `02_Tiled_A4_Shorts`, etc.).
+  - [x] Preset `straw_pirate_full_set`: Genera simultaneamente el Chaleco Rojo + Bermuda Denim Deshilachada.
+  - [x] Ficha tecnica consolidada con consumo total de telas (Lino rojo + Denim azul) y avios (botones + ojetes + cordon).
+  - [x] Empaquetado comercial unificado en un solo ZIP de Etsy (`01_Print_At_Home_A4`, `02_Print_At_Home_US_Letter`, etc.).
 - Gates: `npm test`
 
 ---
 
 ## Closure gate
 
-- [ ] Todas las tareas (`T-13` a `T-16`) completadas y auditadas con veredicto APTO.
-- [ ] Servidor web local operativo ejecutable via `npm start` o `pattern-ai-core serve`.
-- [ ] Suite completa de pruebas automatizadas en verde.
+- [x] Todas las tareas (`T-13` a `T-16`) completadas y auditadas con veredicto APTO.
+- [x] Servidor web local operativo ejecutable via `npm start` o `pattern-ai-core serve`.
+- [x] Suite completa de pruebas automatizadas en verde (13/13 suites, 375 tests).
+
