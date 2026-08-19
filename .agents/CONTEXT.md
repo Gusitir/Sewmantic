@@ -165,3 +165,14 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-10] integrate trousers and shorts into modifier engine and pattern DNA` (hash: `ddf3e46`).
 - Verdict: **APTO**.
 - Next: Tarea `[T-11] Motor de Personalización Antropométrica por Medidas Exactas`.
+
+## 2026-08-18T23:45:00-05:00 - TASK T-11 AUDIT: ANTHROPOMETRIC CUSTOM MEASUREMENTS (Arquitecto / Ingeniero)
+
+- Decision and reason: Implementación del motor de graduación y escalado continuo a partir de medidas antropométricas personalizadas del cliente (`src/engine/base_blocks/measurements.ts`), validación Zod (`src/schema/pattern_schema.ts`), integración CLI con flag `-m, --measurements` (`src/pipeline.ts`, `src/index.ts`) y renderizado en Ficha Técnica (`src/engine/tech_sheet.ts`).
+- Verification:
+  - 26 nuevos tests (Total: 292/292 tests passing al 100% en Vitest).
+  - Fórmulas de escala armónica monotónica y clamping de seguridad anatómica en 18 cotas.
+  - Comparativa de medidas cliente vs base en Ficha Técnica Markdown, JSON y PDF.
+- Evidence: Commit `[T-11] implement anthropometric custom measurement scaling and CLI options` (hash: `8d6b46d`).
+- Verdict: **APTO**.
+- Next: Tarea `[T-12] Empaquetador Comercial Automatizado para Etsy (ZIP Bundler & Assets)`.

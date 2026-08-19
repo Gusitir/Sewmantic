@@ -55,14 +55,14 @@ Assurance: Lean
 
 ### T-11 - Motor de Personalizacion Antropometrica por Medidas Exactas
 
-- Status: pending
+- Status: done
 - Depends on: T-10
 - Scope: `src/engine/base_blocks/measurements.ts`, `src/pipeline.ts`, `src/index.ts`, `tests/custom_measurements.test.ts`
 - Rol: Ingeniero (Interpolacion y escalado biometrico).
 - Acceptance:
-  - [ ] Parametro CLI `--measurements <json_o_string>` para admitir medidas personalizadas del cliente (ej: `chest: 1020, waist: 880, hip: 1040, height: 1820`).
-  - [ ] Algoritmo de graduacion anatomica continua (interpolacion no lineal entre tablas antropometricas).
-  - [ ] Ficha tecnica reflejando las medidas individuales del cliente versus medidas estandar.
+  - [x] Parametro CLI `--measurements <json_o_string>` para admitir medidas personalizadas del cliente (ej: `chest: 1020, waist: 880, hip: 1040, height: 1820`).
+  - [x] Algoritmo de graduacion anatomica continua (interpolacion no lineal entre tablas antropometricas).
+  - [x] Ficha tecnica reflejando las medidas individuales del cliente versus medidas estandar.
 - Gates: `npm test`
 - Human checks: none
 - Risk triggers: Clamping insuficiente permitiendo proporciones anatomicas distorsionadas.
