@@ -176,3 +176,19 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-11] implement anthropometric custom measurement scaling and CLI options` (hash: `8d6b46d`).
 - Verdict: **APTO**.
 - Next: Tarea `[T-12] Empaquetador Comercial Automatizado para Etsy (ZIP Bundler & Assets)`.
+
+## 2026-08-18T23:55:00-05:00 - CLOSE PHASE 2.0 (EXPANDED SLOPERS, CUSTOM SIZING & ETSY BUNDLER) (Arquitecto)
+
+- Decision and reason: Cierre formal del hito Fase 2 (`T-09` a `T-12`). Todas las tareas han sido completadas, probadas exhaustivamente y auditadas con veredicto **APTO**.
+- Deliverables & Features Added in Phase 2:
+  1. `src/engine/base_blocks/trousers.ts`: Sloper base paramétrico de pantalón y shorts con coincidencia sub-milimétrica de entrepierna ($\Delta \le 0.05\text{ mm}$).
+  2. `src/engine/modifier.ts`: Modificador de prendas inferiores con pretinas, bolsillos cargo/parche y dobladillos con vuelta/flecos.
+  3. `src/engine/base_blocks/measurements.ts`: Motor de personalización antropométrica continua por medidas del cliente con soporte CLI `-m, --measurements`.
+  4. `src/engine/etsy_bundler.ts`: Empaquetador comercial automático que genera el archivo `.zip` organizado en 6 carpetas, con guía de impresión PDF y archivo `etsy_listing_metadata.json` (título SEO, 13 tags y descripción comercial completa).
+  5. Subcomandos CLI nuevos y opciones: `pattern-ai-core bundle <dir>`, `pattern-ai-core generate -m <json> --bundle`.
+- Verification:
+  - Suite completa de **309/309 tests pasando al 100%** en Vitest.
+  - Bundles comerciales generados y probados: `straw_pirate_adventurer_vest_etsy_bundle.zip` y `streetwear_oversize_hoodie_etsy_bundle.zip`.
+- Verdict: **APTO (Fase 2 Cerrada con Éxito - 309/309 Tests PASS)**.
+- Evidence: Commits `[T-09]` a `[T-12]`, hash `876300a`. Commit de control `[STATE] close phase 2.0`.
+- Next: Planificación de Fase 3 (Visor WebGL / Web UI interactiva / Catálogo).

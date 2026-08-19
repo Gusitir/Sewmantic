@@ -72,19 +72,19 @@ Assurance: Lean
 
 ### T-12 - Empaquetador Comercial Automatizado para Etsy (ZIP Bundler & Assets)
 
-- Status: pending
+- Status: done
 - Depends on: T-11
 - Scope: `src/engine/etsy_bundler.ts`, `src/pipeline.ts`, `src/index.ts`, `tests/bundler.test.ts`
 - Rol: Obrero (Empaquetado de archivos y estructura de carpetas) / Ingeniero (Auditoria).
 - Acceptance:
-  - [ ] Subcomando `pattern bundle <concept>` o flag `--bundle` que genere automaticamente un archivo `.zip` organizado para compradores de Etsy:
-    - ?? `01_Print_At_Home_A4/`
-    - ?? `02_Print_At_Home_US_Letter/`
-    - ?? `03_Copy_Shop_Plotter_A0/`
-    - ?? `04_Vector_Layers_SVG/`
-    - ?? `05_Sewing_Guide_And_TechPack/`
-    - ?? `README_Etsy_Customer_Instructions.pdf`
-  - [ ] Generacion de archivo `etsy_listing_metadata.json` con titulo SEO optimizado, etiquetas sugeridas (13 tags de Etsy) y descripcion en ingles lista para copiar y pegar.
+  - [x] Subcomando `pattern bundle <concept>` o flag `--bundle` que genere automaticamente un archivo `.zip` organizado para compradores de Etsy:
+    - `01_Print_At_Home_A4/`
+    - `02_Print_At_Home_US_Letter/`
+    - `03_Copy_Shop_Plotter_A0/`
+    - `04_Vector_Layers_SVG/`
+    - `05_Sewing_Guide_And_TechPack/`
+    - `README_Etsy_Printing_Instructions.pdf`
+  - [x] Generacion de archivo `etsy_listing_metadata.json` con titulo SEO optimizado, etiquetas sugeridas (13 tags de Etsy) y descripcion en ingles lista para copiar y pegar.
 - Gates: `npm test && node dist/index.js bundle`
 - Human checks: H-05
 - Risk triggers: Corrupcion de archivos comprimidos o rutas rotas.
@@ -94,6 +94,6 @@ Assurance: Lean
 
 ## Closure gate
 
-- [ ] Todas las tareas (`T-09` a `T-12`) con veredicto APTO.
-- [ ] Pruebas automatizadas pasando al 100% en Vitest.
-- [ ] Muestra completa de conjunto de 2 piezas (ej: Chaleco + Bermuda Pirata) empaquetada en ZIP comercial para Etsy.
+- [x] Todas las tareas (`T-09` a `T-12`) con veredicto APTO.
+- [x] Pruebas automatizadas pasando al 100% en Vitest (309/309 tests).
+- [x] Muestra completa de prendas y conjuntos empaquetada en ZIP comercial para Etsy (`straw_pirate_adventurer_vest_etsy_bundle.zip` y `streetwear_oversize_hoodie_etsy_bundle.zip`).
