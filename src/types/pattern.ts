@@ -167,6 +167,82 @@ export interface HoodMod {
 }
 
 /**
+ * Tipos de pretina para prendas inferiores
+ */
+export type WaistbandType = 'elastic' | 'fitted' | 'drawstring' | 'rib';
+
+/**
+ * Modificaciones geométricas de pretina
+ */
+export interface WaistbandMod {
+  type: WaistbandType;
+  height_mm?: number;
+}
+
+/**
+ * Tipos de dobladillo / bajo de pantalón
+ */
+export type TrouserHemType =
+  | 'straight'
+  | 'cuffed'
+  | 'elastic'
+  | 'fringed_pirate'
+  | 'raw';
+
+/**
+ * Modificaciones de bajo de pantalón
+ */
+export interface TrouserHemMod {
+  type: TrouserHemType;
+  cuff_height_mm?: number;
+}
+
+/**
+ * Tipos de pierna / silueta de pantalón
+ */
+export type TrouserLegsType =
+  | 'straight'
+  | 'wide_baggy'
+  | 'slim'
+  | 'flare'
+  | 'tapered';
+
+/**
+ * Longitud estándar de pantalón
+ */
+export type TrouserLengthType = 'full' | 'shorts' | 'bermuda' | 'cropped';
+
+/**
+ * Modificaciones de pierna de pantalón
+ */
+export interface TrouserLegsMod {
+  type: TrouserLegsType;
+  length_type?: TrouserLengthType;
+  inseam_mm?: number;
+}
+
+/**
+ * Tipos de bolsillo de pantalón
+ */
+export type TrouserPocketType = 'in_seam' | 'slash' | 'cargo' | 'patch_back';
+
+/**
+ * Modificaciones de bolsillos de pantalón
+ */
+export interface TrouserPocketMod {
+  type: TrouserPocketType;
+  count?: number;
+  width_mm?: number;
+  height_mm?: number;
+  placement_y_mm?: number;
+}
+
+/**
+ * Categoría principal de prenda
+ */
+export type GarmentCategory = 'top' | 'bottom' | 'set';
+
+/**
  * Árbol completo de modificaciones paramétricas sobre el bloque base
  */
 export interface ModificationTree {
@@ -176,6 +252,10 @@ export interface ModificationTree {
   pocket?: PocketMod;
   pockets?: PocketMod[];
   hood?: HoodMod;
+  waistband?: WaistbandMod;
+  trouser_hem?: TrouserHemMod;
+  trouser_legs?: TrouserLegsMod;
+  trouser_pockets?: TrouserPocketMod | TrouserPocketMod[];
   custom?: Record<string, unknown>;
 }
 
@@ -190,6 +270,10 @@ export interface EaseSettings {
   waist_ease_mm?: number;
   hip_ease_mm?: number;
   shoulder_ease_mm?: number;
+  crotch_ease_mm?: number;
+  thigh_ease_mm?: number;
+  knee_ease_mm?: number;
+  ankle_ease_mm?: number;
 }
 
 /**
@@ -222,6 +306,7 @@ export interface TechSpecs {
 export interface PatternDna {
   concept_name: string;
   description?: string;
+  garment_category?: GarmentCategory;
   base_block: string;
   ease: EaseSettings;
   modifications: ModificationTree;

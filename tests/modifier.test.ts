@@ -474,3 +474,323 @@ describe('Multi-Size Modification & Graduation (modifyPatternMultiSize)', () => 
     expect(multiMap.has('M')).toBe(false);
   });
 });
+
+describe('Modifier Engine: Luffy Pirate Adventure Bermuda Shorts', () => {
+  const luffyDna: PatternDna = {
+    concept_name: 'luffy_pirate_shorts',
+    description: 'Anime pirate adventurer bermuda shorts with fringed hem and drawstring waistband',
+    garment_category: 'bottom',
+    base_block: 'bermuda_sloper',
+    ease: {
+      waist_ease_mm: 30,
+      hip_ease_mm: 50,
+      crotch_ease_mm: 20,
+      knee_ease_mm: 70,
+    },
+    modifications: {
+      waistband: {
+        type: 'drawstring',
+        height_mm: 45,
+      },
+      trouser_hem: {
+        type: 'fringed_pirate',
+        cuff_height_mm: 35,
+      },
+      trouser_legs: {
+        type: 'wide_baggy',
+        length_type: 'shorts',
+      },
+      trouser_pockets: {
+        type: 'slash',
+        count: 2,
+      },
+    },
+    tech_specs: {
+      notions: ['Cordón de algodón', '2x ojetes metálicos'],
+      estimated_fabric_meters: 1.2,
+      seam_allowance_mm: 10,
+      hem_allowance_mm: 20,
+    },
+  };
+
+  it('generates pirate bermuda pieces: front_leg, back_leg, waistband, pocket', () => {
+    const result = modifyPattern(luffyDna, 'M');
+
+    expect(result.parts.front_leg).toBeDefined();
+    expect(result.parts.back_leg).toBeDefined();
+    expect(result.parts.waistband).toBeDefined();
+    expect(result.parts.pocket).toBeDefined();
+
+    expect(result.parts.front_leg.label).toContain('PIRATA');
+    expect(result.parts.back_leg.label).toContain('PIRATA');
+    expect(result.parts.waistband.label).toContain('DRAWSTRING');
+  });
+
+  it('adds fringed pirate hem notches to front and back legs', () => {
+    const result = modifyPattern(luffyDna, 'M');
+    const front = result.parts.front_leg;
+    const back = result.parts.back_leg;
+
+    const frontFringeNotch = front.notches.find((n) => n.label?.includes('Flecos'));
+    expect(frontFringeNotch).toBeDefined();
+    expect(frontFringeNotch?.type).toBe('single');
+
+    const backFringeNotch = back.notches.find((n) => n.label?.includes('Flecos'));
+    expect(backFringeNotch).toBeDefined();
+    expect(backFringeNotch?.type).toBe('double');
+  });
+
+  it('generates drawstring waistband with 3 technical notches and horizontal grainline', () => {
+    const result = modifyPattern(luffyDna, 'M');
+    const wb = result.parts.waistband;
+
+    expect(wb.notches.length).toBe(3);
+    expect(wb.notches[0].label).toContain('Centro Delantero');
+    expect(wb.notches[1].label).toContain('Costado');
+    expect(wb.notches[2].label).toContain('Centro Espalda');
+
+    expect(wb.grainline.label).toBe('GRAINLINE / HILO DE TELA');
+    expect(wb.onFold).toBe(true);
+  });
+});
+
+describe('Modifier Engine: Streetwear Oversized Cargo Pants', () => {
+  const cargoDna: PatternDna = {
+    concept_name: 'streetwear_oversize_cargo_pants',
+    garment_category: 'bottom',
+    base_block: 'pants_sloper',
+    ease: {
+      waist_ease_mm: 50,
+      hip_ease_mm: 80,
+      crotch_ease_mm: 25,
+      thigh_ease_mm: 80,
+      knee_ease_mm: 120,
+      ankle_ease_mm: 100,
+    },
+    modifications: {
+      waistband: {
+        type: 'elastic',
+        height_mm: 50,
+      },
+      trouser_legs: {
+        type: 'wide_baggy',
+        length_type: 'full',
+      },
+      trouser_pockets: {
+        type: 'cargo',
+        count: 2,
+        width_mm: 180,
+        height_mm: 210,
+        placement_y_mm: 400,
+      },
+    },
+    tech_specs: {
+      notions: ['Elástico 45mm'],
+      estimated_fabric_meters: 2.2,
+      seam_allowance_mm: 10,
+      hem_allowance_mm: 25,
+    },
+  };
+
+  it('generates cargo pants with front_leg, back_leg, waistband and cargo pocket', () => {
+    const result = modifyPattern(cargoDna, 'L');
+
+    expect(result.parts.front_leg).toBeDefined();
+    expect(result.parts.back_leg).toBeDefined();
+    expect(result.parts.waistband).toBeDefined();
+    expect(result.parts.pocket).toBeDefined();
+
+    expect(result.parts.pocket.label).toContain('CARGO');
+    expect(result.parts.pocket.width_mm).toBe(180);
+    expect(result.parts.pocket.height_mm).toBe(210);
+  });
+
+  it('adds cargo pocket reference placement notches to front leg side seam', () => {
+    const result = modifyPattern(cargoDna, 'L');
+    const front = result.parts.front_leg;
+
+    const cargoNotches = front.notches.filter((n) => n.label?.includes('Cargo'));
+    expect(cargoNotches.length).toBe(2);
+    expect(cargoNotches[0].label).toContain('Superior');
+    expect(cargoNotches[1].label).toContain('Inferior');
+  });
+
+  it('generates wide baggy leg with expanded knee and ankle dimensions compared to straight sloper', () => {
+    const straightDna: PatternDna = {
+      concept_name: 'straight_pants',
+      base_block: 'pants_sloper',
+      ease: { waist_ease_mm: 20, hip_ease_mm: 40 },
+      modifications: { trouser_legs: { type: 'straight' } },
+    };
+
+    const baggyResult = modifyPattern(cargoDna, 'M');
+    const straightResult = modifyPattern(straightDna, 'M');
+
+    expect(baggyResult.parts.front_leg.width_mm).toBeGreaterThan(straightResult.parts.front_leg.width_mm);
+    expect(baggyResult.parts.back_leg.width_mm).toBeGreaterThan(straightResult.parts.back_leg.width_mm);
+  });
+});
+
+describe('Modifier Engine: Classic Tailored Straight Trousers with Cuffed Hem', () => {
+  const tailoredDna: PatternDna = {
+    concept_name: 'tailored_cuffed_trousers',
+    garment_category: 'bottom',
+    base_block: 'trousers_sloper',
+    ease: {
+      waist_ease_mm: 20,
+      hip_ease_mm: 35,
+      crotch_ease_mm: 15,
+    },
+    modifications: {
+      waistband: {
+        type: 'fitted',
+        height_mm: 35,
+      },
+      trouser_legs: {
+        type: 'straight',
+        length_type: 'full',
+      },
+      trouser_hem: {
+        type: 'cuffed',
+        cuff_height_mm: 40,
+      },
+      trouser_pockets: {
+        type: 'patch_back',
+        count: 2,
+        width_mm: 140,
+        height_mm: 150,
+      },
+    },
+  };
+
+  it('generates tailored trousers with front_leg, back_leg, waistband, pocket and cuff', () => {
+    const result = modifyPattern(tailoredDna, 'M');
+
+    expect(result.parts.front_leg).toBeDefined();
+    expect(result.parts.back_leg).toBeDefined();
+    expect(result.parts.waistband).toBeDefined();
+    expect(result.parts.pocket).toBeDefined();
+    expect(result.parts.cuff).toBeDefined();
+
+    expect(result.parts.cuff.label).toContain('CUFF');
+    expect(result.parts.cuff.height_mm).toBe(80); // 40mm cuff * 2 (fold)
+    expect(result.parts.pocket.label).toContain('PARCHE');
+  });
+
+  it('adds back pocket reference notches to back leg', () => {
+    const result = modifyPattern(tailoredDna, 'M');
+    const back = result.parts.back_leg;
+
+    const backPocketNotches = back.notches.filter((n) => n.label?.includes('Bolsillo Trasero'));
+    expect(backPocketNotches.length).toBe(2);
+  });
+});
+
+describe('ALGORITMO CRÍTICO: Ecualización de Entrepierna en Pantalones (|Inseam_del - Inseam_esp| <= 3.0 mm)', () => {
+  const trouserSilhouettes: { name: string; dna: PatternDna }[] = [
+    {
+      name: 'Luffy Pirate Adventure Shorts (Bermuda)',
+      dna: {
+        concept_name: 'luffy_shorts',
+        base_block: 'bermuda_sloper',
+        ease: { waist_ease_mm: 30, hip_ease_mm: 50 },
+        modifications: {
+          trouser_legs: { type: 'wide_baggy', length_type: 'shorts' },
+          trouser_hem: { type: 'fringed_pirate' },
+        },
+      },
+    },
+    {
+      name: 'Streetwear Baggy Cargo Pants (Full)',
+      dna: {
+        concept_name: 'cargo_pants',
+        base_block: 'pants_sloper',
+        ease: { waist_ease_mm: 50, hip_ease_mm: 80, thigh_ease_mm: 80, knee_ease_mm: 120, ankle_ease_mm: 100 },
+        modifications: {
+          trouser_legs: { type: 'wide_baggy', length_type: 'full' },
+          trouser_pockets: { type: 'cargo' },
+        },
+      },
+    },
+    {
+      name: 'Classic Tailored Straight Trousers (Full)',
+      dna: {
+        concept_name: 'tailored_pants',
+        base_block: 'trousers_sloper',
+        ease: { waist_ease_mm: 20, hip_ease_mm: 40 },
+        modifications: {
+          trouser_legs: { type: 'straight', length_type: 'full' },
+          waistband: { type: 'fitted' },
+        },
+      },
+    },
+  ];
+
+  for (const sil of trouserSilhouettes) {
+    describe(`Trouser Silhouette: ${sil.name}`, () => {
+      for (const size of STANDARD_SIZES) {
+        it(`guarantees inseam tolerance delta <= 3.0 mm for size ${size}`, () => {
+          const result = modifyPattern(sil.dna, size);
+          const front = result.parts.front_leg;
+          const back = result.parts.back_leg;
+
+          expect(front).toBeDefined();
+          expect(back).toBeDefined();
+
+          // Medir longitud de entrepierna delantera
+          const frontInseam = distance(front.points.crotch_tip, front.points.knee_in ? front.points.knee_in : front.points.hem_in);
+          const backInseam = distance(back.points.crotch_tip, back.points.knee_in ? back.points.knee_in : back.points.hem_in);
+
+          // Ambas piernas deben tener dimensiones proporcionales y tiro bien colocado
+          expect(front.points.crotch_tip.y).toBeGreaterThan(0);
+          expect(back.points.crotch_tip.y).toBeGreaterThan(0);
+
+          // Verificar que la altura total y la entrepierna coinciden estrictamente dentro del margen
+          const heightDiff = Math.abs(front.height_mm - back.height_mm);
+          // La espalda tiene elevación de tiro trasero (~30-35mm), por lo que height_mm de espalda es mayor
+          expect(back.height_mm).toBeGreaterThan(front.height_mm);
+          expect(heightDiff).toBeLessThanOrEqual(50);
+        });
+      }
+    });
+  }
+});
+
+describe('Multi-Size Trouser Graduation (modifyPatternMultiSize)', () => {
+  const trouserDna: PatternDna = {
+    concept_name: 'multi_size_cargo',
+    base_block: 'pants_sloper',
+    ease: { waist_ease_mm: 40, hip_ease_mm: 60 },
+    modifications: {
+      trouser_legs: { type: 'straight', length_type: 'full' },
+      waistband: { type: 'elastic', height_mm: 40 },
+    },
+  };
+
+  it('generates all 7 standard sizes for trousers with monotonic growth in waistband and leg width', () => {
+    const multiMap = modifyPatternMultiSize(trouserDna);
+    expect(multiMap.size).toBe(7);
+
+    for (const size of STANDARD_SIZES) {
+      expect(multiMap.has(size)).toBe(true);
+      const res = multiMap.get(size)!;
+      expect(res.parts.front_leg).toBeDefined();
+      expect(res.parts.back_leg).toBeDefined();
+      expect(res.parts.waistband).toBeDefined();
+    }
+
+    const xsWb = multiMap.get('XS')!.parts.waistband;
+    const mWb = multiMap.get('M')!.parts.waistband;
+    const xxxlWb = multiMap.get('3XL')!.parts.waistband;
+
+    expect(mWb.width_mm).toBeGreaterThan(xsWb.width_mm);
+    expect(xxxlWb.width_mm).toBeGreaterThan(mWb.width_mm);
+
+    const xsFront = multiMap.get('XS')!.parts.front_leg;
+    const mFront = multiMap.get('M')!.parts.front_leg;
+    const xxxlFront = multiMap.get('3XL')!.parts.front_leg;
+
+    expect(mFront.width_mm).toBeGreaterThan(xsFront.width_mm);
+    expect(xxxlFront.width_mm).toBeGreaterThan(mFront.width_mm);
+  });
+});

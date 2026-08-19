@@ -16,6 +16,11 @@ import {
   HemModSchema,
   PocketModSchema,
   HoodModSchema,
+  WaistbandModSchema,
+  TrouserHemModSchema,
+  TrouserLegsModSchema,
+  TrouserPocketModSchema,
+  GarmentCategorySchema,
   StandardSizeSchema,
 } from "../src/schema/pattern_schema.js";
 import type { PatternDna, StandardSize } from "../src/types/pattern.js";
@@ -179,6 +184,150 @@ describe("PatternDna Zod Schema & Validators", () => {
         const parsed = StandardSizeSchema.parse(size);
         expect(parsed).toBe(size);
       });
+    });
+
+    it("debe validar un ADN de bermuda pirata de Luffy con bajo deshilachado y pretina con cordón", () => {
+      const luffyPirateDna = {
+        concept_name: "luffy_pirate_shorts",
+        description: "Bermuda pirata anime de Luffy con dobladillo de flecos y pretina con cordon",
+        garment_category: "bottom",
+        base_block: "bermuda_sloper",
+        ease: {
+          waist_ease_mm: 30,
+          hip_ease_mm: 50,
+          crotch_ease_mm: 20,
+          knee_ease_mm: 70,
+        },
+        modifications: {
+          waistband: {
+            type: "drawstring",
+            height_mm: 45,
+          },
+          trouser_hem: {
+            type: "fringed_pirate",
+            cuff_height_mm: 35,
+          },
+          trouser_legs: {
+            type: "wide_baggy",
+            length_type: "bermuda",
+            inseam_mm: 320,
+          },
+          trouser_pockets: {
+            type: "slash",
+            count: 2,
+          },
+        },
+        tech_specs: {
+          notions: ["1x cordon de algodon crudo 120cm", "2x ojetes metalicos"],
+          estimated_fabric_meters: 1.2,
+          seam_allowance_mm: 10,
+          hem_allowance_mm: 20,
+          fabric_type: "denim_washed",
+        },
+      };
+
+      const result = parsePatternDna(luffyPirateDna);
+      expect(result.concept_name).toBe("luffy_pirate_shorts");
+      expect(result.garment_category).toBe("bottom");
+      expect(result.base_block).toBe("bermuda_sloper");
+      expect(result.modifications.trouser_hem?.type).toBe("fringed_pirate");
+      expect(result.modifications.waistband?.type).toBe("drawstring");
+      expect(result.modifications.trouser_legs?.type).toBe("wide_baggy");
+    });
+
+    it("debe validar un pantalón cargo streetwear con bolsillos fuelle y pretina elástica", () => {
+      const cargoDna = {
+        concept_name: "streetwear_baggy_cargo",
+        garment_category: "bottom",
+        base_block: "pants_sloper",
+        ease: {
+          waist_ease_mm: 60,
+          hip_ease_mm: 90,
+          crotch_ease_mm: 30,
+          thigh_ease_mm: 80,
+          knee_ease_mm: 120,
+          ankle_ease_mm: 100,
+        },
+        modifications: {
+          waistband: {
+            type: "elastic",
+            height_mm: 50,
+          },
+          trouser_legs: {
+            type: "wide_baggy",
+            length_type: "full",
+            inseam_mm: 780,
+          },
+          trouser_pockets: [
+            {
+              type: "cargo",
+              count: 2,
+              width_mm: 180,
+              height_mm: 210,
+              placement_y_mm: 420,
+            },
+          ],
+          trouser_hem: {
+            type: "elastic",
+            cuff_height_mm: 30,
+          },
+        },
+        tech_specs: {
+          notions: ["elastico 40mm para cintura", "velcro para tapas de bolsillo"],
+          estimated_fabric_meters: 2.1,
+          seam_allowance_mm: 10,
+          hem_allowance_mm: 25,
+        },
+      };
+
+      const result = parsePatternDna(cargoDna);
+      expect(result.concept_name).toBe("streetwear_baggy_cargo");
+      expect(result.ease.waist_ease_mm).toBe(60);
+      expect(result.modifications.waistband?.type).toBe("elastic");
+    });
+
+    it("debe validar un pantalón sastre recto con pretina fitted y bolsillos traseros", () => {
+      const tailoredDna = {
+        concept_name: "tailored_straight_trousers",
+        garment_category: "bottom",
+        base_block: "trousers_sloper",
+        ease: {
+          waist_ease_mm: 20,
+          hip_ease_mm: 35,
+          crotch_ease_mm: 15,
+        },
+        modifications: {
+          waistband: {
+            type: "fitted",
+            height_mm: 35,
+          },
+          trouser_legs: {
+            type: "straight",
+            length_type: "full",
+          },
+          trouser_hem: {
+            type: "cuffed",
+            cuff_height_mm: 40,
+          },
+          trouser_pockets: {
+            type: "patch_back",
+            count: 2,
+            width_mm: 140,
+            height_mm: 150,
+          },
+        },
+        tech_specs: {
+          notions: ["1x cremallera pantalon 18cm", "1x boton sastre"],
+          estimated_fabric_meters: 1.6,
+          seam_allowance_mm: 10,
+          hem_allowance_mm: 40,
+        },
+      };
+
+      const result = parsePatternDna(tailoredDna);
+      expect(result.concept_name).toBe("tailored_straight_trousers");
+      expect(result.modifications.trouser_hem?.type).toBe("cuffed");
+      expect(result.modifications.trouser_legs?.type).toBe("straight");
     });
   });
 
@@ -414,6 +563,65 @@ Espero que este patrón sea perfecto para tu confección. ¡Avisa si requieres a
         estimated_fabric_meters: 0.01, // Demasiado bajo (< 0.05)
       };
       expect(() => parsePatternDna(invalid)).toThrow(/Fabric meters must be at least/);
+    });
+
+    it("debe validar y rechazar tipos inválidos de pretina (WaistbandModSchema)", () => {
+      expect(WaistbandModSchema.parse({ type: "elastic", height_mm: 40 })).toEqual({
+        type: "elastic",
+        height_mm: 40,
+      });
+      expect(WaistbandModSchema.parse({ type: "drawstring" })).toEqual({
+        type: "drawstring",
+      });
+      // @ts-expect-error tipo inválido
+      expect(() => WaistbandModSchema.parse({ type: "zipper_only" })).toThrow(/Invalid waistband type/);
+      expect(() => WaistbandModSchema.parse({ type: "elastic", height_mm: 5 })).toThrow(/Waistband height must be at least 10mm/);
+      expect(() => WaistbandModSchema.parse({ type: "elastic", height_mm: 250 })).toThrow(/Waistband height exceeds maximum limit/);
+    });
+
+    it("debe validar y rechazar tipos inválidos de bajo de pantalón (TrouserHemModSchema)", () => {
+      expect(TrouserHemModSchema.parse({ type: "fringed_pirate" })).toEqual({
+        type: "fringed_pirate",
+      });
+      expect(TrouserHemModSchema.parse({ type: "cuffed", cuff_height_mm: 50 })).toEqual({
+        type: "cuffed",
+        cuff_height_mm: 50,
+      });
+      // @ts-expect-error tipo inválido
+      expect(() => TrouserHemModSchema.parse({ type: "bell_bottom_ultra" })).toThrow(/Invalid trouser hem type/);
+      expect(() => TrouserHemModSchema.parse({ type: "cuffed", cuff_height_mm: 5 })).toThrow(/Cuff height must be at least 10mm/);
+    });
+
+    it("debe validar y rechazar tipos inválidos de pierna (TrouserLegsModSchema)", () => {
+      expect(TrouserLegsModSchema.parse({ type: "wide_baggy", length_type: "shorts", inseam_mm: 350 })).toEqual({
+        type: "wide_baggy",
+        length_type: "shorts",
+        inseam_mm: 350,
+      });
+      // @ts-expect-error tipo inválido
+      expect(() => TrouserLegsModSchema.parse({ type: "ultra_skinny" })).toThrow(/Invalid trouser legs type/);
+      expect(() => TrouserLegsModSchema.parse({ type: "straight", inseam_mm: 50 })).toThrow(/Inseam length must be at least 100mm/);
+    });
+
+    it("debe validar y rechazar tipos y conteo de bolsillos de pantalón (TrouserPocketModSchema)", () => {
+      expect(TrouserPocketModSchema.parse({ type: "cargo", count: 4, width_mm: 180, height_mm: 200 })).toEqual({
+        type: "cargo",
+        count: 4,
+        width_mm: 180,
+        height_mm: 200,
+      });
+      // @ts-expect-error tipo inválido
+      expect(() => TrouserPocketModSchema.parse({ type: "front_hoodie" })).toThrow(/Invalid trouser pocket type/);
+      expect(() => TrouserPocketModSchema.parse({ type: "cargo", count: 0 })).toThrow(/Pocket count must be at least 1/);
+      expect(() => TrouserPocketModSchema.parse({ type: "cargo", count: 10 })).toThrow(/Pocket count exceeds maximum limit/);
+    });
+
+    it("debe validar categoría de prenda (GarmentCategorySchema)", () => {
+      expect(GarmentCategorySchema.parse("top")).toBe("top");
+      expect(GarmentCategorySchema.parse("bottom")).toBe("bottom");
+      expect(GarmentCategorySchema.parse("set")).toBe("set");
+      // @ts-expect-error categoría inválida
+      expect(() => GarmentCategorySchema.parse("accessory")).toThrow();
     });
   });
 });

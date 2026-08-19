@@ -16,6 +16,11 @@ import {
   HemMod,
   PocketMod,
   HoodMod,
+  WaistbandMod,
+  TrouserHemMod,
+  TrouserLegsMod,
+  TrouserPocketMod,
+  GarmentCategory,
 } from '../types/pattern.js';
 import {
   Point2D,
@@ -42,6 +47,8 @@ import {
   getStandardMeasurements,
   generatePocketBlock,
   generateHoodBlock,
+  generateTrouserBlock,
+  TrouserLengthType,
 } from './base_blocks/index.js';
 
 export interface ArmholeHarmonization {
@@ -159,6 +166,515 @@ function computeSleeveCapCurveLength(
 }
 
 /**
+ * Determina si el ADN corresponde a una prenda inferior (pantalón, bermuda, shorts)
+ */
+export function isBottomGarment(dna: PatternDna): boolean {
+  if (dna.garment_category === 'bottom') return true;
+  const base = dna.base_block.toLowerCase().trim();
+  return (
+    base === 'pants_sloper' ||
+    base === 'trousers_sloper' ||
+    base === 'trouser_sloper' ||
+    base === 'pants' ||
+    base === 'trousers' ||
+    base === 'trouser' ||
+    base === 'shorts' ||
+    base === 'shorts_sloper' ||
+    base === 'bermuda' ||
+    base === 'bermuda_sloper' ||
+    base === 'cropped_pants' ||
+    base.includes('pant') ||
+    base.includes('trouser') ||
+    base.includes('short') ||
+    base.includes('bermuda')
+  );
+}
+
+/**
+ * Modifica y adapta un patrón de prenda inferior (pantalón, bermuda, shorts)
+ */
+export function modifyTrouserPattern(
+  dna: PatternDna,
+  size: StandardSize,
+  measurements: BodyMeasurements,
+  seamAllowance: number,
+  hemAllowance: number
+): ModifiedPatternResult {
+  const parts: Record<string, PatternPart> = {};
+
+  const baseBlockNorm = dna.base_block.toLowerCase().trim();
+  const trouserLegs = dna.modifications.trouser_legs;
+  const trouserHem = dna.modifications.trouser_hem;
+  const waistband = dna.modifications.waistband;
+
+  // Normalización de bolsillos de pantalón
+  const trouserPocketMod: TrouserPocketMod | undefined =
+    Array.isArray(dna.modifications.trouser_pockets)
+      ? dna.modifications.trouser_pockets[0]
+      : dna.modifications.trouser_pockets ??
+        (dna.modifications.pocket?.type === 'cargo' ||
+        dna.modifications.pocket?.type === 'patch'
+          ? {
+              type: dna.modifications.pocket.type === 'cargo' ? 'cargo' : 'patch_back',
+              width_mm: dna.modifications.pocket.width_mm,
+              height_mm: dna.modifications.pocket.height_mm,
+              placement_y_mm: dna.modifications.pocket.placement_y_mm,
+            }
+          : undefined);
+
+  // Tipología de longitud
+  const lengthType: TrouserLengthType =
+    trouserLegs?.length_type ??
+    (baseBlockNorm.includes('short') ||
+    baseBlockNorm.includes('bermuda') ||
+    trouserHem?.type === 'fringed_pirate'
+      ? 'shorts'
+      : baseBlockNorm.includes('crop')
+        ? 'cropped'
+        : 'full');
+
+  const legType = trouserLegs?.type ?? 'straight';
+
+  // Holguras paramétricas textiles
+  const waistEase =
+    dna.ease.waist_ease_mm ?? (legType === 'wide_baggy' ? 50 : 20);
+  const hipEase =
+    dna.ease.hip_ease_mm ?? (legType === 'wide_baggy' ? 80 : 40);
+  const crotchEase =
+    dna.ease.crotch_ease_mm ??
+    (legType === 'wide_baggy' ? 25 : legType === 'slim' ? 5 : 15);
+  const thighEase =
+    dna.ease.thigh_ease_mm ??
+    (legType === 'wide_baggy' ? 80 : legType === 'slim' ? 10 : 30);
+  const kneeEase =
+    dna.ease.knee_ease_mm ??
+    (legType === 'wide_baggy'
+      ? 120
+      : legType === 'slim'
+        ? 15
+        : legType === 'flare'
+          ? 20
+          : legType === 'tapered'
+            ? 50
+            : lengthType === 'shorts' || lengthType === 'bermuda'
+              ? 60
+              : 40);
+  const ankleEase =
+    dna.ease.ankle_ease_mm ??
+    (legType === 'wide_baggy'
+      ? 100
+      : legType === 'slim'
+        ? 15
+        : legType === 'flare'
+          ? 140
+          : legType === 'tapered'
+            ? 15
+            : 40);
+
+  const lengthDelta = trouserLegs?.inseam_mm
+    ? trouserLegs.inseam_mm - measurements.inseam_mm
+    : (dna.modifications.hem?.drop_mm ?? 0);
+
+  // 1. Generar piezas base de pierna (Delantero y Espalda)
+  const trouserBlock = generateTrouserBlock(size, {
+    length_type: lengthType,
+    waist_ease_mm: waistEase,
+    hip_ease_mm: hipEase,
+    crotch_ease_mm: crotchEase,
+    thigh_ease_mm: thighEase,
+    knee_ease_mm: kneeEase,
+    ankle_ease_mm: ankleEase,
+    length_delta_mm: lengthDelta,
+    seam_allowance_mm: seamAllowance,
+    hem_allowance_mm: hemAllowance,
+    measurements,
+  });
+
+  const frontLeg = trouserBlock.front_leg;
+  const backLeg = trouserBlock.back_leg;
+
+  // Ajustes de terminación de bajo pirata si aplica
+  if (trouserHem?.type === 'fringed_pirate') {
+    frontLeg.label = 'SHORTS DELANTERO PIRATA (FLECOS) / PIRATE SHORTS FRONT';
+    backLeg.label = 'SHORTS ESPALDA PIRATA (FLECOS) / PIRATE SHORTS BACK';
+    frontLeg.notches.push({
+      point: createPoint(0, frontLeg.points.hem_in.y),
+      type: 'single',
+      label: 'Piquete Flecos / Fringes Delantero',
+    });
+    backLeg.notches.push({
+      point: createPoint(0, backLeg.points.hem_in.y),
+      type: 'double',
+      label: 'Piquete Doble Flecos / Fringes Espalda',
+    });
+  }
+
+  parts.front_leg = frontLeg;
+  parts.back_leg = backLeg;
+
+  // 2. Generar Pretina (Waistband)
+  const wbType =
+    waistband?.type ??
+    (legType === 'wide_baggy' || lengthType === 'shorts' ? 'elastic' : 'fitted');
+  const wbHeight = waistband?.height_mm ?? 40;
+  const totalWaistCirc = measurements.waist_circumference_mm + waistEase;
+  const halfWaist = Math.round((totalWaistCirc / 2) * 10) / 10;
+  const pieceHeight = wbHeight * 2;
+
+  const wb_tl = createPoint(0, 0, 'top_left');
+  const wb_tr = createPoint(halfWaist, 0, 'top_right');
+  const wb_br = createPoint(halfWaist, pieceHeight, 'bottom_right');
+  const wb_bl = createPoint(0, pieceHeight, 'bottom_left');
+
+  const wb_outline = [wb_tl, wb_tr, wb_br, wb_bl];
+  const wb_pathD = `M 0 0 L ${halfWaist} 0 L ${halfWaist} ${pieceHeight} L 0 ${pieceHeight} Z`;
+  const wb_bounds = computeBounds(wb_outline);
+  const wb_area = computePolygonArea(wb_outline);
+
+  const wb_notches: TechnicalNotch[] = [
+    {
+      point: createPoint(0, 0),
+      type: 'single',
+      label: 'Piquete Centro Delantero Pretina',
+    },
+    {
+      point: createPoint(halfWaist / 2, 0),
+      type: 'single',
+      label: 'Piquete Costado Pretina',
+    },
+    {
+      point: createPoint(halfWaist, 0),
+      type: 'double',
+      label: 'Piquete Centro Espalda Pretina',
+    },
+  ];
+
+  const waistbandPart: PatternPart = {
+    name: 'waistband',
+    label: `PRETINA ${wbType.toUpperCase()} / WAISTBAND ${wbType.toUpperCase()}`,
+    cutCount: 1,
+    onFold: true,
+    points: {
+      top_left: wb_tl,
+      top_right: wb_tr,
+      bottom_right: wb_br,
+      bottom_left: wb_bl,
+    },
+    pathD: wb_pathD,
+    outline: wb_outline,
+    bounds: wb_bounds,
+    width_mm: wb_bounds.width,
+    height_mm: wb_bounds.height,
+    area_mm2: wb_area,
+    grainline: {
+      start: createPoint(20, wbHeight),
+      end: createPoint(halfWaist - 20, wbHeight),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches: wb_notches,
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: 0,
+  };
+
+  parts.waistband = waistbandPart;
+
+  // 3. Generar Bolsillos (Pockets)
+  if (trouserPocketMod) {
+    const pType = trouserPocketMod.type;
+    const cutCount = trouserPocketMod.count ?? 2;
+
+    if (pType === 'cargo') {
+      const pWidth = trouserPocketMod.width_mm ?? 170;
+      const pHeight = trouserPocketMod.height_mm ?? 190;
+
+      const p_tl = createPoint(0, 0, 'top_left');
+      const p_tr = createPoint(pWidth, 0, 'top_right');
+      const p_br = createPoint(pWidth, pHeight, 'bottom_right');
+      const p_bl = createPoint(0, pHeight, 'bottom_left');
+
+      const outline = [p_tl, p_tr, p_br, p_bl];
+      const pathD = `M 0 0 L ${pWidth} 0 L ${pWidth} ${pHeight} L 0 ${pHeight} Z`;
+      const bounds = computeBounds(outline);
+      const area = computePolygonArea(outline);
+
+      const cargoPart: PatternPart = {
+        name: 'pocket',
+        label: 'BOLSILLO CARGO / CARGO POCKET',
+        cutCount,
+        onFold: false,
+        points: {
+          top_left: p_tl,
+          top_right: p_tr,
+          bottom_right: p_br,
+          bottom_left: p_bl,
+        },
+        pathD,
+        outline,
+        bounds,
+        width_mm: bounds.width,
+        height_mm: bounds.height,
+        area_mm2: area,
+        grainline: {
+          start: createPoint(pWidth / 2, 20),
+          end: createPoint(pWidth / 2, pHeight - 20),
+          label: 'GRAINLINE / HILO DE TELA',
+        },
+        notches: [
+          {
+            point: createPoint(0, seamAllowance + 15),
+            type: 'single',
+            label: 'Piquete Dobladillo Superior Bolsillo Cargo',
+          },
+          {
+            point: createPoint(pWidth, seamAllowance + 15),
+            type: 'single',
+            label: 'Piquete Dobladillo Superior Bolsillo Cargo',
+          },
+        ],
+        seamAllowance_mm: seamAllowance,
+        hemAllowance_mm: hemAllowance,
+      };
+
+      parts.pocket = cargoPart;
+
+      // Piquetes de referencia en el lateral del delantero para posicionamiento del bolsillo cargo
+      const placementY =
+        trouserPocketMod.placement_y_mm ?? (measurements.crotch_depth_mm + 50);
+      const sideX = frontLeg.points.hip_side.x;
+
+      frontLeg.notches.push(
+        {
+          point: createPoint(sideX - 10, placementY),
+          type: 'single',
+          label: 'Piquete Superior Bolsillo Cargo',
+        },
+        {
+          point: createPoint(sideX - 10, placementY + pHeight),
+          type: 'single',
+          label: 'Piquete Inferior Bolsillo Cargo',
+        }
+      );
+    } else if (pType === 'patch_back') {
+      const pWidth = trouserPocketMod.width_mm ?? 140;
+      const pHeight = trouserPocketMod.height_mm ?? 150;
+      const pointDrop = 20;
+
+      const p_tl = createPoint(0, 0, 'top_left');
+      const p_tr = createPoint(pWidth, 0, 'top_right');
+      const p_br = createPoint(pWidth, pHeight - pointDrop, 'bottom_right');
+      const p_tip = createPoint(pWidth / 2, pHeight, 'bottom_tip');
+      const p_bl = createPoint(0, pHeight - pointDrop, 'bottom_left');
+
+      const outline = [p_tl, p_tr, p_br, p_tip, p_bl];
+      const pathD = `M 0 0 L ${pWidth} 0 L ${pWidth} ${pHeight - pointDrop} L ${pWidth / 2} ${pHeight} L 0 ${pHeight - pointDrop} Z`;
+      const bounds = computeBounds(outline);
+      const area = computePolygonArea(outline);
+
+      const patchPart: PatternPart = {
+        name: 'pocket',
+        label: 'BOLSILLO TRASERO PARCHE / BACK PATCH POCKET',
+        cutCount,
+        onFold: false,
+        points: {
+          top_left: p_tl,
+          top_right: p_tr,
+          bottom_right: p_br,
+          bottom_tip: p_tip,
+          bottom_left: p_bl,
+        },
+        pathD,
+        outline,
+        bounds,
+        width_mm: bounds.width,
+        height_mm: bounds.height,
+        area_mm2: area,
+        grainline: {
+          start: createPoint(pWidth / 2, 20),
+          end: createPoint(pWidth / 2, pHeight - 30),
+          label: 'GRAINLINE / HILO DE TELA',
+        },
+        notches: [],
+        seamAllowance_mm: seamAllowance,
+        hemAllowance_mm: hemAllowance,
+      };
+
+      parts.pocket = patchPart;
+
+      // Piquetes de referencia en espalda
+      const placementY =
+        trouserPocketMod.placement_y_mm ?? (measurements.crotch_depth_mm * 0.4);
+      backLeg.notches.push(
+        {
+          point: createPoint(backLeg.points.hip_side.x * 0.2, placementY),
+          type: 'single',
+          label: 'Piquete Referencia Superior Izquierdo Bolsillo Trasero',
+        },
+        {
+          point: createPoint(backLeg.points.hip_side.x * 0.2 + pWidth, placementY),
+          type: 'single',
+          label: 'Piquete Referencia Superior Derecho Bolsillo Trasero',
+        }
+      );
+    } else if (pType === 'in_seam' || pType === 'slash') {
+      const pWidth = trouserPocketMod.width_mm ?? 160;
+      const pHeight = trouserPocketMod.height_mm ?? 260;
+
+      const p_tl = createPoint(0, 0, 'top_left');
+      const p_tr = createPoint(pWidth, 0, 'top_right');
+      const p_br = createPoint(pWidth, pHeight * 0.6, 'bottom_right');
+      const p_bc = createPoint(pWidth * 0.5, pHeight, 'bottom_center');
+      const p_bl = createPoint(0, pHeight * 0.7, 'bottom_left');
+
+      const outline = [p_tl, p_tr, p_br, p_bc, p_bl];
+      const pathD = `M 0 0 L ${pWidth} 0 L ${pWidth} ${pHeight * 0.6} Q ${pWidth} ${pHeight} ${pWidth * 0.5} ${pHeight} Q 0 ${pHeight} 0 ${pHeight * 0.7} Z`;
+      const bounds = computeBounds(outline);
+      const area = computePolygonArea(outline);
+
+      const slashPart: PatternPart = {
+        name: 'pocket',
+        label: 'BOLSA DE BOLSILLO LATERAL / POCKET BAG',
+        cutCount: 4,
+        onFold: false,
+        points: {
+          top_left: p_tl,
+          top_right: p_tr,
+          bottom_right: p_br,
+          bottom_center: p_bc,
+          bottom_left: p_bl,
+        },
+        pathD,
+        outline,
+        bounds,
+        width_mm: bounds.width,
+        height_mm: bounds.height,
+        area_mm2: area,
+        grainline: {
+          start: createPoint(pWidth / 2, 20),
+          end: createPoint(pWidth / 2, pHeight - 40),
+          label: 'GRAINLINE / HILO DE TELA',
+        },
+        notches: [
+          {
+            point: createPoint(0, 40),
+            type: 'single',
+            label: 'Piquete Superior Boca Bolsillo',
+          },
+          {
+            point: createPoint(0, 190),
+            type: 'single',
+            label: 'Piquete Inferior Boca Bolsillo',
+          },
+        ],
+        seamAllowance_mm: seamAllowance,
+        hemAllowance_mm: 0,
+      };
+
+      parts.pocket = slashPart;
+
+      // Piquetes de apertura en el costado del delantero
+      frontLeg.notches.push(
+        {
+          point: createPoint(frontLeg.points.waist_side.x - 5, 40),
+          type: 'single',
+          label: 'Piquete Superior Boca Bolsillo Costado',
+        },
+        {
+          point: createPoint(frontLeg.points.hip_side.x, 190),
+          type: 'single',
+          label: 'Piquete Inferior Boca Bolsillo Costado',
+        }
+      );
+    }
+  }
+
+  // 4. Generar Vuelta de Dobladillo / Puño si `trouserHem?.type === 'cuffed'`
+  if (trouserHem?.type === 'cuffed') {
+    const cuffHeight = trouserHem.cuff_height_mm ?? 40;
+    const frontHemW = Math.abs(frontLeg.points.hem_out.x - frontLeg.points.hem_in.x);
+    const backHemW = Math.abs(backLeg.points.hem_out.x - backLeg.points.hem_in.x);
+    const halfCuffW = Math.round(((frontHemW + backHemW) / 2) * 10) / 10;
+    const cuffPieceHeight = cuffHeight * 2;
+
+    const c_tl = createPoint(0, 0, 'top_left');
+    const c_tr = createPoint(halfCuffW, 0, 'top_right');
+    const c_br = createPoint(halfCuffW, cuffPieceHeight, 'bottom_right');
+    const c_bl = createPoint(0, cuffPieceHeight, 'bottom_left');
+
+    const cuffOutline = [c_tl, c_tr, c_br, c_bl];
+    const cuffPathD = `M 0 0 L ${halfCuffW} 0 L ${halfCuffW} ${cuffPieceHeight} L 0 ${cuffPieceHeight} Z`;
+    const cuffBounds = computeBounds(cuffOutline);
+    const cuffArea = computePolygonArea(cuffOutline);
+
+    const cuffPart: PatternPart = {
+      name: 'cuff',
+      label: 'VUELTA DOBLADILLO / TROUSER CUFF',
+      cutCount: 2,
+      onFold: true,
+      points: {
+        top_left: c_tl,
+        top_right: c_tr,
+        bottom_right: c_br,
+        bottom_left: c_bl,
+      },
+      pathD: cuffPathD,
+      outline: cuffOutline,
+      bounds: cuffBounds,
+      width_mm: cuffBounds.width,
+      height_mm: cuffBounds.height,
+      area_mm2: cuffArea,
+      grainline: {
+        start: createPoint(20, cuffHeight),
+        end: createPoint(halfCuffW - 20, cuffHeight),
+        label: 'GRAINLINE / HILO DE TELA',
+      },
+      notches: [
+        {
+          point: createPoint(halfCuffW / 2, 0),
+          type: 'single',
+          label: 'Piquete Costado Vuelta Dobladillo',
+        },
+      ],
+      seamAllowance_mm: seamAllowance,
+      hemAllowance_mm: 0,
+    };
+
+    parts.cuff = cuffPart;
+  }
+
+  // 5. Verificación de Grainlines y Márgenes en el 100% de piezas
+  for (const [partName, part] of Object.entries(parts)) {
+    if (!part.grainline || !part.grainline.label) {
+      part.grainline = {
+        start: createPoint(part.width_mm / 2, part.height_mm * 0.8),
+        end: createPoint(part.width_mm / 2, part.height_mm * 0.2),
+        label: 'GRAINLINE / HILO DE TELA',
+      };
+    }
+    if (part.seamAllowance_mm === undefined) {
+      part.seamAllowance_mm = seamAllowance;
+    }
+    if (part.hemAllowance_mm === undefined) {
+      part.hemAllowance_mm = hemAllowance;
+    }
+  }
+
+  const allBounds = Object.values(parts).map((p) => p.bounds);
+  const totalBounds = combineBounds(allBounds);
+
+  return {
+    concept_name: dna.concept_name,
+    size,
+    base_block: dna.base_block,
+    measurements,
+    parts,
+    bounds: totalBounds,
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: hemAllowance,
+    tech_specs: dna.tech_specs,
+  };
+}
+
+/**
  * Aplica modificaciones paramétricas de ADN sobre los bloques base y genera las piezas adaptadas
  * @param dna ADN paramétrico del patrón
  * @param targetSize Talla estándar a generar (por defecto 'M' o la especificada en sizing)
@@ -180,12 +696,17 @@ export function modifyPattern(
   const hemAllowance =
     dna.tech_specs?.hem_allowance_mm ?? dna.modifications.hem?.allowance_mm ?? 25;
 
+  // Si la prenda es de tipo inferior (pantalón, bermuda, shorts), delegar a modifyTrouserPattern
+  if (isBottomGarment(dna)) {
+    return modifyTrouserPattern(dna, size, measurements, seamAllowance, hemAllowance);
+  }
+
   const parts: Record<string, PatternPart> = {};
 
   // =========================================================================
   // 1. ANÁLISIS DE MODIFICACIONES Y HOLGURAS (EASE SETTINGS)
   // =========================================================================
-  const chestEase = dna.ease.chest_ease_mm;
+  const chestEase = dna.ease.chest_ease_mm ?? 40;
   const shoulderEase = dna.ease.shoulder_ease_mm ?? (chestEase > 100 ? 30 : 0);
   const waistEase = dna.ease.waist_ease_mm ?? chestEase * 0.8;
   const hipEase = dna.ease.hip_ease_mm ?? chestEase * 0.9;

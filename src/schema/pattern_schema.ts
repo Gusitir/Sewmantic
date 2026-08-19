@@ -25,9 +25,11 @@ export const StandardSizeSchema = z.enum([
  */
 export const EaseSettingsSchema = z.object({
   chest_ease_mm: z
-    .number({ required_error: "chest_ease_mm is required" })
+    .number()
     .min(0, "Chest ease (chest_ease_mm) cannot be negative")
-    .max(500, "Chest ease exceeds realistic apparel threshold (max 500mm)"),
+    .max(500, "Chest ease exceeds realistic apparel threshold (max 500mm)")
+    .optional()
+    .default(0),
   bicep_ease_mm: z
     .number()
     .min(0, "Bicep ease cannot be negative")
@@ -47,6 +49,26 @@ export const EaseSettingsSchema = z.object({
     .number()
     .min(0, "Shoulder ease cannot be negative")
     .max(200, "Shoulder ease exceeds threshold (max 200mm)")
+    .optional(),
+  crotch_ease_mm: z
+    .number()
+    .min(0, "Crotch ease cannot be negative")
+    .max(200, "Crotch ease exceeds threshold (max 200mm)")
+    .optional(),
+  thigh_ease_mm: z
+    .number()
+    .min(0, "Thigh ease cannot be negative")
+    .max(300, "Thigh ease exceeds threshold (max 300mm)")
+    .optional(),
+  knee_ease_mm: z
+    .number()
+    .min(0, "Knee ease cannot be negative")
+    .max(300, "Knee ease exceeds threshold (max 300mm)")
+    .optional(),
+  ankle_ease_mm: z
+    .number()
+    .min(0, "Ankle ease cannot be negative")
+    .max(300, "Ankle ease exceeds threshold (max 300mm)")
     .optional(),
 });
 
@@ -296,6 +318,72 @@ export const HoodModSchema = z.object({
 });
 
 /**
+ * Esquema de modificaciones de pretina
+ */
+export const WaistbandModSchema = z.object({
+  type: z.enum(["elastic", "fitted", "drawstring", "rib"], {
+    errorMap: () => ({ message: "Invalid waistband type" }),
+  }),
+  height_mm: z
+    .number()
+    .min(10, "Waistband height must be at least 10mm")
+    .max(200, "Waistband height exceeds maximum limit (200mm)")
+    .optional(),
+});
+
+/**
+ * Esquema de modificaciones de bajo / dobladillo de pantalón
+ */
+export const TrouserHemModSchema = z.object({
+  type: z.enum(["straight", "cuffed", "elastic", "fringed_pirate", "raw"], {
+    errorMap: () => ({ message: "Invalid trouser hem type" }),
+  }),
+  cuff_height_mm: z
+    .number()
+    .min(10, "Cuff height must be at least 10mm")
+    .max(200, "Cuff height exceeds maximum limit (200mm)")
+    .optional(),
+});
+
+/**
+ * Esquema de modificaciones de pernera / silueta de pantalón
+ */
+export const TrouserLegsModSchema = z.object({
+  type: z.enum(["straight", "wide_baggy", "slim", "flare", "tapered"], {
+    errorMap: () => ({ message: "Invalid trouser legs type" }),
+  }),
+  length_type: z.enum(["full", "shorts", "bermuda", "cropped"]).optional(),
+  inseam_mm: z
+    .number()
+    .min(100, "Inseam length must be at least 100mm")
+    .max(1200, "Inseam length exceeds maximum limit (1200mm)")
+    .optional(),
+});
+
+/**
+ * Esquema de modificaciones de bolsillo de pantalón
+ */
+export const TrouserPocketModSchema = z.object({
+  type: z.enum(["in_seam", "slash", "cargo", "patch_back"], {
+    errorMap: () => ({ message: "Invalid trouser pocket type" }),
+  }),
+  count: z
+    .number()
+    .int("Pocket count must be an integer")
+    .min(1, "Pocket count must be at least 1")
+    .max(8, "Pocket count exceeds maximum limit (8)")
+    .optional(),
+  width_mm: z.number().min(30).max(400).optional(),
+  height_mm: z.number().min(30).max(400).optional(),
+  placement_y_mm: z.number().min(0).max(1200).optional(),
+});
+
+/**
+ * Esquema de categoría de prenda
+ */
+export const GarmentCategorySchema = z.enum(["top", "bottom", "set"]);
+
+/**
  * Esquema de árbol de modificaciones
  */
 export const ModificationTreeSchema = z.object({
@@ -305,6 +393,10 @@ export const ModificationTreeSchema = z.object({
   pocket: PocketModSchema.optional(),
   pockets: z.array(PocketModSchema).optional(),
   hood: HoodModSchema.optional(),
+  waistband: WaistbandModSchema.optional(),
+  trouser_hem: TrouserHemModSchema.optional(),
+  trouser_legs: TrouserLegsModSchema.optional(),
+  trouser_pockets: z.union([TrouserPocketModSchema, z.array(TrouserPocketModSchema)]).optional(),
   custom: z.record(z.unknown()).optional(),
 });
 
@@ -376,6 +468,7 @@ export const PatternDnaSchema = z.object({
       "concept_name must contain only alphanumeric characters, underscores or hyphens"
     ),
   description: z.string().max(1000).optional(),
+  garment_category: GarmentCategorySchema.optional(),
   base_block: z
     .string({ required_error: "base_block is required" })
     .min(2, "base_block is required"),

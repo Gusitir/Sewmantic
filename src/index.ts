@@ -28,6 +28,7 @@ export interface CoreConfig {
 
 // Exportación de tipos y contratos de ADN Paramétrico
 export * from "./types/pattern.js";
+export type { TrouserLengthType } from "./types/pattern.js";
 export * from "./schema/pattern_schema.js";
 
 // Exportación del Motor Geométrico y Bloques Base (Slopers)
