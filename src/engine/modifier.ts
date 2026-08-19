@@ -45,6 +45,7 @@ import {
   STANDARD_MEASUREMENTS,
   STANDARD_SIZES,
   getStandardMeasurements,
+  calculateCustomMeasurements,
   generatePocketBlock,
   generateHoodBlock,
   generateTrouserBlock,
@@ -231,6 +232,9 @@ export function modifySetPattern(
       fabric_width_mm: dna.fabric_details?.main_fabric?.width_mm ?? dna.tech_specs?.fabric_width_mm ?? 1500,
     },
   };
+  if (dna.custom_measurements && !topDna.custom_measurements) {
+    topDna.custom_measurements = dna.custom_measurements;
+  }
 
   // 2. Resolver Bottom DNA
   const bottomDna: PatternDna = dna.sub_garments?.bottom ?? dna.multi_piece_config?.bottom_dna ?? {
@@ -265,6 +269,9 @@ export function modifySetPattern(
       fabric_width_mm: dna.fabric_details?.secondary_fabric?.width_mm ?? dna.tech_specs?.fabric_width_mm ?? 1500,
     },
   };
+  if (dna.custom_measurements && !bottomDna.custom_measurements) {
+    bottomDna.custom_measurements = dna.custom_measurements;
+  }
 
   // 3. Modificar ambas prendas
   const topResult = modifyPattern(topDna, size);
@@ -898,7 +905,12 @@ export function modifyPattern(
 ): ModifiedPatternResult {
   const size: StandardSize = targetSize ?? dna.sizing?.size ?? 'M';
   const isTargetSizeMatch = !dna.sizing?.size || dna.sizing.size === size || dna.custom_measurements !== undefined;
-  const measurements: BodyMeasurements = {
+  
+  const customMerged = dna.custom_measurements
+    ? calculateCustomMeasurements(dna.custom_measurements, size)
+    : undefined;
+
+  const measurements: BodyMeasurements = customMerged ?? {
     ...getStandardMeasurements(size),
     ...(isTargetSizeMatch && dna.sizing?.chest_circ_mm ? { chest_circumference_mm: dna.sizing.chest_circ_mm } : {}),
     ...(isTargetSizeMatch && dna.sizing?.waist_circ_mm ? { waist_circumference_mm: dna.sizing.waist_circ_mm } : {}),

@@ -754,7 +754,7 @@ export class PatternViewer {
     }
 
     const sizeElements = this.patternContent.querySelectorAll(
-      `.size-${size}, [data-size="${size}"]`
+      `.size-${size}, [data-size="${size}"].size-layer`
     );
     sizeElements.forEach((el) => {
       el.style.display = visible ? '' : 'none';
@@ -766,16 +766,24 @@ export class PatternViewer {
    */
   highlightSize(size) {
     this.highlightedSize = size;
-    const pieces = this.patternContent.querySelectorAll('.pattern-piece');
+    const layers = this.patternContent.querySelectorAll('.size-layer');
+    if (!layers || layers.length === 0) return;
 
-    pieces.forEach((p) => {
-      const pieceSize = p.getAttribute('data-size') || 'M';
-      if (!size || pieceSize === size) {
-        p.style.opacity = '1';
-        p.style.filter = 'none';
+    layers.forEach((layer) => {
+      const layerSize = layer.getAttribute('data-size') || 'M';
+      const path = layer.querySelector('path');
+      if (!size || layerSize === size) {
+        layer.classList.remove('dimmed');
+        layer.style.opacity = '1';
+        if (path) {
+          path.setAttribute('stroke-width', '2.2');
+        }
       } else {
-        p.style.opacity = '0.35';
-        p.style.filter = 'grayscale(60%)';
+        layer.classList.add('dimmed');
+        layer.style.opacity = '0.22';
+        if (path) {
+          path.setAttribute('stroke-width', '0.9');
+        }
       }
     });
   }

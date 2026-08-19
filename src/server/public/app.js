@@ -13,7 +13,10 @@ const state = {
   activeConceptSlug: null,
   activePatternData: null,
   activeGrid: 'off',
+  activeSelectedSize: 'M',
   selectedSizes: ['S', 'M', 'L', 'XL', '2XL'],
+  uploadedImageData: null,
+  uploadedImageName: null,
   customMeasurements: {
     chest_circumference_mm: 1040,
     waist_circumference_mm: 860,
@@ -41,6 +44,13 @@ const generateBtn = document.getElementById('generateBtn');
 const generateBtnText = document.getElementById('generateBtnText');
 const generateBtnSpinner = document.getElementById('generateBtnSpinner');
 const presetsContainer = document.getElementById('presetsContainer');
+
+// Elementos de Imagen Dropzone
+const imageDropzone = document.getElementById('imageDropzone');
+const imageFileInput = document.getElementById('imageFileInput');
+const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+const imagePreviewImg = document.getElementById('imagePreviewImg');
+const btnRemoveImage = document.getElementById('btnRemoveImage');
 
 // Sliders biométricos
 const chestSlider = document.getElementById('chestSlider');
@@ -109,6 +119,69 @@ function initTheme() {
       if (viewerInstance) {
         viewerInstance.setTheme(state.theme);
       }
+    });
+  }
+}
+
+/**
+ * Inicializa el cargador de imágenes por Drag & Drop
+ */
+function initImageUploader() {
+  if (!imageDropzone || !imageFileInput) return;
+
+  const handleFile = (file) => {
+    if (!file || !file.type.startsWith('image/')) {
+      alert('Por favor selecciona un archivo de imagen válido (PNG, JPG, WEBP).');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      state.uploadedImageData = e.target.result;
+      state.uploadedImageName = file.name;
+
+      if (imagePreviewImg && imagePreviewContainer) {
+        imagePreviewImg.src = state.uploadedImageData;
+        imagePreviewContainer.style.display = 'block';
+        imageDropzone.style.display = 'none';
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  imageDropzone.addEventListener('click', () => {
+    imageFileInput.click();
+  });
+
+  imageFileInput.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) handleFile(file);
+  });
+
+  imageDropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    imageDropzone.classList.add('drag-over');
+  });
+
+  imageDropzone.addEventListener('dragleave', () => {
+    imageDropzone.classList.remove('drag-over');
+  });
+
+  imageDropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    imageDropzone.classList.remove('drag-over');
+    const file = e.dataTransfer?.files?.[0];
+    if (file) handleFile(file);
+  });
+
+  if (btnRemoveImage) {
+    btnRemoveImage.addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.uploadedImageData = null;
+      state.uploadedImageName = null;
+      if (imageFileInput) imageFileInput.value = '';
+      if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
+      if (imageDropzone) imageDropzone.style.display = 'flex';
     });
   }
 }
@@ -193,12 +266,21 @@ function initSizePills() {
     allSizes.forEach((size) => {
       const pill = document.createElement('button');
       pill.type = 'button';
-      pill.className = 'btn-tool active';
-      pill.textContent = size;
+      pill.className = `btn-tool size-tool-pill ${size === state.activeSelectedSize ? 'active' : ''}`;
+      pill.textContent = `Talla ${size}`;
+      pill.setAttribute('data-size', size);
+
       pill.addEventListener('click', () => {
-        const isActive = pill.classList.toggle('active');
+        state.activeSelectedSize = size;
+        document.querySelectorAll('.size-tool-pill').forEach((p) => p.classList.remove('active'));
+        pill.classList.add('active');
+
         if (viewerInstance) {
-          viewerInstance.toggleSizeLayer(size, isActive);
+          viewerInstance.highlightSize(size);
+        }
+
+        if (state.activePatternData) {
+          updateRightPanelStats(state.activePatternData, size);
         }
       });
       viewerSizePills.appendChild(pill);
@@ -255,7 +337,8 @@ async function loadPresetsCatalog() {
         else if (p.id === 'dress') icon = '👗';
         else if (p.id === 'vest') icon = '🦺';
         else if (p.id === 'pirate_vest') icon = '🏴‍☠️';
-        else if (p.id === 'pirate_shorts') icon = '🩳';
+        else if (p.id === 'pirate_shorts') icon = '👖';
+        else if (p.id === 'straw_pirate_full_set') icon = '🏴‍☠️';
 
         card.innerHTML = `
           <div class="preset-card-title">${icon} ${p.name}</div>
@@ -353,9 +436,15 @@ function initTabs() {
     } else if (tabKey === 'techpack') {
       tabBtnTechpack?.classList.add('active');
       viewTechpack?.classList.add('active');
+      if (state.activePatternData) {
+        renderTechpackView(state.activePatternData);
+      }
     } else if (tabKey === 'etsy') {
       tabBtnEtsy?.classList.add('active');
       viewEtsy?.classList.add('active');
+      if (state.activePatternData) {
+        renderEtsyMetadataView(state.activePatternData);
+      }
     }
   };
 
@@ -378,6 +467,7 @@ async function loadPatternIntoStudio(conceptSlug) {
       const svgText = await svgRes.text();
       if (viewerInstance) {
         viewerInstance.loadSvg(svgText);
+        viewerInstance.highlightSize(state.activeSelectedSize);
       }
     }
 
@@ -388,7 +478,7 @@ async function loadPatternIntoStudio(conceptSlug) {
       state.activePatternData = techpack;
       renderTechpackView(techpack);
       renderEtsyMetadataView(techpack);
-      updateRightPanelStats(techpack);
+      updateRightPanelStats(techpack, state.activeSelectedSize);
     }
 
     // 3. Actualizar enlaces de descarga directa
@@ -404,54 +494,128 @@ async function loadPatternIntoStudio(conceptSlug) {
 function renderTechpackView(techpack) {
   if (!viewTechpack) return;
 
-  const piecesHtml = (techpack.cuttingPieces || [])
+  const rawPieces = techpack.pieces || techpack.cuttingPieces || [];
+  const rawPOM = techpack.pointsOfMeasure || techpack.finishedMeasurements || [];
+  const rawSteps = techpack.steps || techpack.assemblySequence || [];
+  const rawNotions = techpack.notions || [];
+  const fabricBreakdown = techpack.fabricConsumption?.breakdown_by_fabric;
+
+  const piecesHtml = rawPieces
     .map(
       (p) => `
       <tr>
-        <td><strong>${p.name.toUpperCase()}</strong></td>
-        <td>${p.label || p.name}</td>
-        <td>x${p.cutCount} ${p.onFold ? '(Al Lomo / Fold)' : ''}</td>
-        <td>${p.seamAllowance_mm} mm</td>
-        <td>${p.dimensions_mm?.width || '-'} × ${p.dimensions_mm?.height || '-'} mm</td>
+        <td><strong>${(p.id || p.name || '').toUpperCase()}</strong></td>
+        <td>${p.name || p.label || p.id}</td>
+        <td>${p.quantityDescription || `x${p.cutCount || 1} ${p.onFold ? '(Al Lomo)' : ''}`}</td>
+        <td>${p.seamAllowance_mm || techpack.seamAllowance_mm || 10} mm</td>
+        <td>${p.width_mm || p.dimensions_mm?.width || '-'} × ${p.height_mm || p.dimensions_mm?.height || '-'} mm</td>
+        <td>${p.suggestedFabric || '-'}</td>
       </tr>
     `
     )
     .join('');
 
-  const measurementsHtml = (techpack.finishedMeasurements || [])
+  const pomHtml = rawPOM
     .map(
       (m) => `
       <tr>
-        <td><strong>${m.code || m.name}</strong></td>
-        <td>${m.name}</td>
-        <td>${m.baseValue_mm} mm (${(m.baseValue_mm / 10).toFixed(1)} cm)</td>
-        <td>${m.description || '-'}</td>
+        <td><strong style="color: var(--accent-cyan); font-family: monospace;">${m.code || m.id || '-'}</strong></td>
+        <td><strong>${m.name || ''}</strong></td>
+        <td>${m.description || m.location || '-'}</td>
+        <td style="font-weight: 700; color: #fff;">${m.baseValue_mm || m.measurement_mm || '-'} mm (${m.baseValue_mm ? (m.baseValue_mm / 10).toFixed(1) : '-'} cm)</td>
+        <td>±${m.tolerance_mm ?? 3} mm</td>
       </tr>
     `
     )
     .join('');
 
-  const sequenceHtml = (techpack.assemblySequence || [])
+  const sequenceHtml = rawSteps
     .map(
       (s) => `
-      <li style="margin-bottom: 8px;">
-        <strong>Paso ${s.step || ''}:</strong> ${s.operation || s.title || ''} 
-        <span style="color: var(--text-dim); font-size: 0.8rem;">(${s.stitchType || s.notes || ''})</span>
+      <li style="margin-bottom: 10px; line-height: 1.4;">
+        <strong>Paso ${s.step || ''}: ${s.operation || s.title || ''}</strong>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+          ${s.description || s.notes || ''}
+          ${s.machine || s.stitchType ? `<span style="display:inline-block; margin-left:6px; padding:2px 6px; background:var(--bg-input); border-radius:4px; font-family:monospace; color:var(--accent-cyan); font-size:0.75rem;">${s.machine || s.stitchType}</span>` : ''}
+        </div>
       </li>
     `
     )
     .join('');
 
+  const notionsHtml = rawNotions
+    .map(
+      (n) => `
+      <tr>
+        <td><strong style="text-transform: capitalize;">${n.category || 'Avío'}</strong></td>
+        <td>${n.name || ''}</td>
+        <td>${n.specification || '-'}</td>
+        <td style="font-weight: 600;">${n.quantity || '-'}</td>
+        <td>${n.usageLocation || '-'}</td>
+      </tr>
+    `
+    )
+    .join('');
+
+  let fabricBreakdownHtml = '';
+  if (fabricBreakdown && Object.keys(fabricBreakdown).length > 0) {
+    const cards = Object.values(fabricBreakdown)
+      .map(
+        (f) => `
+        <div class="fabric-stat-box" style="text-align: left; padding: 12px 16px;">
+          <div style="font-weight: 700; font-size: 0.9rem; color: #fff; margin-bottom: 4px;">${f.fabricName || f.fabricKey}</div>
+          <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 6px;">Color: ${f.color || 'Coordinado'} | Ancho: ${f.width_mm} mm</div>
+          <div style="font-size: 1.1rem; font-weight: 800; color: var(--accent-cyan); font-family: monospace;">${(f.averageLinearMeters || 0).toFixed(2)} m <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">(Promedio / Prenda)</span></div>
+        </div>
+      `
+      )
+      .join('');
+
+    fabricBreakdownHtml = `
+      <h3 style="font-size: 1rem; margin-top: 24px; margin-bottom: 10px;">🧶 Desglose de Consumo por Tela (Multi-Tela)</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        ${cards}
+      </div>
+    `;
+  }
+
+  let customMeasHtml = '';
+  if (techpack.customMeasurements && Object.keys(techpack.customMeasurements).length > 0) {
+    const rows = Object.entries(techpack.customMeasurements)
+      .map(
+        ([k, v]) => `
+        <tr>
+          <td><strong style="font-family: monospace;">${k}</strong></td>
+          <td style="font-weight: 700; color: var(--accent-cyan);">${v} mm (${(Number(v) / 10).toFixed(1)} cm)</td>
+        </tr>
+      `
+      )
+      .join('');
+
+    customMeasHtml = `
+      <h3 style="font-size: 1rem; margin-top: 24px; margin-bottom: 8px;">👤 Personalización Antropométrica Aplicada</h3>
+      <table class="tech-table" style="max-width: 500px; margin-bottom: 20px;">
+        <thead><tr><th>Cota Antropométrica</th><th>Medida a Medida</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
   viewTechpack.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 14px;">
       <div>
-        <h2 style="font-size: 1.25rem; font-weight: 700;">${techpack.conceptName || 'Ficha Técnica Industrial'}</h2>
-        <div style="color: var(--text-muted); font-size: 0.85rem;">Talla Base: <strong>${techpack.baseSize || 'M'}</strong> | Bloque: <strong>${techpack.baseBlock || 'Sloper'}</strong></div>
+        <h2 style="font-size: 1.3rem; font-weight: 700; color: #fff;">${techpack.conceptName?.replace(/_/g, ' ').toUpperCase() || 'FICHA TÉCNICA INDUSTRIAL'}</h2>
+        <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">
+          Talla Base: <strong style="color:var(--accent-cyan);">${techpack.primarySize || techpack.baseSize || 'M'}</strong> | Bloque: <strong>${techpack.baseBlock || 'Sloper'}</strong> | Merma: <strong>${techpack.fabricConsumption?.wastePercentage || 15}%</strong>
+        </div>
       </div>
       <a class="btn-tool" href="/api/patterns/${state.activeConceptSlug}/download/techpack-pdf" download>📥 Descargar Tech Pack PDF</a>
     </div>
 
-    <h3 style="font-size: 1rem; margin-top: 18px; margin-bottom: 8px;">✂️ Piezas de Corte y Moldería</h3>
+    ${customMeasHtml}
+    ${fabricBreakdownHtml}
+
+    <h3 style="font-size: 1rem; margin-top: 20px; margin-bottom: 8px;">✂️ Piezas de Corte y Moldería (${rawPieces.length} piezas)</h3>
     <table class="tech-table">
       <thead>
         <tr>
@@ -460,25 +624,47 @@ function renderTechpackView(techpack) {
           <th>Cantidad de Corte</th>
           <th>Margen de Costura</th>
           <th>Dimensiones (An × Al)</th>
+          <th>Tela Asignada</th>
         </tr>
       </thead>
-      <tbody>${piecesHtml || '<tr><td colspan="5">No se encontraron piezas</td></tr>'}</tbody>
+      <tbody>${piecesHtml || '<tr><td colspan="6">No se encontraron piezas</td></tr>'}</tbody>
     </table>
 
-    <h3 style="font-size: 1rem; margin-top: 24px; margin-bottom: 8px;">📏 Medidas de Prenda Terminada</h3>
+    <h3 style="font-size: 1rem; margin-top: 24px; margin-bottom: 8px;">📏 Puntos de Control y Medidas de Calidad (POM)</h3>
     <table class="tech-table">
       <thead>
         <tr>
           <th>Código</th>
-          <th>Punto de Medición</th>
-          <th>Medida Base</th>
-          <th>Tolerancia / Detalle</th>
+          <th>Punto de Control</th>
+          <th>Descripción</th>
+          <th>Medida Terminada</th>
+          <th>Tolerancia</th>
         </tr>
       </thead>
-      <tbody>${measurementsHtml || '<tr><td colspan="4">Sin medidas registradas</td></tr>'}</tbody>
+      <tbody>${pomHtml || '<tr><td colspan="5">Sin medidas de control registradas</td></tr>'}</tbody>
     </table>
 
-    <h3 style="font-size: 1rem; margin-top: 24px; margin-bottom: 8px;">🧵 Secuencia de Armado y Confección</h3>
+    ${
+      rawNotions.length > 0
+        ? `
+      <h3 style="font-size: 1rem; margin-top: 24px; margin-bottom: 8px;">📦 Lista de Avíos y Fornituras (BOM)</h3>
+      <table class="tech-table">
+        <thead>
+          <tr>
+            <th>Categoría</th>
+            <th>Nombre</th>
+            <th>Especificación</th>
+            <th>Cantidad</th>
+            <th>Ubicación</th>
+          </tr>
+        </thead>
+        <tbody>${notionsHtml}</tbody>
+      </table>
+    `
+        : ''
+    }
+
+    <h3 style="font-size: 1rem; margin-top: 24px; margin-bottom: 8px;">🧵 Secuencia de Armado y Confección Industrial</h3>
     <ol style="padding-left: 20px; font-size: 0.85rem; color: var(--text-main);">
       ${sequenceHtml || '<li>Secuencia estándar de confección industrial.</li>'}
     </ol>
@@ -491,24 +677,25 @@ function renderTechpackView(techpack) {
 function renderEtsyMetadataView(techpack) {
   if (!viewEtsy) return;
 
-  const conceptName = techpack.conceptName || 'Patrón Textil Paramétrico';
-  const title = `Sewing Pattern PDF | ${conceptName.replace(/_/g, ' ')} | Sizes XS-3XL | Instant Download`;
-  const sku = `PAC-${conceptName.toUpperCase().slice(0, 8)}-M`;
+  const conceptName = techpack.conceptName || 'Patron Textil Parametrico';
+  const cleanName = conceptName.replace(/_/g, ' ');
+  const title = `Sewing Pattern PDF | ${cleanName.charAt(0).toUpperCase() + cleanName.slice(1)} | Sizes XS-3XL | Instant Download A4 Letter A0 Plotter`;
+  const sku = `PAT-AI-${conceptName.toUpperCase().slice(0, 8)}-001`;
 
   const tags = [
     'sewing pattern',
     'pdf pattern',
     'digital pattern',
     'anime cosplay',
-    'diy streetwear',
+    'diy clothing',
     'pattern cutting',
     'menswear pattern',
-    'oversize sloper',
+    'streetwear sloper',
     'printable pdf',
     'a4 pattern',
     'us letter pattern',
     'freesewing',
-    'tech pack',
+    'sewing tech pack',
   ];
 
   const tagsHtml = tags
@@ -516,37 +703,59 @@ function renderEtsyMetadataView(techpack) {
       (t) => `
       <span class="etsy-tag-pill">
         ${t}
-        <button style="background:none;border:none;color:#38bdf8;cursor:pointer;" onclick="navigator.clipboard.writeText('${t}')" title="Copiar tag">📋</button>
+        <button type="button" style="background:none;border:none;color:#38bdf8;cursor:pointer;margin-left:4px;" onclick="navigator.clipboard.writeText('${t}')" title="Copiar tag">📋</button>
       </span>
     `
     )
     .join('');
 
   viewEtsy.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 14px;">
       <div>
-        <h2 style="font-size: 1.25rem; font-weight: 700;">🛍️ Kit Comercial & Metadatos Etsy</h2>
-        <div style="color: var(--text-muted); font-size: 0.85rem;">Optimizado para listings de alta conversión en Etsy y Shopify</div>
+        <h2 style="font-size: 1.3rem; font-weight: 700; color: #fff;">🛍️ Kit Comercial & Metadatos Etsy SEO</h2>
+        <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">Optimizado para listings de alta conversión en Etsy, Shopify y marketplaces digitales</div>
       </div>
       <a class="btn-download-action zip-btn" style="width: auto;" href="/api/patterns/${state.activeConceptSlug}/bundle" download>📦 Descargar ZIP Etsy Completo</a>
     </div>
 
     <div class="etsy-meta-box">
-      <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">Título de Listing SEO Sugerido (Máx 140 caracteres):</label>
-      <div style="display: flex; gap: 8px;">
-        <input type="text" value="${title}" readonly style="flex:1; background:#0d1321; border:1px solid #334155; padding:8px 12px; border-radius:6px; color:#fff;" id="etsyTitleInput" />
-        <button class="btn-tool" onclick="navigator.clipboard.writeText(document.getElementById('etsyTitleInput').value); alert('¡Título copiado!');">Copiar</button>
+      <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">Título de Listing SEO Optimizado (122 / 140 caracteres):</label>
+      <div style="display: flex; gap: 8px; margin-top: 6px;">
+        <input type="text" value="${title}" readonly style="flex:1; background:#0d1321; border:1px solid #334155; padding:8px 12px; border-radius:6px; color:#fff; font-size:0.85rem;" id="etsyTitleInput" />
+        <button class="btn-tool" type="button" onclick="navigator.clipboard.writeText(document.getElementById('etsyTitleInput').value); alert('¡Título copiado al portapapeles!');">📋 Copiar</button>
       </div>
     </div>
 
     <div class="etsy-meta-box">
-      <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">13 Tags de Alto Tráfico para Etsy (1-Click Copy):</label>
-      <div class="etsy-tags-cloud">${tagsHtml}</div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">13 Tags SEO de Alto Tráfico para Etsy:</label>
+        <button class="btn-tool" type="button" style="font-size:0.75rem;" onclick="navigator.clipboard.writeText('${tags.join(', ')}'); alert('¡13 tags copiados!');">Copiar Todos (Separados por coma)</button>
+      </div>
+      <div class="etsy-tags-cloud" style="margin-top: 8px;">${tagsHtml}</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+      <div class="etsy-meta-box">
+        <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">SKU Comercial de Inventario:</label>
+        <div style="font-family: monospace; font-size: 1rem; color: #34d399; font-weight: 700; margin-top: 4px;">${sku}</div>
+      </div>
+      <div class="etsy-meta-box">
+        <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">Precio Sugerido en Etsy / Gumroad:</label>
+        <div style="font-family: monospace; font-size: 1.1rem; color: #38bdf8; font-weight: 700; margin-top: 4px;">$14.99 - $16.99 USD</div>
+      </div>
     </div>
 
     <div class="etsy-meta-box">
-      <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">SKU Comercial de Inventario:</label>
-      <div style="font-family: monospace; font-size: 1rem; color: #34d399; font-weight: 700;">${sku}</div>
+      <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">Estructura Interna del Archivo .ZIP Entregable:</label>
+      <ul style="font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; padding-left: 20px; line-height: 1.6;">
+        <li>📁 01_Print_At_Home_A4/ (Patrón paginado A4 con cuadro 10x10 cm en Pág 1)</li>
+        <li>📁 02_Print_At_Home_US_Letter/ (Patrón paginado US Letter)</li>
+        <li>📁 03_Copy_Shop_Plotter_A0/ (Patrón continuo para copistería)</li>
+        <li>📁 04_Vector_Layers_SVG/ (Vector editable multi-capa)</li>
+        <li>📁 05_Sewing_Guide_And_TechPack/ (Ficha técnica PDF, MD y JSON)</li>
+        <li>📁 06_Dna_Parameters/ (Archivo ADN paramétrico JSON)</li>
+        <li>📄 README_Etsy_Printing_Instructions.pdf (Guía de calibración e impresión)</li>
+      </ul>
     </div>
   `;
 }
@@ -554,14 +763,20 @@ function renderEtsyMetadataView(techpack) {
 /**
  * Actualiza el panel derecho con métricas de tela y piezas
  */
-function updateRightPanelStats(techpack) {
+function updateRightPanelStats(techpack, targetSize) {
+  const sizeToUse = targetSize || state.activeSelectedSize || 'M';
+  const perSizeData = techpack.fabricConsumption?.perSize?.[sizeToUse];
+  const sizeFabric = perSizeData?.estimatedLinearMeters;
   const avgFabric = techpack.fabricConsumption?.averageLinearMeters || 1.4;
-  const partsCount = (techpack.cuttingPieces || []).length || 4;
 
-  if (fabricConsumptionVal) fabricConsumptionVal.textContent = `${avgFabric.toFixed(2)} m`;
+  const displayMeters = sizeFabric ? `${sizeFabric.toFixed(2)} m (Talla ${sizeToUse})` : `${avgFabric.toFixed(2)} m`;
+  const rawPieces = techpack.pieces || techpack.cuttingPieces || [];
+  const partsCount = rawPieces.length || 4;
+
+  if (fabricConsumptionVal) fabricConsumptionVal.textContent = displayMeters;
   if (totalPartsCountVal) totalPartsCountVal.textContent = String(partsCount);
-  if (fabricWidthVal) fabricWidthVal.textContent = '1500 mm';
-  if (wasteFactorVal) wasteFactorVal.textContent = '15%';
+  if (fabricWidthVal) fabricWidthVal.textContent = `${techpack.fabricConsumption?.fabricWidth_mm || 1500} mm`;
+  if (wasteFactorVal) wasteFactorVal.textContent = `${techpack.fabricConsumption?.wastePercentage || 15}%`;
 }
 
 /**
@@ -635,11 +850,12 @@ function initGenerateForm() {
   generateForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const prompt = promptInput?.value?.trim();
-    if (!prompt) return;
+    if (!prompt && !state.uploadedImageData) return;
 
     const provider = providerSelect?.value || 'mock';
     const sizes = state.selectedSizes;
     const customMeasurements = state.customMeasurements;
+    const imagePath = state.uploadedImageData;
 
     if (generateBtn) generateBtn.disabled = true;
     if (generateBtnText) generateBtnText.textContent = 'Orquestando Geometría IA...';
@@ -650,10 +866,11 @@ function initGenerateForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt,
+          prompt: prompt || 'Generar patrón a partir de imagen de referencia',
           provider,
           sizes,
           customMeasurements,
+          imagePath,
           bundle: true,
           wasteFactor: 0.15,
         }),
@@ -685,6 +902,7 @@ function initGenerateForm() {
 // Inicialización de la aplicación
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  initImageUploader();
   initBiometrics();
   initSizePills();
   initViewer();

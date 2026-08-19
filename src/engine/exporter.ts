@@ -182,6 +182,7 @@ export function exportContinuousSvg(
     includeLabels = true,
     gap_mm = 30,
     margin_mm = 20,
+    sizeLayers,
   } = options;
 
   const layout = layoutPatternParts(pattern.parts, gap_mm);
@@ -260,11 +261,35 @@ export function exportContinuousSvg(
       </g>`;
     }
 
+    let sizeOutlinesSvg = '';
+    const hasSizeLayers =
+      sizeLayers &&
+      ((sizeLayers instanceof Map && sizeLayers.size > 0) ||
+        (typeof sizeLayers === 'object' && Object.keys(sizeLayers).length > 0));
+
+    if (hasSizeLayers) {
+      const entries: [string, ModifiedPatternResult][] =
+        sizeLayers instanceof Map
+          ? Array.from(sizeLayers.entries())
+          : Object.entries(sizeLayers);
+
+      for (const [sz, szPattern] of entries) {
+        const szPart = szPattern?.parts ? szPattern.parts[name] : undefined;
+        if (szPart && szPart.pathD) {
+          const pal = SIZE_LAYER_STYLES[sz as StandardSize] || { stroke: '#111827', strokeWidth: 1.2 };
+          const isBase = sz === pattern.size;
+          const strokeW = isBase ? 1.6 : 1.0;
+          const dashAttr = pal.dashArray ? `stroke-dasharray="${pal.dashArray}"` : '';
+          sizeOutlinesSvg += `\n      <!-- Capa Talla ${sz} -->\n      <g class="size-layer size-${sz}" data-size="${sz}">\n        <path class="outline-cut size-stroke-${sz}" d="${szPart.pathD}" fill="none" stroke="${pal.stroke}" stroke-width="${strokeW}" ${dashAttr} />\n      </g>`;
+        }
+      }
+    } else {
+      sizeOutlinesSvg = `\n      <!-- Contorno de corte base (Talla ${pattern.size}) -->\n      <g class="size-layer size-${pattern.size}" data-size="${pattern.size}">\n        <path class="outline-cut" d="${part.pathD}" fill="none" stroke="#111827" stroke-width="1.3" />\n      </g>`;
+    }
+
     piecesSvg += `
     <!-- Pieza: ${name} -->
-    <g id="part-${name}" class="pattern-piece" data-part="${name}" transform="translate(${posX.toFixed(2)}, ${posY.toFixed(2)})">
-      <!-- Contorno de corte -->
-      <path class="outline-cut" d="${part.pathD}" fill="none" stroke="#111827" stroke-width="1.2" />${grainlineSvg}${notchesSvg}${labelsSvg}
+    <g id="part-${name}" class="pattern-piece" data-part="${name}" transform="translate(${posX.toFixed(2)}, ${posY.toFixed(2)})">${sizeOutlinesSvg}${grainlineSvg}${notchesSvg}${labelsSvg}
     </g>`;
   }
 
@@ -277,7 +302,10 @@ export function exportContinuousSvg(
   </defs>
   <style>
     .pattern-piece { vector-effect: non-scaling-stroke; }
-    .outline-cut { stroke-linecap: round; stroke-linejoin: round; }
+    .outline-cut { stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+    .size-layer { transition: opacity 0.2s ease, stroke-width 0.2s ease; }
+    .size-layer.dimmed { opacity: 0.15; }
+    .size-layer.hidden { display: none; }
   </style>
   <g id="pattern-container">${calibSvg}
 ${piecesSvg}

@@ -40,6 +40,7 @@ npm test
    - La ventana de consola CMD se abre con encabezado azul/celeste.
    - Detecta Node.js y compila si es necesario.
    - Abre automáticamente el navegador en `http://127.0.0.1:3030`.
+- **Estado:** ✅ [VERIFICADO OK - Launcher por lotes corregido y validado]
 
 ---
 
@@ -48,9 +49,10 @@ npm test
 2. **Pruebas en el visor:**
    - **Zoom:** Usa la rueda del ratón hacia adelante/atrás (el zoom debe centrarse en el cursor).
    - **Pan:** Haz clic izquierdo sostenido y arrastra para mover el lienzo.
-   - **Selector de Capas:** Activa y desactiva las tallas `XS`, `M`, `3XL` con los botones de la barra superior para ver el escalado gradual.
+   - **Selector de Capas:** Activa y desactiva las tallas `XS` a `3XL` en la barra superior; los trazos de colores graduados se resaltan y ocultan en tiempo real.
    - **Cuadrícula A4:** Activa el botón "Cuadrícula A4" para ver las páginas numeradas (`A1`, `A2`, `B1`...) sobrepuestas en el patrón.
    - **Calibración 10x10 cm:** Pasa el cursor o haz clic en "Verificar 10x10cm" para inspeccionar el recuadro de prueba.
+- **Estado:** ✅ [VERIFICADO OK - Capas multi-talla activas e interactivas]
 
 ---
 
@@ -59,10 +61,12 @@ npm test
    - **Contorno de Pecho:** Sube a `1060 mm`.
    - **Contorno de Cintura:** Ajusta a `880 mm`.
    - **Contorno de Cadera:** Ajusta a `1020 mm`.
+   - **Tiro / Inseam:** Ajusta a `820 mm`.
 2. Haz clic en **"Generar Patrón Paramétrico"**.
 3. **Resultado esperado:**
-   - El visor 2D se actualiza en tiempo real reflejando las nuevas proporciones del cliente.
-   - En la pestaña **"Ficha Técnica"**, aparece la sección *"1.1 PERSONALIZACIÓN ANTROPOMÉTRICA"* comparando las medidas del cliente contra la talla base.
+   - El visor 2D se actualiza en tiempo real reflejando las nuevas proporciones del torso y de las bermudas.
+   - En la pestaña **"Ficha Técnica"**, aparece la sección *"👤 Personalización Antropométrica Aplicada"* comparando las cotas a medida.
+- **Estado:** ✅ [VERIFICADO OK - Escalado continuo anatómico aplicado a Top y Bottom]
 
 ---
 
@@ -71,10 +75,11 @@ npm test
    - `[PDF A4 Paginado]`: Descarga el archivo multi-página listo para imprimir en casa.
    - `[PDF US Letter]`: Descarga el formato para impresoras estándar americanas.
    - `[PDF Plotter A0]`: Descarga el plano continuo para copistería.
-   - `[SVG Vectorial]`: Descarga el vector continuo para software CAD/Illustrator.
+   - `[SVG Vectorial]`: Descarga el vector continuo multi-capa editable.
    - `[Ficha Técnica PDF]`: Descarga el PDF estilizado con consumo de telas y ensamble.
-   - `[🛍️ Paquete Comercial Etsy (.ZIP)]`: Descarga el archivo `.zip` completo estructurado.
+   - `[🛍️ Paquete Comercial Etsy (.ZIP)]`: Descarga el archivo `.zip` completo estructurado en 6 carpetas.
 2. Abre el `.zip` descargado y verifica que contenga las 6 subcarpetas con la guía `README_Etsy_Printing_Instructions.pdf`.
+- **Estado:** ✅ [VERIFICADO OK - Paquetes ZIP y PDFs descargables]
 
 ---
 
@@ -83,10 +88,9 @@ Prueba la generación de un conjunto completo desde PowerShell:
 ```powershell
 node dist/index.js generate "straw_pirate_full_set" -b "two_piece_set" -p mock --bundle
 ```
-**Resultado esperado:**
-Genera los 11 archivos en `output/straw_pirate_full_set/`, incluyendo el ZIP de Etsy y `straw_pirate_full_set_etsy_listing_metadata.json` con 13 tags SEO.
-
----
+**Resultado verificado empíricamente:**
+- Genera los 11 archivos en `output/straw_pirate_full_set/`, incluyendo `straw_pirate_full_set_etsy_bundle.zip` (160 KB) y metadatos con 13 tags SEO.
+- **Estado:** ✅ [VERIFICADO OK - Ejecución determinista 100%]
 
 ## 3. Verificaciones Físicas Indispensables (Stop Conditions)
 

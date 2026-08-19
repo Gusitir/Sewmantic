@@ -63,14 +63,29 @@
             <textarea id="promptInput" class="prompt-input" placeholder="Ej: Sudadera oversize streetwear con capucha cruzada y bolsillo canguro..." required></textarea>
           </div>
 
+          <!-- Procesador de Imagen de Referencia (Drag & Drop / Selector) -->
+          <div class="form-group">
+            <label class="form-label">Imagen de Referencia / Boceto (Opcional):</label>
+            <div class="image-dropzone" id="imageDropzone">
+              <input type="file" id="imageFileInput" accept="image/png, image/jpeg, image/webp" style="display: none;" />
+              <div class="image-dropzone-icon">🖼️</div>
+              <div class="image-dropzone-text">Arrastra una imagen aquí o <strong>haz clic para buscar</strong></div>
+              <div style="font-size: 0.65rem; color: var(--text-dim);">(PNG, JPG, WEBP • Para análisis visual por IA)</div>
+            </div>
+            <div class="image-preview-container" id="imagePreviewContainer">
+              <img id="imagePreviewImg" src="" alt="Preview de referencia" />
+              <button type="button" class="btn-remove-image" id="btnRemoveImage" title="Eliminar imagen">✕</button>
+            </div>
+          </div>
+
           <!-- Proveedor IA -->
           <div class="form-group">
             <label class="form-label" for="providerSelect">Proveedor de Inteligencia Artificial:</label>
             <select id="providerSelect" class="control-select">
               <option value="mock">mock (Offline / Rápido - 100% Determinista)</option>
-              <option value="agy">agy (Claude / Antigravity CLI)</option>
-              <option value="opencode">opencode (OpenCode CLI)</option>
-              <option value="api">api (Direct API)</option>
+              <option value="agy">agy (Antigravity CLI • Gemini 3.7 Flash)</option>
+              <option value="opencode">opencode (OpenCode CLI • Modelos Gratuitos)</option>
+              <option value="api">api (Direct API • GEMINI_API_KEY)</option>
             </select>
           </div>
 
@@ -176,7 +191,7 @@
       </div>
 
       <!-- 1. VISTA: VISOR VECTORIAL 2D (DEFAULT) -->
-      <div class="viewer-container-wrapper" id="viewVector2d">
+      <div class="viewer-container-wrapper active" id="viewVector2d">
         <div id="viewerStage" style="width: 100%; height: 100%;"></div>
       </div>
 
