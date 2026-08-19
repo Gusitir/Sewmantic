@@ -38,14 +38,14 @@ Assurance: Lean
 
 ### T-10 - Integracion de Pantalones/Bermudas en Modifier Engine y ADN
 
-- Status: pending
+- Status: done
 - Depends on: T-09
 - Scope: `src/engine/modifier.ts`, `src/types/pattern.ts`, `src/schema/pattern_schema.ts`, `tests/modifier.test.ts`
 - Rol: Ingeniero (Logica de transformaciones y holguras).
 - Acceptance:
-  - [ ] Soporte para modificaciones de pantalon: bolsillos laterales (in-seam y parche/cargo), pretina elastica / rib / cordon, dobladillos con vuelta o deshilachados.
-  - [ ] Adaptacion de holguras de cadera, muslo y botamanga segun silueta (slim, straight, baggy, pirate shorts).
-  - [ ] Suite de pruebas con generacion de pantalon completo y bermudas en todas las tallas XS-3XL.
+  - [x] Soporte para modificaciones de pantalon: bolsillos laterales (in-seam y parche/cargo), pretina elastica / rib / cordon, dobladillos con vuelta o deshilachados.
+  - [x] Adaptacion de holguras de cadera, muslo y botamanga segun silueta (slim, straight, baggy, pirate shorts).
+  - [x] Suite de pruebas con generacion de pantalon completo y bermudas en todas las tallas XS-3XL.
 - Gates: `npm test`
 - Human checks: none
 - Risk triggers: Conflicto con piezas de torso en patrones de conjunto (set 2 piezas).

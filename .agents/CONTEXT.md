@@ -153,3 +153,15 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-09] implement parametric trouser and shorts sloper base block` (hash: `be3f4b9`).
 - Verdict: **APTO**.
 - Next: Tarea `[T-10] Integración de Pantalones/Bermudas en Modifier Engine y ADN`.
+
+## 2026-08-18T23:35:00-05:00 - TASK T-10 AUDIT: TROUSER MODIFIER INTEGRATION (Arquitecto / Ingeniero)
+
+- Decision and reason: Integración completa de modificaciones paramétricas de prendas inferiores (pantalones, bermudas, shorts) en el Modifier Engine (`src/engine/modifier.ts`), esquemas Zod (`src/schema/pattern_schema.ts`) y tipos (`src/types/pattern.ts`).
+- Verification:
+  - 38 nuevos tests (Total: 266/266 tests passing al 100% en Vitest).
+  - Soporte de pretinas (`elastic`, `fitted`, `drawstring`, `rib`), dobladillos (`straight`, `cuffed`, `fringed_pirate`), bolsillos (`cargo`, `patch_back`, `slash`, `in_seam`) y siluetas (`wide_baggy`, `straight`, `slim`).
+  - Ecualización de entrepierna probada y garantizada ($\Delta \le 3.0\text{ mm}$) en todas las tallas modificadas.
+  - 100% de piezas con grainlines normalizados y piquetes emparejados.
+- Evidence: Commit `[T-10] integrate trousers and shorts into modifier engine and pattern DNA` (hash: `ddf3e46`).
+- Verdict: **APTO**.
+- Next: Tarea `[T-11] Motor de Personalización Antropométrica por Medidas Exactas`.

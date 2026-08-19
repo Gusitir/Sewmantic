@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-18T02:16:00-05:00
-source_commit: [T-09] implement parametric trouser and shorts sloper base block
+updated_at: 2026-08-18T23:35:00-05:00
+source_commit: [T-10] integrate trousers and shorts into modifier engine and pattern DNA
 assurance: Lean
 active_plan: PLAN_v0.2-features.md
-active_task: T-10
+active_task: T-11
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,16 +18,16 @@ backup: local-only
 
 ## Next action
 
-1. **FASE 2 ACTIVA - TAREA [T-10]:** El Ingeniero integrará el soporte completo de pantalones y bermudas en el Modifier Engine (`src/engine/modifier.ts`), tipos y esquemas Zod (`src/types/pattern.ts`, `src/schema/pattern_schema.ts`), permitiendo generar tanto prendas inferiores individuales como conjuntos de 2 piezas (ej. Chaleco + Bermuda).
+1. **FASE 2 ACTIVA - TAREA [T-11]:** El Ingeniero implementará el Motor de Personalización Antropométrica por Medidas Exactas (`src/engine/base_blocks/measurements.ts`, `src/pipeline.ts`, `src/index.ts`, `tests/custom_measurements.test.ts`), permitiendo generar moldería a medida a partir de parámetros CLI `--measurements` o archivos JSON de medidas anatómicas individuales.
 
 ## Blockers
 
-- Ninguno. Todas las pruebas automatizadas (228/228) pasando al 100%.
+- Ninguno. Todas las pruebas automatizadas (266/266) pasando al 100%.
 
 ## Current facts
 
-- Tarea `T-09` completada y auditada con veredicto **APTO**: Sloper base de pantalón/shorts implementado con coincidencia de entrepiernas $< 0.05\text{ mm}$ en todas las tallas XS-3XL.
-- Suite determinista completa con **228/228 tests pasando al 100%** en Vitest.
+- Tarea `T-10` completada y auditada con veredicto **APTO**: Integración completa de pantalones y bermudas en Modifier Engine, esquemas Zod y moldería de piezas (delantero, espalda, pretinas elásticas/fitted, bolsillos cargo/parche, dobladillos con vuelta y flecos pirata).
+- Suite determinista completa con **266/266 tests pasando al 100%** en Vitest.
 - Reconstrucción digital de ensamble de hojas A4 verificada al 100% en PDFStitcher (curvas continuas sin desfases).
 - Generación de muestra completa en `output/streetwear_oversize_hoodie/` con 8 entregables válidos de alta calidad comercial para Etsy.
 - Sistema CLI con 5 comandos operativos (`generate`, `calibrate`, `inspect`, `techpack`, `status`).
