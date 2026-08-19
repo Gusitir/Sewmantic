@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pattern-ai-core | Generador Paramétrico de Patrones IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #8b5cf6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-badge {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      font-weight: 700;
+      font-size: 1.25rem;
+      padding: 10px 14px;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .status-badges {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: #1f2937;
+      color: #93c5fd;
+      border: 1px solid #374151;
+    }
+
+    .badge.green {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 28px;
+    }
+
+    @media (max-width: 960px) {
+      .grid-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #d1d5db;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      background: #0d1321;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 85px;
+    }
+
+    .presets-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .preset-chip {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: #cbd5e1;
+      transition: all 0.15s ease;
+    }
+
+    .preset-chip:hover {
+      background: #334155;
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .col {
+      flex: 1;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: #d1d5db;
+    }
+
+    button.btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary), #2563eb);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.2s;
+      margin-top: 8px;
+    }
+
+    button.btn-primary:hover {
+      opacity: 0.92;
+    }
+
+    button.btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pattern-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 620px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .pattern-item {
+      background: #162032;
+      border: 1px solid #283548;
+      border-radius: 8px;
+      padding: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .pattern-item:hover {
+      border-color: #3b82f6;
+    }
+
+    .pattern-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .pattern-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #f3f4f6;
+    }
+
+    .pattern-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .pattern-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .btn-action {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #93c5fd;
+      font-size: 0.75rem;
+      padding: 5px 10px;
+      border-radius: 6px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .btn-action:hover {
+      background: #2563eb;
+      color: white;
+      border-color: #2563eb;
+    }
+
+    .btn-action.zip {
+      color: #34d399;
+    }
+    .btn-action.zip:hover {
+      background: #10b981;
+      color: white;
+      border-color: #10b981;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #1f2937;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      font-size: 1.25rem;
+      cursor: pointer;
+    }
+
+    .svg-viewer {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 16px;
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+    }
+
+    .svg-viewer svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    pre.json-viewer {
+      background: #0d1321;
+      padding: 14px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #a5f3fc;
+      overflow-x: auto;
+    }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo-badge">PAC</div>
+        <div>
+          <h1>pattern-ai-core</h1>
+          <div class="subtitle">Motor Paramétrico FreeSewing v3 & API REST Local</div>
+        </div>
+      </div>
+      <div class="status-badges" id="statusBadges">
+        <span class="badge green">● Conectado</span>
+        <span class="badge" id="versionBadge">v0.1.0</span>
+        <span class="badge" id="providerBadge">IA: Mock</span>
+      </div>
+    </header>
+
+    <div class="grid-layout">
+      <!-- PANEL IZQUIERDO: FORMULARIO GENERADOR -->
+      <section class="card">
+        <h2 class="card-title">⚡ Generar Moldería Textil IA</h2>
+
+        <div class="form-group">
+          <label>Presets Rápidos de Patronaje:</label>
+          <div class="presets-container" id="presetsContainer">
+            <span class="preset-chip" data-prompt="Sudadera oversize streetwear con capucha cruzada y bolsillo canguro">🧥 Hoodie Oversize</span>
+            <span class="preset-chip" data-prompt="Camiseta manga corta cuello redondo regular fit 100% algodón">👕 T-Shirt Regular</span>
+            <span class="preset-chip" data-prompt="Vestido túnica ceremonial anime fantasy sacerdotisa con mangas kimono">👗 Vestido Priestess</span>
+            <span class="preset-chip" data-prompt="Chaleco táctico cyberpunk shinobi sin mangas con bolsillos cargo">🦺 Chaleco Shinobi</span>
+            <span class="preset-chip" data-prompt="Chaleco pirata de anime con escote en V pronunciado y bajo en pico">🏴‍☠️ Pirate Captain Vest</span>
+          </div>
+        </div>
+
+        <form id="generateForm">
+          <div class="form-group">
+            <label for="promptInput">Prompt de la Prenda o Modificaciones:</label>
+            <textarea id="promptInput" placeholder="Ej: Sudadera oversize con capucha cruzada y bolsillo canguro..." required rows="3"></textarea>
+          </div>
+
+          <div class="row">
+            <div class="col form-group">
+              <label for="providerSelect">Proveedor IA:</label>
+              <select id="providerSelect">
+                <option value="mock">mock (Offline / Rápido)</option>
+                <option value="agy">agy (Claude/CLI)</option>
+                <option value="opencode">opencode (CLI)</option>
+                <option value="api">api (Direct API)</option>
+              </select>
+            </div>
+            <div class="col form-group">
+              <label for="sizesInput">Tallas Graduadas:</label>
+              <input type="text" id="sizesInput" value="S, M, L, XL, 2XL" placeholder="XS, S, M, L..." />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="measurementsInput">Medidas Personalizadas en JSON (Opcional):</label>
+            <input type="text" id="measurementsInput" placeholder='{"chest_circumference_mm": 1040, "waist_circumference_mm": 880}' />
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="bundleCheckbox" checked />
+              <span>Empaquetar automáticamente ZIP Comercial y Metadatos Etsy</span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn-primary" id="generateBtn">
+            <span id="btnText">Generar Patrón Paramétrico</span>
+            <div id="btnSpinner" class="spinner" style="display: none;"></div>
+          </button>
+        </form>
+      </section>
+
+      <!-- PANEL DERECHO: PATRONES GENERADOS -->
+      <section class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h2 class="card-title" style="margin-bottom: 0;">📁 Biblioteca de Patrones</h2>
+          <button id="refreshPatternsBtn" class="btn-action">🔄 Actualizar</button>
+        </div>
+
+        <div class="pattern-list" id="patternsList">
+          <div style="text-align: center; color: var(--text-muted); padding: 32px 0;">
+            Cargando patrones...
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- MODAL DE VISOR SVG Y FICHA TÉCNICA -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle" style="font-size: 1.1rem;">Visor</h3>
+        <button class="modal-close" id="modalCloseBtn">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '';
+
+    // Referencias DOM
+    const generateForm = document.getElementById('generateForm');
+    const promptInput = document.getElementById('promptInput');
+    const providerSelect = document.getElementById('providerSelect');
+    const sizesInput = document.getElementById('sizesInput');
+    const measurementsInput = document.getElementById('measurementsInput');
+    const bundleCheckbox = document.getElementById('bundleCheckbox');
+    const generateBtn = document.getElementById('generateBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const patternsList = document.getElementById('patternsList');
+    const refreshPatternsBtn = document.getElementById('refreshPatternsBtn');
+    const versionBadge = document.getElementById('versionBadge');
+    const providerBadge = document.getElementById('providerBadge');
+
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+    // Cargar estado inicial
+    async function loadStatus() {
+      try {
+        const res = await fetch(`${API_BASE}/api/status`);
+        if (!res.ok) return;
+        const data = await res.json();
+        versionBadge.textContent = `v${data.version || '0.1.0'}`;
+        providerBadge.textContent = `IA: ${data.activeProvider || 'mock'}`;
+      } catch (err) {
+        console.error('Error fetching status:', err);
+      }
+    }
+
+    // Cargar Presets de API
+    async function loadPresets() {
+      try {
+        const res = await fetch(`${API_BASE}/api/presets`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.presets && data.presets.length > 0) {
+          const container = document.getElementById('presetsContainer');
+          container.innerHTML = '';
+          data.presets.forEach(p => {
+            const chip = document.createElement('span');
+            chip.className = 'preset-chip';
+            chip.textContent = `${p.name}`;
+            chip.addEventListener('click', () => {
+              promptInput.value = p.description || p.name;
+              if (p.target_layers) {
+                sizesInput.value = p.target_layers.join(', ');
+              }
+            });
+            container.appendChild(chip);
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching presets:', err);
+      }
+    }
+
+    // Cargar Lista de Patrones
+    async function loadPatterns() {
+      try {
+        patternsList.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 24px 0;">Cargando...</div>';
+        const res = await fetch(`${API_BASE}/api/patterns`);
+        if (!res.ok) throw new Error('Error al listar patrones');
+        const data = await res.json();
+        const patterns = data.patterns || [];
+
+        if (patterns.length === 0) {
+          patternsList.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 32px 0;">No se encontraron patrones generados aún. ¡Genera el primero!</div>';
+          return;
+        }
+
+        patternsList.innerHTML = '';
+        patterns.forEach(p => {
+          const item = document.createElement('div');
+          item.className = 'pattern-item';
+
+          const slug = p.concept_slug || p.concept_name;
+          const desc = p.description || p.base_block || 'Moldería paramétrica';
+
+          item.innerHTML = `
+            <div class="pattern-header">
+              <span class="pattern-name">${p.concept_name || slug}</span>
+              <span class="badge">${p.base_block || 'sloper'}</span>
+            </div>
+            <div class="pattern-meta">${desc}</div>
+            <div class="pattern-actions">
+              ${p.hasSvg ? `<button class="btn-action" onclick="viewSvg('${slug}')">📐 Ver SVG</button>` : ''}
+              ${p.hasTechpack ? `<button class="btn-action" onclick="viewTechpack('${slug}')">📋 Ficha Técnica</button>` : ''}
+              ${p.hasBundle ? `<a class="btn-action zip" href="${API_BASE}/api/patterns/${slug}/bundle" download>📦 Descargar ZIP</a>` : ''}
+            </div>
+          `;
+          patternsList.appendChild(item);
+        });
+      } catch (err) {
+        patternsList.innerHTML = `<div style="color: var(--danger); padding: 16px;">Error al cargar biblioteca: ${err.message}</div>`;
+      }
+    }
+
+    // Modal Handlers
+    function openModal(title, contentHtml) {
+      modalTitle.textContent = title;
+      modalBody.innerHTML = contentHtml;
+      modalBackdrop.style.display = 'flex';
+    }
+
+    modalCloseBtn.addEventListener('click', () => {
+      modalBackdrop.style.display = 'none';
+    });
+
+    modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalBackdrop) modalBackdrop.style.display = 'none';
+    });
+
+    // Ver SVG en Modal
+    window.viewSvg = async function(slug) {
+      try {
+        const res = await fetch(`${API_BASE}/api/patterns/${slug}/svg`);
+        if (!res.ok) throw new Error('No se pudo cargar el archivo SVG');
+        const svgText = await res.text();
+        openModal(`Moldería Vectorial: ${slug}`, `<div class="svg-viewer">${svgText}</div>`);
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    };
+
+    // Ver Ficha Técnica en Modal
+    window.viewTechpack = async function(slug) {
+      try {
+        const res = await fetch(`${API_BASE}/api/patterns/${slug}/techpack`);
+        if (!res.ok) throw new Error('No se pudo cargar la ficha técnica');
+        const json = await res.json();
+        openModal(`Ficha Técnica: ${slug}`, `<pre class="json-viewer">${JSON.stringify(json, null, 2)}</pre>`);
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    };
+
+    // Manejo de Formulario de Generación
+    generateForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const prompt = promptInput.value.trim();
+      if (!prompt) return;
+
+      const provider = providerSelect.value;
+      const sizes = sizesInput.value
+        .split(/[,;\s]+/)
+        .map(s => s.trim().toUpperCase())
+        .filter(Boolean);
+
+      let measurements = undefined;
+      if (measurementsInput.value.trim()) {
+        try {
+          measurements = JSON.parse(measurementsInput.value.trim());
+        } catch (err) {
+          alert('El JSON de medidas personalizadas no es válido: ' + err.message);
+          return;
+        }
+      }
+
+      const bundle = bundleCheckbox.checked;
+
+      generateBtn.disabled = true;
+      btnText.textContent = 'Generando moldería...';
+      btnSpinner.style.display = 'block';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt,
+            provider,
+            sizes,
+            measurements,
+            bundle
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Falló la generación del patrón');
+        }
+
+        await loadPatterns();
+        if (data.conceptSlug) {
+          viewSvg(data.conceptSlug);
+        }
+      } catch (err) {
+        alert('Error al generar moldería: ' + err.message);
+      } finally {
+        generateBtn.disabled = false;
+        btnText.textContent = 'Generar Patrón Paramétrico';
+        btnSpinner.style.display = 'none';
+      }
+    });
+
+    refreshPatternsBtn.addEventListener('click', loadPatterns);
+
+    // Inicio
+    loadStatus();
+    loadPresets();
+    loadPatterns();
+  </script>
+</body>
+</html>

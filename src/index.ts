@@ -55,6 +55,9 @@ export * from "./ai/factory.js";
 // Exportación del Pipeline y Automatizaciones
 export * from "./pipeline.js";
 
+// Exportación del Servidor API REST Local y Web UI
+export * from "./server/index.js";
+
 export function getVersion(): string {
   return "0.1.0";
 }
@@ -371,6 +374,30 @@ export function initCli(): Command {
       console.log(`• Formatos de Exportación: PDF Paginado (A4/Letter), PDF Continuo (A0), SVG Vectorial, Ficha Técnica PDF/MD/JSON`);
       console.log(`• Empaquetador Etsy: ZIP estructurado, Guía de impresión PDF, Metadatos SEO (13 tags, SKU, precio)`);
       console.log(`=============================================================`);
+    });
+
+  // ==========================================
+  // COMANDO 7: serve
+  // ==========================================
+  program
+    .command("serve")
+    .description("Inicia el servidor HTTP local con API REST y Dashboard Web")
+    .option("-p, --port <port>", "Puerto HTTP para el servidor", "3030")
+    .option("-o, --open", "Abre automáticamente la interfaz web en el navegador", false)
+    .option("-d, --dir <dir>", "Directorio base de salida de patrones", "output")
+    .action(async (options: { port?: string; open?: boolean; dir?: string }) => {
+      try {
+        const port = options.port ? parseInt(options.port, 10) : 3030;
+        const { startServer } = await import("./server/index.js");
+        await startServer({
+          port,
+          open: options.open,
+          outputDir: options.dir || "output",
+        });
+      } catch (err) {
+        console.error(`\n[ERROR] No se pudo iniciar el servidor HTTP:`, err instanceof Error ? err.message : String(err));
+        process.exitCode = 1;
+      }
     });
 
   return program;
