@@ -243,6 +243,23 @@ export interface TrouserPocketMod {
 export type GarmentCategory = 'top' | 'bottom' | 'set';
 
 /**
+ * Configuración de estilo y tipología de pantalón / bermuda
+ */
+export interface TrouserConfig {
+  style?: 'bermuda' | 'shorts' | 'cropped' | 'full' | string;
+  length_mm?: number;
+  waist_height?: 'natural' | 'high' | 'low' | string;
+  fit_type?: 'relaxed' | 'slim' | 'straight' | 'wide' | string;
+  leg_opening_mm?: number;
+  pleats_count?: number;
+  has_cuff?: boolean;
+  cuff_height_mm?: number;
+  pocket_type?: 'jeans_5pocket' | 'cargo' | 'patch' | 'slash' | string;
+  front_pocket_type?: string;
+  back_pocket_type?: string;
+}
+
+/**
  * Árbol completo de modificaciones paramétricas sobre el bloque base
  */
 export interface ModificationTree {
@@ -256,8 +273,10 @@ export interface ModificationTree {
   trouser_hem?: TrouserHemMod;
   trouser_legs?: TrouserLegsMod;
   trouser_pockets?: TrouserPocketMod | TrouserPocketMod[];
+  trouser?: TrouserConfig;
   custom?: Record<string, unknown>;
 }
+
 
 /**
  * Configuración de holguras textiles (Ease) en milímetros
@@ -304,6 +323,20 @@ export interface TechSpecs {
 }
 
 /**
+ * Especificación detallada de tejido / tela
+ */
+export interface FabricSpec {
+  name?: string;
+  type?: string;
+  description?: string;
+  width_mm?: number;
+  weight_gsm?: number;
+  color?: string;
+  composition?: string;
+  estimated_meters?: number;
+}
+
+/**
  * Contrato de ADN Paramétrico Principal (PatternDna)
  */
 export interface PatternDna {
@@ -318,4 +351,18 @@ export interface PatternDna {
   tech_specs?: TechSpecs;
   notions?: string[];
   estimated_fabric_meters?: number;
+  sub_garments?: {
+    top?: PatternDna;
+    bottom?: PatternDna;
+  };
+  multi_piece_config?: {
+    top_dna?: PatternDna;
+    bottom_dna?: PatternDna;
+  };
+  fabric_details?: {
+    main_fabric?: FabricSpec;
+    secondary_fabric?: FabricSpec;
+    [key: string]: FabricSpec | undefined;
+  };
 }
+

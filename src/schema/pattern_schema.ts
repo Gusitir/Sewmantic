@@ -384,6 +384,23 @@ export const TrouserPocketModSchema = z.object({
 export const GarmentCategorySchema = z.enum(["top", "bottom", "set"]);
 
 /**
+ * Esquema de configuración de estilo y tipología de pantalón / bermuda
+ */
+export const TrouserConfigSchema = z.object({
+  style: z.string().optional(),
+  length_mm: z.number().optional(),
+  waist_height: z.string().optional(),
+  fit_type: z.string().optional(),
+  leg_opening_mm: z.number().optional(),
+  pleats_count: z.number().optional(),
+  has_cuff: z.boolean().optional(),
+  cuff_height_mm: z.number().optional(),
+  pocket_type: z.string().optional(),
+  front_pocket_type: z.string().optional(),
+  back_pocket_type: z.string().optional(),
+});
+
+/**
  * Esquema de árbol de modificaciones
  */
 export const ModificationTreeSchema = z.object({
@@ -397,8 +414,10 @@ export const ModificationTreeSchema = z.object({
   trouser_hem: TrouserHemModSchema.optional(),
   trouser_legs: TrouserLegsModSchema.optional(),
   trouser_pockets: z.union([TrouserPocketModSchema, z.array(TrouserPocketModSchema)]).optional(),
+  trouser: TrouserConfigSchema.optional(),
   custom: z.record(z.unknown()).optional(),
 });
+
 
 /**
  * Esquema de validación para medidas corporales exactas / personalizadas
@@ -553,9 +572,49 @@ export const TechSpecsSchema = z.object({
 });
 
 /**
+ * Esquema de especificación detallada de tejido / tela
+ */
+export const FabricSpecSchema = z.object({
+  name: z.string().optional(),
+  type: z.string().optional(),
+  description: z.string().optional(),
+  width_mm: z.number().min(500).max(3000).optional(),
+  weight_gsm: z.number().min(30).max(1000).optional(),
+  color: z.string().optional(),
+  composition: z.string().optional(),
+  estimated_meters: z.number().min(0.05).max(50).optional(),
+});
+
+/**
+ * Esquema de sub-prendas coordinadas para conjuntos de 2 piezas
+ */
+export const SubGarmentsSchema: z.ZodType<any> = z.object({
+  top: z.lazy(() => PatternDnaSchema).optional(),
+  bottom: z.lazy(() => PatternDnaSchema).optional(),
+});
+
+/**
+ * Esquema alternativo de configuración multi-pieza
+ */
+export const MultiPieceConfigSchema: z.ZodType<any> = z.object({
+  top_dna: z.lazy(() => PatternDnaSchema).optional(),
+  bottom_dna: z.lazy(() => PatternDnaSchema).optional(),
+});
+
+/**
+ * Esquema de desglose de telas (principal y secundaria)
+ */
+export const FabricDetailsSchema = z
+  .object({
+    main_fabric: FabricSpecSchema.optional(),
+    secondary_fabric: FabricSpecSchema.optional(),
+  })
+  .catchall(FabricSpecSchema);
+
+/**
  * Esquema maestro para el ADN Paramétrico (PatternDna)
  */
-export const PatternDnaSchema = z.object({
+export const PatternDnaSchema: z.ZodType<any> = z.object({
   concept_name: z
     .string({ required_error: "concept_name is required" })
     .min(2, "concept_name must be at least 2 characters")
@@ -580,7 +639,11 @@ export const PatternDnaSchema = z.object({
     .min(0.05, "Fabric meters must be at least 0.05m")
     .max(50, "Fabric meters exceeds realistic garment threshold (max 50m)")
     .optional(),
+  sub_garments: z.lazy(() => SubGarmentsSchema).optional(),
+  multi_piece_config: z.lazy(() => MultiPieceConfigSchema).optional(),
+  fabric_details: FabricDetailsSchema.optional(),
 });
+
 
 /**
  * Valida un objeto desconocido contra el esquema PatternDnaSchema

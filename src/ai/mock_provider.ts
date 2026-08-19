@@ -247,6 +247,171 @@ export const MOCK_PRESETS: Record<string, PatternDna> = {
     notions: ["3x botones negros 20mm", "0.4m entretela termoadhesiva para vistas"],
     estimated_fabric_meters: 0.85,
   },
+
+  straw_pirate_full_set: {
+
+    concept_name: "straw_pirate_full_set",
+    description: "Conjunto Cosplay Pirata de Luffy: Chaleco Rojo de Lino + Bermuda Denim Deshilachada con Dobladillo Vuelto",
+    garment_category: "set",
+    base_block: "two_piece_set",
+    ease: {
+      chest_ease_mm: 50,
+      waist_ease_mm: 35,
+      hip_ease_mm: 50,
+      thigh_ease_mm: 60,
+      shoulder_ease_mm: 0,
+    },
+    modifications: {
+      neckline: {
+        type: "v_neck",
+        depth_mm: 130,
+        width_mm: 35,
+      },
+      sleeves: {
+        type: "sleeveless",
+      },
+      hem: {
+        type: "curved_tail",
+        drop_mm: 45,
+        back_drop_mm: 0,
+      },
+      trouser: {
+        style: "bermuda",
+        length_mm: 550,
+        waist_height: "natural",
+        fit_type: "relaxed",
+        leg_opening_mm: 480,
+        pleats_count: 0,
+        has_cuff: true,
+        cuff_height_mm: 45,
+        pocket_type: "jeans_5pocket",
+        front_pocket_type: "curved",
+        back_pocket_type: "patch",
+      },
+    },
+    fabric_details: {
+      main_fabric: {
+        name: "Lino Rústico Rojo Escarlata / Scarlet Red Linen Canvas (260 gsm)",
+        type: "rustic_red_linen_canvas",
+        description: "Lino rústico 100% transpirable para el chaleco pirata",
+        width_mm: 1500,
+        weight_gsm: 260,
+        color: "Rojo Escarlata / Scarlet Red",
+        composition: "100% Lino / Linen",
+        estimated_meters: 0.9,
+      },
+      secondary_fabric: {
+        name: "Denim Azul Índigo Lavado 12oz / 12oz Washed Blue Denim",
+        type: "blue_indigo_denim_12oz",
+        description: "Denim de algodón resistente 12oz con acabado deshilachado para las bermudas",
+        width_mm: 1500,
+        weight_gsm: 380,
+        color: "Azul Índigo Lavado / Washed Indigo Blue",
+        composition: "100% Algodón / Cotton Denim",
+        estimated_meters: 1.2,
+      },
+    },
+    sub_garments: {
+      top: {
+        concept_name: "straw_pirate_adventurer_vest",
+        description: "Chaleco Rojo de Lino Sin Mangas",
+        garment_category: "top",
+        base_block: "menswear_torso_fitted",
+        ease: {
+          chest_ease_mm: 50,
+          waist_ease_mm: 40,
+          hip_ease_mm: 35,
+          shoulder_ease_mm: 0,
+        },
+        modifications: {
+          neckline: {
+            type: "v_neck",
+            depth_mm: 130,
+            width_mm: 35,
+          },
+          sleeves: {
+            type: "sleeveless",
+          },
+          hem: {
+            type: "curved_tail",
+            drop_mm: 45,
+            back_drop_mm: 0,
+          },
+        },
+        tech_specs: {
+          fabric_type: "rustic_red_linen_canvas_260gsm",
+          fabric_width_mm: 1500,
+          seam_allowance_mm: 10,
+          hem_allowance_mm: 20,
+          estimated_fabric_meters: 0.9,
+          notions: ["3x botones dorados 25mm", "0.4m entretela termoadhesiva"],
+        },
+      },
+      bottom: {
+        concept_name: "straw_pirate_denim_shorts",
+        description: "Bermuda Denim Azul Deshilachada",
+        garment_category: "bottom",
+        base_block: "pants_sloper",
+        ease: {
+          chest_ease_mm: 0,
+          waist_ease_mm: 35,
+          hip_ease_mm: 50,
+          thigh_ease_mm: 60,
+        },
+        modifications: {
+          trouser: {
+            style: "bermuda",
+            length_mm: 550,
+            waist_height: "natural",
+            fit_type: "relaxed",
+            leg_opening_mm: 480,
+            pleats_count: 0,
+            has_cuff: true,
+            cuff_height_mm: 45,
+            pocket_type: "jeans_5pocket",
+            front_pocket_type: "curved",
+            back_pocket_type: "patch",
+          },
+        },
+        tech_specs: {
+          fabric_type: "blue_indigo_denim_12oz",
+          fabric_width_mm: 1500,
+          seam_allowance_mm: 12,
+          hem_allowance_mm: 25,
+          estimated_fabric_meters: 1.2,
+          notions: ["1x botón metálico jeans 17mm", "1x cremallera YKK 15cm", "4x remaches"],
+        },
+      },
+
+    },
+    sizing: {
+      size: "M",
+      chest_circ_mm: 980,
+      waist_circ_mm: 840,
+      hip_circ_mm: 980,
+      target_layers: ["XS", "S", "M", "L", "XL", "2XL", "3XL"],
+    },
+    tech_specs: {
+      notions: [
+        "3x botones dorados 25mm para chaleco",
+        "1x botón metálico jeans 17mm",
+        "1x cremallera metálica YKK 15cm",
+        "0.5m entretela termoadhesiva",
+      ],
+      estimated_fabric_meters: 2.1,
+      seam_allowance_mm: 10,
+      hem_allowance_mm: 20,
+      fabric_type: "Conjunto 2 Piezas: Lino Rojo + Denim Azul",
+      fabric_width_mm: 1500,
+    },
+    notions: [
+      "3x botones dorados 25mm para chaleco",
+      "1x botón metálico jeans 17mm",
+      "1x cremallera metálica YKK 15cm",
+      "0.5m entretela termoadhesiva",
+    ],
+    estimated_fabric_meters: 2.1,
+  },
 };
 
 /**
@@ -263,6 +428,19 @@ export class MockAiProvider implements IAiProvider {
     let selectedPreset: PatternDna;
 
     if (
+      query.includes("straw_pirate_full_set") ||
+      query.includes("full set") ||
+      query.includes("conjunto") ||
+      query.includes("2 piezas") ||
+      query.includes("two piece") ||
+      query.includes("set pirata") ||
+      query.includes("chaleco + bermuda") ||
+      query.includes("chaleco y bermuda") ||
+      (query.includes("set") && (query.includes("pirat") || query.includes("luffy") || query.includes("sombrero"))) ||
+      (query.includes("completo") && (query.includes("pirat") || query.includes("luffy") || query.includes("sombrero")))
+    ) {
+      selectedPreset = MOCK_PRESETS.straw_pirate_full_set;
+    } else if (
       query.includes("luffy") ||
       query.includes("lufi") ||
       query.includes("pirata") ||
@@ -305,3 +483,4 @@ export class MockAiProvider implements IAiProvider {
     return parsePatternDna(cloned);
   }
 }
+

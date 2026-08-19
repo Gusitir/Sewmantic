@@ -15,3 +15,6 @@ output/
 *.log
 npm-debug.log*
 .DS_Store
+*.blend
+*.blend1
+

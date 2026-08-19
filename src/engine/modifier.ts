@@ -166,6 +166,196 @@ function computeSleeveCapCurveLength(
 }
 
 /**
+ * Determina si el ADN corresponde a un conjunto completo de 2 piezas (Top + Bottom / Set)
+ */
+export function isSetGarment(dna: PatternDna): boolean {
+  if (dna.garment_category === 'set') return true;
+  if (dna.sub_garments?.top && dna.sub_garments?.bottom) return true;
+  if (dna.multi_piece_config?.top_dna && dna.multi_piece_config?.bottom_dna) return true;
+  const base = (dna.base_block || '').toLowerCase().trim();
+  const concept = (dna.concept_name || '').toLowerCase().trim();
+  return (
+    base === 'two_piece_set' ||
+    base === 'set' ||
+    base === 'pirate_set' ||
+    base === 'straw_pirate_full_set' ||
+    base.includes('two_piece') ||
+    base.includes('conjunto') ||
+    concept.includes('full_set') ||
+    concept.includes('two_piece') ||
+    concept.includes('conjunto')
+  );
+}
+
+/**
+ * Modifica y genera las piezas de un conjunto coordinado de 2 piezas (Top + Bottom)
+ */
+export function modifySetPattern(
+  dna: PatternDna,
+  size: StandardSize,
+  measurements: BodyMeasurements,
+  seamAllowance: number,
+  hemAllowance: number
+): ModifiedPatternResult {
+  // 1. Resolver Top DNA
+  const topDna: PatternDna = dna.sub_garments?.top ?? dna.multi_piece_config?.top_dna ?? {
+    concept_name: `${dna.concept_name}_top`,
+    description: `${dna.description ?? dna.concept_name} - Torso / Chaleco`,
+    base_block:
+      dna.base_block === 'two_piece_set' || dna.base_block === 'set' || dna.base_block.includes('pant')
+        ? 'menswear_torso_fitted'
+        : dna.base_block,
+    garment_category: 'top',
+    ease: {
+      chest_ease_mm: dna.ease.chest_ease_mm,
+      waist_ease_mm: dna.ease.waist_ease_mm,
+      hip_ease_mm: dna.ease.hip_ease_mm,
+      shoulder_ease_mm: dna.ease.shoulder_ease_mm,
+      bicep_ease_mm: dna.ease.bicep_ease_mm,
+    },
+    modifications: {
+      neckline: dna.modifications.neckline,
+      sleeves: dna.modifications.sleeves,
+      hem: dna.modifications.hem,
+      pocket: dna.modifications.pocket,
+      hood: dna.modifications.hood,
+    },
+    sizing: dna.sizing,
+    custom_measurements: dna.custom_measurements,
+    tech_specs: {
+      notions: dna.tech_specs?.notions ?? dna.notions ?? [],
+      estimated_fabric_meters: dna.fabric_details?.main_fabric?.estimated_meters ?? 0.85,
+      seam_allowance_mm: seamAllowance,
+      hem_allowance_mm: hemAllowance,
+      fabric_type: dna.fabric_details?.main_fabric?.type ?? dna.tech_specs?.fabric_type,
+      fabric_width_mm: dna.fabric_details?.main_fabric?.width_mm ?? dna.tech_specs?.fabric_width_mm ?? 1500,
+    },
+  };
+
+  // 2. Resolver Bottom DNA
+  const bottomDna: PatternDna = dna.sub_garments?.bottom ?? dna.multi_piece_config?.bottom_dna ?? {
+    concept_name: `${dna.concept_name}_bottom`,
+    description: `${dna.description ?? dna.concept_name} - Pantalón / Bermuda`,
+    base_block: 'pants_sloper',
+    garment_category: 'bottom',
+    ease: {
+      chest_ease_mm: 0,
+      waist_ease_mm: dna.ease.waist_ease_mm ?? 30,
+      hip_ease_mm: dna.ease.hip_ease_mm ?? 50,
+      crotch_ease_mm: dna.ease.crotch_ease_mm ?? 25,
+      thigh_ease_mm: dna.ease.thigh_ease_mm ?? 60,
+      knee_ease_mm: dna.ease.knee_ease_mm ?? 70,
+      ankle_ease_mm: dna.ease.ankle_ease_mm ?? 40,
+    },
+    modifications: {
+      trouser_legs: dna.modifications.trouser_legs,
+      trouser_hem: dna.modifications.trouser_hem,
+      waistband: dna.modifications.waistband,
+      trouser_pockets: dna.modifications.trouser_pockets,
+      pocket: dna.modifications.pocket,
+    },
+    sizing: dna.sizing,
+    custom_measurements: dna.custom_measurements,
+    tech_specs: {
+      notions: dna.tech_specs?.notions ?? dna.notions ?? [],
+      estimated_fabric_meters: dna.fabric_details?.secondary_fabric?.estimated_meters ?? 1.10,
+      seam_allowance_mm: seamAllowance,
+      hem_allowance_mm: hemAllowance,
+      fabric_type: dna.fabric_details?.secondary_fabric?.type ?? dna.tech_specs?.fabric_type,
+      fabric_width_mm: dna.fabric_details?.secondary_fabric?.width_mm ?? dna.tech_specs?.fabric_width_mm ?? 1500,
+    },
+  };
+
+  // 3. Modificar ambas prendas
+  const topResult = modifyPattern(topDna, size);
+  const bottomResult = modifyTrouserPattern(
+    bottomDna,
+    size,
+    measurements,
+    bottomDna.tech_specs?.seam_allowance_mm ?? seamAllowance,
+    bottomDna.tech_specs?.hem_allowance_mm ?? hemAllowance
+  );
+
+  // 4. Mapear y unificar las piezas de moldería
+  const parts: Record<string, PatternPart> = {};
+
+  // Piezas de torso (Top)
+  if (topResult.parts.front) {
+    const frontPart = { ...topResult.parts.front };
+    frontPart.name = 'front_torso';
+    frontPart.label = frontPart.label || 'CHALECO DELANTERO / FRONT TORSO';
+    parts.front_torso = frontPart;
+  }
+  if (topResult.parts.back) {
+    const backPart = { ...topResult.parts.back };
+    backPart.name = 'back_torso';
+    backPart.label = backPart.label || 'CHALECO ESPALDA / BACK TORSO';
+    parts.back_torso = backPart;
+  }
+  if (topResult.parts.sleeve) {
+    parts.sleeve = topResult.parts.sleeve;
+  }
+  if (topResult.parts.hood) {
+    parts.hood = topResult.parts.hood;
+  }
+  if (topResult.parts.pocket) {
+    const topPocket = { ...topResult.parts.pocket };
+    topPocket.name = 'pocket';
+    parts.pocket = topPocket;
+  }
+
+  // Piezas de pierna (Bottom)
+  if (bottomResult.parts.front_leg) {
+    parts.front_leg = bottomResult.parts.front_leg;
+  }
+  if (bottomResult.parts.back_leg) {
+    parts.back_leg = bottomResult.parts.back_leg;
+  }
+  if (bottomResult.parts.waistband) {
+    parts.waistband = bottomResult.parts.waistband;
+  }
+  if (bottomResult.parts.pocket) {
+    parts.pocket = bottomResult.parts.pocket;
+  }
+  if (bottomResult.parts.cuff) {
+    parts.cuff = bottomResult.parts.cuff;
+  }
+
+  // 5. Verificación de Grainlines y Márgenes en el 100% de piezas
+  for (const [_, part] of Object.entries(parts)) {
+    if (!part.grainline || !part.grainline.label) {
+      part.grainline = {
+        start: createPoint(part.width_mm / 2, part.height_mm * 0.8),
+        end: createPoint(part.width_mm / 2, part.height_mm * 0.2),
+        label: 'GRAINLINE / HILO DE TELA',
+      };
+    }
+    if (part.seamAllowance_mm === undefined) {
+      part.seamAllowance_mm = seamAllowance;
+    }
+    if (part.hemAllowance_mm === undefined) {
+      part.hemAllowance_mm = hemAllowance;
+    }
+  }
+
+  const allBounds = Object.values(parts).map((p) => p.bounds);
+  const totalBounds = combineBounds(allBounds);
+
+  return {
+    concept_name: dna.concept_name,
+    size,
+    base_block: dna.base_block,
+    measurements,
+    parts,
+    bounds: totalBounds,
+    harmonization: topResult.harmonization,
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: hemAllowance,
+    tech_specs: dna.tech_specs,
+  };
+}
+
+/**
  * Determina si el ADN corresponde a una prenda inferior (pantalón, bermuda, shorts)
  */
 export function isBottomGarment(dna: PatternDna): boolean {
@@ -202,9 +392,17 @@ export function modifyTrouserPattern(
 ): ModifiedPatternResult {
   const parts: Record<string, PatternPart> = {};
 
+
   const baseBlockNorm = dna.base_block.toLowerCase().trim();
   const trouserLegs = dna.modifications.trouser_legs;
-  const trouserHem = dna.modifications.trouser_hem;
+  const trouserHem =
+    dna.modifications.trouser_hem ??
+    (dna.modifications.trouser?.has_cuff
+      ? {
+          type: 'cuffed' as const,
+          cuff_height_mm: dna.modifications.trouser.cuff_height_mm ?? 45,
+        }
+      : undefined);
   const waistband = dna.modifications.waistband;
 
   // Normalización de bolsillos de pantalón
@@ -212,15 +410,30 @@ export function modifyTrouserPattern(
     Array.isArray(dna.modifications.trouser_pockets)
       ? dna.modifications.trouser_pockets[0]
       : dna.modifications.trouser_pockets ??
-        (dna.modifications.pocket?.type === 'cargo' ||
-        dna.modifications.pocket?.type === 'patch'
+        (dna.modifications.trouser?.pocket_type === 'cargo'
           ? {
-              type: dna.modifications.pocket.type === 'cargo' ? 'cargo' : 'patch_back',
-              width_mm: dna.modifications.pocket.width_mm,
-              height_mm: dna.modifications.pocket.height_mm,
-              placement_y_mm: dna.modifications.pocket.placement_y_mm,
+              type: 'cargo',
+              width_mm: dna.modifications.pocket?.width_mm ?? 170,
+              height_mm: dna.modifications.pocket?.height_mm ?? 190,
+            }
+          : dna.modifications.trouser?.pocket_type === 'patch' ||
+            dna.modifications.trouser?.pocket_type === 'jeans_5pocket' ||
+            dna.modifications.trouser?.back_pocket_type === 'patch' ||
+            dna.modifications.pocket?.type === 'patch'
+          ? {
+              type: 'patch_back',
+              width_mm: dna.modifications.pocket?.width_mm ?? 140,
+              height_mm: dna.modifications.pocket?.height_mm ?? 150,
+              placement_y_mm: dna.modifications.pocket?.placement_y_mm,
+            }
+          : dna.modifications.pocket?.type === 'cargo'
+          ? {
+              type: 'cargo',
+              width_mm: dna.modifications.pocket?.width_mm ?? 170,
+              height_mm: dna.modifications.pocket?.height_mm ?? 190,
             }
           : undefined);
+
 
   // Tipología de longitud
   const lengthType: TrouserLengthType =
@@ -684,22 +897,30 @@ export function modifyPattern(
   targetSize?: StandardSize
 ): ModifiedPatternResult {
   const size: StandardSize = targetSize ?? dna.sizing?.size ?? 'M';
+  const isTargetSizeMatch = !dna.sizing?.size || dna.sizing.size === size || dna.custom_measurements !== undefined;
   const measurements: BodyMeasurements = {
     ...getStandardMeasurements(size),
-    ...(dna.sizing?.chest_circ_mm ? { chest_circumference_mm: dna.sizing.chest_circ_mm } : {}),
-    ...(dna.sizing?.waist_circ_mm ? { waist_circumference_mm: dna.sizing.waist_circ_mm } : {}),
-    ...(dna.sizing?.hip_circ_mm ? { hip_circumference_mm: dna.sizing.hip_circ_mm } : {}),
-    ...(dna.sizing?.height_mm ? { front_length_mm: dna.sizing.height_mm * 0.42, back_length_mm: dna.sizing.height_mm * 0.40 } : {}),
+    ...(isTargetSizeMatch && dna.sizing?.chest_circ_mm ? { chest_circumference_mm: dna.sizing.chest_circ_mm } : {}),
+    ...(isTargetSizeMatch && dna.sizing?.waist_circ_mm ? { waist_circumference_mm: dna.sizing.waist_circ_mm } : {}),
+    ...(isTargetSizeMatch && dna.sizing?.hip_circ_mm ? { hip_circumference_mm: dna.sizing.hip_circ_mm } : {}),
+    ...(isTargetSizeMatch && dna.sizing?.height_mm ? { front_length_mm: dna.sizing.height_mm * 0.42, back_length_mm: dna.sizing.height_mm * 0.40 } : {}),
   };
+
 
   const seamAllowance = dna.tech_specs?.seam_allowance_mm ?? 10;
   const hemAllowance =
     dna.tech_specs?.hem_allowance_mm ?? dna.modifications.hem?.allowance_mm ?? 25;
 
+  // Si la prenda es un conjunto de 2 piezas (Top + Bottom / Set), delegar a modifySetPattern
+  if (isSetGarment(dna)) {
+    return modifySetPattern(dna, size, measurements, seamAllowance, hemAllowance);
+  }
+
   // Si la prenda es de tipo inferior (pantalón, bermuda, shorts), delegar a modifyTrouserPattern
   if (isBottomGarment(dna)) {
     return modifyTrouserPattern(dna, size, measurements, seamAllowance, hemAllowance);
   }
+
 
   const parts: Record<string, PatternPart> = {};
 

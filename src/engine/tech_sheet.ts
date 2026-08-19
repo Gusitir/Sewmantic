@@ -81,6 +81,23 @@ export interface SizeFabricConsumption {
 }
 
 /**
+ * Desglose de consumo por tipo específico de tela (para conjuntos multi-tela)
+ */
+export interface FabricDetailBreakdown {
+  fabricKey: string;
+  fabricName: string;
+  fabricType?: string;
+  color?: string;
+  width_mm: number;
+  wastePercentage: number;
+  wasteMultiplier: number;
+  averageLinearMeters: number;
+  totalLinearMetersAllSizes: number;
+  perSize: Record<StandardSize, SizeFabricConsumption>;
+  pieces: string[];
+}
+
+/**
  * Resumen consolidado de consumo textil
  */
 export interface FabricConsumptionSummary {
@@ -92,7 +109,9 @@ export interface FabricConsumptionSummary {
   averageLinearMeters: number;
   totalLinearMetersAllSizes: number;
   sizeCount: number;
+  breakdown_by_fabric?: Record<string, FabricDetailBreakdown>;
 }
+
 
 /**
  * Insumo o material de mercería (Bill of Materials - BOM)
@@ -186,12 +205,63 @@ export interface TechSheetData {
  */
 function inferFabricForPart(partName: string, dna: PatternDna, defaultFabric: string): string {
   const nameLower = partName.toLowerCase();
-  if (nameLower.includes('rib') || nameLower.includes('cuff') || nameLower.includes('band')) {
+  if (nameLower.includes('rib') || nameLower.includes('band')) {
     return 'Rib 1x1 / 2x2 con Elastano (380-420 gsm)';
   }
   if (nameLower.includes('pocket_bag') || nameLower.includes('lining') || nameLower.includes('forro')) {
     return 'Forro liviano / Popelina / Jersey 140 gsm';
   }
+
+  const isSet =
+    dna.garment_category === 'set' ||
+    Boolean(dna.fabric_details) ||
+    Boolean(dna.sub_garments) ||
+    Boolean(dna.multi_piece_config) ||
+    dna.base_block === 'two_piece_set' ||
+    (dna.concept_name && dna.concept_name.toLowerCase().includes('set'));
+
+  if (isSet) {
+    const mainFabric =
+      dna.fabric_details?.main_fabric?.name ||
+      dna.fabric_details?.main_fabric?.type ||
+      dna.sub_garments?.top?.tech_specs?.fabric_type ||
+      'Lino Rústico Rojo / Rustic Red Linen Canvas (260 gsm)';
+
+    const secondaryFabric =
+      dna.fabric_details?.secondary_fabric?.name ||
+      dna.fabric_details?.secondary_fabric?.type ||
+      dna.sub_garments?.bottom?.tech_specs?.fabric_type ||
+      'Denim Azul Índigo 12oz / 12oz Blue Denim';
+
+    // Top parts: front_torso, back_torso, front, back, sleeve, hood, top_pocket
+    if (
+      nameLower.includes('torso') ||
+      nameLower.includes('vest') ||
+      nameLower.includes('chaleco') ||
+      nameLower.includes('sleeve') ||
+      nameLower.includes('hood') ||
+      (nameLower.includes('front') && !nameLower.includes('leg')) ||
+      (nameLower.includes('back') && !nameLower.includes('leg'))
+    ) {
+      return mainFabric;
+    }
+
+    // Bottom parts: front_leg, back_leg, waistband, pretina, cuff, pocket, pant, trouser, shorts, bermuda
+    if (
+      nameLower.includes('leg') ||
+      nameLower.includes('waistband') ||
+      nameLower.includes('pretina') ||
+      nameLower.includes('cuff') ||
+      nameLower.includes('pant') ||
+      nameLower.includes('trouser') ||
+      nameLower.includes('short') ||
+      nameLower.includes('bermuda') ||
+      nameLower.includes('pocket')
+    ) {
+      return secondaryFabric;
+    }
+  }
+
   return defaultFabric;
 }
 
@@ -213,113 +283,200 @@ function summarizeNotches(notches?: Array<{ type?: string; label?: string }>): s
 function buildNotionsList(dna: PatternDna, defaultFabric: string): NotionItem[] {
   const notions: NotionItem[] = [];
 
-  // 1. Hilos de coser y áncora
-  notions.push({
-    category: 'thread',
-    name: 'Hilo de Costura Recta / Overlock',
-    specification: 'Poliéster 100% Spun 40/2 o 120/2 de alta tenacidad al tono de tela',
-    quantity: 'Aprox. 200 m por prenda',
-    usageLocation: 'Pespuntes, uniones de hombros, mangas y costados',
-  });
+  const isSet =
+    dna.garment_category === 'set' ||
+    Boolean(dna.fabric_details) ||
+    Boolean(dna.sub_garments) ||
+    Boolean(dna.multi_piece_config) ||
+    dna.base_block === 'two_piece_set' ||
+    (dna.concept_name && dna.concept_name.toLowerCase().includes('set'));
 
-  notions.push({
-    category: 'thread',
-    name: 'Hilo de Recubrimiento / Áncoras',
-    specification: 'Poliéster texturizado 150D/1 para áncoras elásticas',
-    quantity: 'Aprox. 250 m por prenda',
-    usageLocation: 'Fileteado de overlock y recubridora (collareta)',
-  });
-
-  // 2. Agujas industriales recomendadas
-  const isKnit =
-    dna.base_block.toLowerCase().includes('hoodie') ||
-    dna.base_block.toLowerCase().includes('tshirt') ||
-    dna.base_block.toLowerCase().includes('oversize');
-
-  notions.push({
-    category: 'needle',
-    name: 'Agujas de Confección',
-    specification: isKnit
-      ? 'Sistema 130/705 H-SUK o DBx1 Punta de Bola Mediana (Ballpoint) 75/11 a 80/12'
-      : 'Sistema 134R / DBx1 Punta Redonda Normal 80/12 a 90/14',
-    quantity: '1-2 unidades por lote de confección',
-    usageLocation: 'Máquinas recta, overlock y collareta',
-  });
-
-  // 3. Rib / Complementos elásticos
-  const isRibbed =
-    dna.modifications.hem?.type === 'ribbed' ||
-    Boolean(dna.modifications.sleeves?.cuff_rib_mm) ||
-    dna.modifications.neckline?.type === 'crew';
-
-  if (isRibbed) {
+  if (isSet) {
+    // 1. Hilos específicos para conjunto de 2 piezas (Lino Rojo + Denim Azul)
     notions.push({
-      category: 'elastic_rib',
-      name: 'Tejido de Rib Complementario',
-      specification: 'Rib 1x1 o 2x2 Algodón/Spandex (95/5) 380 g/m² con memoria elástica',
-      quantity: 'Aprox. 0.35 - 0.45 m lineales',
-      usageLocation: 'Pretina de bajo, puños de manga y/o cuello',
+      category: 'thread',
+      name: 'Hilo de Costura Recta / Overlock Rojo',
+      specification: 'Poliéster 100% Spun 40/2 color rojo escarlata de alta tenacidad al tono de lino',
+      quantity: 'Aprox. 150 m por prenda',
+      usageLocation: 'Uniones de hombros, sisas, vistas y bajo del chaleco',
     });
-  }
 
-  // 4. Capucha: Cordón, Ojetes y Entretela
-  const hasHood =
-    dna.modifications.hood !== undefined ||
-    dna.modifications.neckline?.type === 'crossover_hood' ||
-    dna.modifications.neckline?.type === 'hood' ||
-    dna.base_block.toLowerCase().includes('hoodie');
-
-  if (hasHood) {
     notions.push({
-      category: 'cords_drawstrings',
-      name: 'Cordón de Ajuste para Capucha',
-      specification: 'Cordón tubular de algodón 100% trenzado Ø 8-10 mm con punteras metálicas (aglets)',
-      quantity: '1 unidad (1.25 m a 1.40 m)',
-      usageLocation: 'Canal frontal de la capucha',
+      category: 'thread',
+      name: 'Hilo de Costura Denim Azul Índigo',
+      specification: 'Poliéster 100% Spun 30/2 o 40/2 azul marino / índigo',
+      quantity: 'Aprox. 180 m por prenda',
+      usageLocation: 'Tiro delantero y trasero, entrepierna y costados de la bermuda',
+    });
+
+    notions.push({
+      category: 'thread',
+      name: 'Hilo Torzal de Pespunte Jeans Dorado',
+      specification: 'Poliéster torzal grueso 20/3 amarillo oro contrastante para vaqueros',
+      quantity: 'Aprox. 80 m por prenda',
+      usageLocation: 'Pespuntes decorativos y de refuerzo en bolsillos y pretina de bermuda',
+    });
+
+    // 2. Agujas industriales
+    notions.push({
+      category: 'needle',
+      name: 'Set de Agujas Industriales para Conjunto',
+      specification: '1x Sistema 134R 80/12 (Lino Chaleco) + 1x Sistema 134 Jeans 100/16 (Denim)',
+      quantity: '1 set (2 agujas)',
+      usageLocation: 'Máquina recta y remalladora para lino y denim',
+    });
+
+    // 3. Botones y avíos metálicos consolidados (BOM Completo)
+    notions.push({
+      category: 'hardware',
+      name: 'Botones Frontales de Chaleco',
+      specification: 'Botones planos de resina/nácar o metálicos dorados Ø 22-25 mm con 4 agujeros o pie',
+      quantity: '3 unidades',
+      usageLocation: 'Centro delantero del chaleco pirata',
     });
 
     notions.push({
       category: 'hardware',
-      name: 'Ojetes Metálicos de Salida',
-      specification: 'Ojetes de latón inoxidables niquelados/pavonados Ø interior 8 mm con contra-arandela',
-      quantity: '2 unidades',
-      usageLocation: 'Boca de salida del cordón en delantero de capucha',
+      name: 'Botón Metálico Jeans y Remaches Bermuda',
+      specification: 'Botón metálico de golpe para vaqueros Ø 17 mm con vástago de aluminio',
+      quantity: '1 botón + 4 remaches decorativos',
+      usageLocation: 'Centro delantero de pretina y esquinas de bolsillos de bermuda',
     });
 
     notions.push({
+      category: 'hardware',
+      name: 'Cremallera Metálica para Bragueta',
+      specification: 'Cremallera metálica reforzada YKK latón antiguo #4 de 15 cm con tope de seguridad',
+      quantity: '1 unidad (15 cm)',
+      usageLocation: 'Bragueta delantera de la bermuda denim',
+    });
+
+    // 4. Entretela termoadhesiva
+    notions.push({
       category: 'interfacing',
-      name: 'Entretela de Refuerzo Termoadhesiva',
-      specification: 'Entretela no tejida fusionable liviana 40 g/m² (poliéster)',
-      quantity: '2 parches de 35 x 35 mm',
-      usageLocation: 'Refuerzo interior en la zona de troquelado de los ojetes',
+      name: 'Entretela Termoadhesiva Estructurada',
+      specification: 'Entretela tejida fusionable semi-rígida 60 g/m² para sastrería liviana',
+      quantity: 'Aprox. 0.50 m lineales',
+      usageLocation: 'Vistas delanteras del chaleco y pretina estructurada de la bermuda',
+    });
+
+    // 5. Etiquetas de marca y composición
+    notions.push({
+      category: 'label',
+      name: 'Set de Etiquetas de Marca y Cuidado Cosplay',
+      specification: '1x Etiqueta Principal de Marca + 2x Etiquetas de Talla + 2x Etiquetas de Cuidado',
+      quantity: '1 set completo',
+      usageLocation: 'Escote chaleco y pretina interior trasera de bermuda',
+    });
+  } else {
+    // 1. Hilos de coser y áncora
+    notions.push({
+      category: 'thread',
+      name: 'Hilo de Costura Recta / Overlock',
+      specification: 'Poliéster 100% Spun 40/2 o 120/2 de alta tenacidad al tono de tela',
+      quantity: 'Aprox. 200 m por prenda',
+      usageLocation: 'Pespuntes, uniones de hombros, mangas y costados',
+    });
+
+    notions.push({
+      category: 'thread',
+      name: 'Hilo de Recubrimiento / Áncoras',
+      specification: 'Poliéster texturizado 150D/1 para áncoras elásticas',
+      quantity: 'Aprox. 250 m por prenda',
+      usageLocation: 'Fileteado de overlock y recubridora (collareta)',
+    });
+
+    // 2. Agujas industriales recomendadas
+    const isKnit =
+      dna.base_block.toLowerCase().includes('hoodie') ||
+      dna.base_block.toLowerCase().includes('tshirt') ||
+      dna.base_block.toLowerCase().includes('oversize');
+
+    notions.push({
+      category: 'needle',
+      name: 'Agujas de Confección',
+      specification: isKnit
+        ? 'Sistema 130/705 H-SUK o DBx1 Punta de Bola Mediana (Ballpoint) 75/11 a 80/12'
+        : 'Sistema 134R / DBx1 Punta Redonda Normal 80/12 a 90/14',
+      quantity: '1-2 unidades por lote de confección',
+      usageLocation: 'Máquinas recta, overlock y collareta',
+    });
+
+    // 3. Rib / Complementos elásticos
+    const isRibbed =
+      dna.modifications.hem?.type === 'ribbed' ||
+      Boolean(dna.modifications.sleeves?.cuff_rib_mm) ||
+      dna.modifications.neckline?.type === 'crew';
+
+    if (isRibbed) {
+      notions.push({
+        category: 'elastic_rib',
+        name: 'Tejido de Rib Complementario',
+        specification: 'Rib 1x1 o 2x2 Algodón/Spandex (95/5) 380 g/m² con memoria elástica',
+        quantity: 'Aprox. 0.35 - 0.45 m lineales',
+        usageLocation: 'Pretina de bajo, puños de manga y/o cuello',
+      });
+    }
+
+    // 4. Capucha: Cordón, Ojetes y Entretela
+    const hasHood =
+      dna.modifications.hood !== undefined ||
+      dna.modifications.neckline?.type === 'crossover_hood' ||
+      dna.modifications.neckline?.type === 'hood' ||
+      dna.base_block.toLowerCase().includes('hoodie');
+
+    if (hasHood) {
+      notions.push({
+        category: 'cords_drawstrings',
+        name: 'Cordón de Ajuste para Capucha',
+        specification: 'Cordón tubular de algodón 100% trenzado Ø 8-10 mm con punteras metálicas (aglets)',
+        quantity: '1 unidad (1.25 m a 1.40 m)',
+        usageLocation: 'Canal frontal de la capucha',
+      });
+
+      notions.push({
+        category: 'hardware',
+        name: 'Ojetes Metálicos de Salida',
+        specification: 'Ojetes de latón inoxidables niquelados/pavonados Ø interior 8 mm con contra-arandela',
+        quantity: '2 unidades',
+        usageLocation: 'Boca de salida del cordón en delantero de capucha',
+      });
+
+      notions.push({
+        category: 'interfacing',
+        name: 'Entretela de Refuerzo Termoadhesiva',
+        specification: 'Entretela no tejida fusionable liviana 40 g/m² (poliéster)',
+        quantity: '2 parches de 35 x 35 mm',
+        usageLocation: 'Refuerzo interior en la zona de troquelado de los ojetes',
+      });
+    }
+
+    // 5. Cinta de refuerzo de hombro y tapeta de cuello
+    notions.push({
+      category: 'tape',
+      name: 'Cinta Estabilizadora de Hombros',
+      specification: 'Cinta de polietileno transparente framilon / hiladillo de algodón 6 mm',
+      quantity: 'Aprox. 0.45 m por prenda',
+      usageLocation: 'Embebida en la costura de unión de hombros para evitar estiramiento',
+    });
+
+    notions.push({
+      category: 'tape',
+      name: 'Cinta Tapeta Limpieza Escote Espalda',
+      specification: 'Cinta de espiguilla (Herringbone) 100% algodón 12-15 mm al tono o contraste',
+      quantity: 'Aprox. 0.35 m por prenda',
+      usageLocation: 'Cubrecostura interior de escote trasero de hombro a hombro',
+    });
+
+    // 6. Set de etiquetas
+    notions.push({
+      category: 'label',
+      name: 'Set de Etiquetas de Marca y Cuidado',
+      specification: '1x Etiqueta Principal Jacquard de marca + 1x Etiqueta de Talla + 1x Etiqueta de Composición y Cuidado textil',
+      quantity: '1 set completo',
+      usageLocation: 'Centro escote espalda y costura lateral izquierda a 10 cm del bajo',
     });
   }
-
-  // 5. Cinta de refuerzo de hombro y tapeta de cuello
-  notions.push({
-    category: 'tape',
-    name: 'Cinta Estabilizadora de Hombros',
-    specification: 'Cinta de polietileno transparente framilon / hiladillo de algodón 6 mm',
-    quantity: 'Aprox. 0.45 m por prenda',
-    usageLocation: 'Embebida en la costura de unión de hombros para evitar estiramiento',
-  });
-
-  notions.push({
-    category: 'tape',
-    name: 'Cinta Tapeta Limpieza Escote Espalda',
-    specification: 'Cinta de espiguilla (Herringbone) 100% algodón 12-15 mm al tono o contraste',
-    quantity: 'Aprox. 0.35 m por prenda',
-    usageLocation: 'Cubrecostura interior de escote trasero de hombro a hombro',
-  });
-
-  // 6. Set de etiquetas
-  notions.push({
-    category: 'label',
-    name: 'Set de Etiquetas de Marca y Cuidado',
-    specification: '1x Etiqueta Principal Jacquard de marca + 1x Etiqueta de Talla + 1x Etiqueta de Composición y Cuidado textil',
-    quantity: '1 set completo',
-    usageLocation: 'Centro escote espalda y costura lateral izquierda a 10 cm del bajo',
-  });
 
   // 7. Notions personalizadas declaradas en dna
   const customNotions = dna.tech_specs?.notions ?? dna.notions ?? [];
@@ -344,6 +501,145 @@ function buildNotionsList(dna: PatternDna, defaultFabric: string): NotionItem[] 
 function buildAssemblySequence(dna: PatternDna): AssemblyStep[] {
   const steps: AssemblyStep[] = [];
   let stepNum = 1;
+
+  const isSet =
+    dna.garment_category === 'set' ||
+    Boolean(dna.fabric_details) ||
+    Boolean(dna.sub_garments) ||
+    Boolean(dna.multi_piece_config) ||
+    dna.base_block === 'two_piece_set' ||
+    (dna.concept_name && dna.concept_name.toLowerCase().includes('set'));
+
+  if (isSet) {
+    // Secuencia de confección completa para conjunto de 2 piezas (Chaleco + Bermuda)
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Preparación, Fusionado de Entretelas y Control de Piezas',
+      operation: 'Termofijado de Vistas y Pretinas',
+      machineType: 'Prensa Térmica / Plancha Industrial (140°C, 3 bar, 12s)',
+      stitchType: 'N/A (Termofijado)',
+      instructions:
+        'Verificar el corte de las piezas de ambas prendas: Torso Delantero, Torso Espalda, Pierna Delantera, Pierna Espalda, Pretina y Bolsillos. ' +
+        'Fusionar entretela en las vistas delanteras del chaleco y en la mitad interior de la pretina de la bermuda. Marcar piquetes en sisa, cintura y bajo.',
+      notchGuidance: 'Comprobar piquetes simples en delantero y dobles en espalda en ambas prendas.',
+      criticalNotes: 'Asegurar que la entretela no sobrepase el margen de costura.',
+    });
+
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Confección y Fijado de Bolsillos Traseros de la Bermuda',
+      operation: 'Pespunte de Bolsillo Parche en Espalda Denim',
+      machineType: 'Máquina Recta 1 Aguja (ISO 301) con Hilo Torzal',
+      stitchType: 'Pespunte Jeans 3.5 mm con remate en esquinas',
+      instructions:
+        'Dobladillar la boca superior de los bolsillos traseros (dobladillo de 20 mm). Doblar y planchar los márgenes laterales e inferior a 10 mm. ' +
+        'Ubicar sobre la pierna espalda haciendo coincidir los piquetes de referencia superior e inferior. ' +
+        'Pespuntear a 2 mm del borde con doble pespunte y presillas triangulares de refuerzo en vértices superiores.',
+      notchGuidance: 'Alinear los vértices superiores con los piquetes de referencia en espalda.',
+      criticalNotes: 'Las presillas en esquinas son obligatorias para resistir la tracción.',
+    });
+
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Armado del Chaleco: Hombros, Vistas y Escote en V',
+      operation: 'Unión de Hombros y Colocación de Vistas Delanteras',
+      machineType: 'Máquina Recta (ISO 301) + Overlock 4 Hilos (ISO 514)',
+      stitchType: 'Costura Recta 3.0 mm + Sobrehilado',
+      instructions:
+        '1. Encarar delantero y espalda del chaleco derecho con derecho y unir hombros a 10 mm intercalando cinta estabilizadora. ' +
+        '2. Unir las vistas delanteras al contorno del escote en V y centro delantero. ' +
+        '3. Picar los vértices del escote en V y volcar hacia el interior, asentando con plancha y pespunte de carga interior.',
+      notchGuidance: 'Hacer coincidir el vértice del escote en V con la marca de centro.',
+      criticalNotes: 'El picado del ángulo en V debe llegar a 1 mm de la costura sin cortarla.',
+    });
+
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Acabado de Sisas sin Mangas y Cerrado de Costados del Chaleco',
+      operation: 'Ribeteado / Vistas de Sisa y Cierre Lateral',
+      machineType: 'Máquina Recta (ISO 301) + Overlock (ISO 514)',
+      stitchType: 'Costura Recta 3.0 mm + Fileteado',
+      instructions:
+        '1. Dobladillar o colocar bies/vista en las sisas sin mangas y pespuntear a 5 mm del borde. ' +
+        '2. Encarar delantero y espalda derecho con derecho y cerrar costados a 10 mm. ' +
+        '3. Dobladillar el bajo curvo del chaleco a 20 mm con pespunte al tono.',
+      notchGuidance: 'Alinear piquetes de sisa y cintura en costados.',
+      criticalNotes: 'Mantener tensión suave en sisas curvas para evitar que se desboquen.',
+    });
+
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Armado de la Bermuda: Tiros y Montaje de Bragueta',
+      operation: 'Cierre de Tiro Delantero y Colocación de Cremallera YKK',
+      machineType: 'Máquina Recta (ISO 301) + Overlock 4 Hilos (ISO 514)',
+      stitchType: 'Pespunte reforzado + Puntada de seguridad',
+      instructions:
+        '1. Sobrehilar los bordes de tiro delantero y trasero de la bermuda. ' +
+        '2. Montar la cremallera metálica en la bragueta delantera con su tapeta protectora. ' +
+        '3. Pespuntear la curva exterior de la bragueta con hilo torzal dorado. ' +
+        '4. Unir el tiro delantero hasta el tope de la cremallera.',
+      notchGuidance: 'Alinear piquetes de bragueta y centro delantero.',
+      criticalNotes: 'Evitar que la aguja golpee los dientes metálicos de la cremallera.',
+    });
+
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Cierre de Entrepierna, Costados y Tiro Trasero de la Bermuda',
+      operation: 'Unión Continua de Piernas',
+      machineType: 'Overlock 4 Hilos (ISO 514) + Recta Doble Pespunte',
+      stitchType: 'Costura de seguridad 5 hilos o Overlock 4 hilos',
+      instructions:
+        '1. Unir la entrepierna de pierna delantera con pierna trasera en una sola pasada continua. ' +
+        '2. Cerrar el tiro trasero reforzando con doble costura de seguridad. ' +
+        '3. Cerrar los costados exteriores de la bermuda desde la cintura hasta el bajo.',
+      notchGuidance: 'Hacer coincidir en cruz exacta la intersección de las costuras de entrepierna.',
+      criticalNotes: 'Tolerancia en el cruce de entrepierna: +/- 1.5 mm máximo.',
+    });
+
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Confección y Pegado de Pretina Estructurada',
+      operation: 'Montaje de Pretina Jeans con Trabillas',
+      machineType: 'Máquina Recta (ISO 301) con Hilo Torzal',
+      stitchType: 'Pespunte al borde 2.0 mm',
+      instructions:
+        '1. Fijar la pretina entretelada a la cintura de la bermuda encarando derecho con revés. ' +
+        '2. Doblar la pretina hacia el derecho envolviendo el margen y pespuntear todo el contorno a 2 mm con hilo torzal. ' +
+        '3. Insertar la etiqueta de cuidado y composición en el interior trasero.',
+      notchGuidance: 'Alinear los piquetes de pretina con las costuras laterales y centros.',
+      criticalNotes: 'Asegurar que la pretina quede totalmente plana y sin embebidos desiguales.',
+    });
+
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Terminación de Bajos: Flecos Pirata / Dobladillo Vuelto',
+      operation: 'Acabado de Ruedo de Chaleco y Bermuda',
+      machineType: 'Máquina Recta / Tijera de Deshilachado Textil',
+      stitchType: 'Pespunte de retención 2.0 mm',
+      instructions:
+        '1. En la bermuda: Pespuntear una línea de retención a 35 mm del borde inferior. Deshilachar manualmente la trama del denim para crear los flecos pirata característicos de Luffy o planchar el puño vuelto. ' +
+        '2. En el chaleco: Asentar con plancha el bajo en pico / cola curva y pespuntear.',
+      notchGuidance: 'Alinear con los piquetes de bajo pirata.',
+      criticalNotes: 'La costura de retención evita que el deshilachado continúe con los lavados.',
+    });
+
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Ojales, Botones, Control de Calidad y Planchado Final',
+      operation: 'Ojalado Automático, Fijación de Botones y Auditoría POM',
+      machineType: 'Ojaladora Industrial + Botonera + Plancha a Vapor',
+      stitchType: 'Ojal de sastre / Ojal de lágrima',
+      instructions:
+        '1. Realizar 3 ojales verticales en el delantero derecho del chaleco y pegar los 3 botones dorados en el delantero izquierdo. ' +
+        '2. Abrir ojal en la pretina de la bermuda y colocar el botón metálico jeans de golpe. ' +
+        '3. Auditar las 10 medidas clave de la tabla POM en ambas prendas. ' +
+        '4. Planchar a vapor medio (140°C para lino, 150°C para denim), doblar y embolsar como conjunto.',
+      notchGuidance: 'Verificar la alineación horizontal de botones y ojales.',
+      criticalNotes: 'Las medidas de ambas prendas terminadas deben cumplir las tolerancias de la tabla POM.',
+    });
+
+    return steps;
+  }
 
   const hasHood =
     dna.modifications.hood !== undefined ||
@@ -542,6 +838,21 @@ function buildFinishedMeasurementsTable(
 ): FinishedGarmentMeasurementRow[] {
   const rows: FinishedGarmentMeasurementRow[] = [];
 
+  const isSet =
+    dna.garment_category === 'set' ||
+    Boolean(dna.fabric_details) ||
+    Boolean(dna.sub_garments) ||
+    Boolean(dna.multi_piece_config) ||
+    dna.base_block === 'two_piece_set' ||
+    (dna.concept_name && dna.concept_name.toLowerCase().includes('set'));
+
+  const isBottomOnly =
+    dna.garment_category === 'bottom' ||
+    dna.base_block.toLowerCase().includes('pant') ||
+    dna.base_block.toLowerCase().includes('trouser') ||
+    dna.base_block.toLowerCase().includes('short') ||
+    dna.base_block.toLowerCase().includes('bermuda');
+
   // Helper para computar valores en mm para cada talla
   const computeValues = (extractor: (res: ModifiedPatternResult) => number): Record<StandardSize, number> => {
     const record = {} as Record<StandardSize, number>;
@@ -556,6 +867,219 @@ function buildFinishedMeasurementsTable(
     return record;
   };
 
+  if (isSet) {
+    // 1. MEDIDAS TERMINADAS DE PARTE SUPERIOR (CHALECO / TOP)
+    rows.push({
+      code: 'POM-01',
+      pointOfMeasurement: 'Contorno Total de Pecho / Busto - Chaleco (Total Chest)',
+      tolerance_mm: 10,
+      values: computeValues((res) => {
+        const front = res.parts.front_torso || res.parts.front;
+        if (front && front.points.armhole_bottom) {
+          return front.points.armhole_bottom.x * 4;
+        }
+        return res.measurements.chest_circumference_mm + (dna.ease.chest_ease_mm ?? 50);
+      }),
+    });
+
+    rows.push({
+      code: 'POM-02',
+      pointOfMeasurement: 'Largo Total Delantero desde HPS - Chaleco (Front Length)',
+      tolerance_mm: 8,
+      values: computeValues((res) => {
+        const front = res.parts.front_torso || res.parts.front;
+        if (front && front.points.center_hem && front.points.neck_shoulder) {
+          return Math.abs(front.points.center_hem.y - front.points.neck_shoulder.y);
+        }
+        return front ? front.bounds.height : res.measurements.front_length_mm;
+      }),
+    });
+
+    rows.push({
+      code: 'POM-03',
+      pointOfMeasurement: 'Largo Total Espalda desde HPS - Chaleco (Back Length)',
+      tolerance_mm: 8,
+      values: computeValues((res) => {
+        const back = res.parts.back_torso || res.parts.back;
+        if (back && back.points.center_hem && back.points.neck_shoulder) {
+          return Math.abs(back.points.center_hem.y - back.points.neck_shoulder.y);
+        }
+        return back ? back.bounds.height : res.measurements.back_length_mm;
+      }),
+    });
+
+    rows.push({
+      code: 'POM-04',
+      pointOfMeasurement: 'Ancho de Hombro a Hombro - Chaleco (Shoulder Width)',
+      tolerance_mm: 6,
+      values: computeValues((res) => {
+        const front = res.parts.front_torso || res.parts.front;
+        if (front && front.points.shoulder_tip) {
+          return front.points.shoulder_tip.x * 2;
+        }
+        return res.measurements.shoulder_to_shoulder_mm;
+      }),
+    });
+
+    rows.push({
+      code: 'POM-05',
+      pointOfMeasurement: 'Profundidad de Escote en V - Chaleco (Front Neck Drop)',
+      tolerance_mm: 5,
+      values: computeValues((res) => {
+        const front = res.parts.front_torso || res.parts.front;
+        if (front && front.points.neck_center && front.points.neck_shoulder) {
+          return Math.abs(front.points.neck_center.y - front.points.neck_shoulder.y);
+        }
+        return 130;
+      }),
+    });
+
+    // 2. MEDIDAS TERMINADAS DE PARTE INFERIOR (BERMUDA / DENIM SHORTS)
+    rows.push({
+      code: 'POM-06',
+      pointOfMeasurement: 'Contorno Total de Cintura - Bermuda (Waist Circumference)',
+      tolerance_mm: 8,
+      values: computeValues((res) => {
+        const wb = res.parts.waistband;
+        if (wb) {
+          return wb.bounds.width * 2;
+        }
+        return res.measurements.waist_circumference_mm + (dna.ease.waist_ease_mm ?? 30);
+      }),
+    });
+
+    rows.push({
+      code: 'POM-07',
+      pointOfMeasurement: 'Contorno Total de Cadera - Bermuda (Hip Circumference)',
+      tolerance_mm: 10,
+      values: computeValues((res) => {
+        const frontLeg = res.parts.front_leg;
+        const backLeg = res.parts.back_leg;
+        if (frontLeg && backLeg) {
+          return (frontLeg.bounds.width + backLeg.bounds.width) * 2;
+        }
+        return res.measurements.hip_circumference_mm + (dna.ease.hip_ease_mm ?? 50);
+      }),
+    });
+
+    rows.push({
+      code: 'POM-08',
+      pointOfMeasurement: 'Largo Lateral Total - Bermuda (Waist to Hem Outseam)',
+      tolerance_mm: 8,
+      values: computeValues((res) => {
+        const frontLeg = res.parts.front_leg;
+        return frontLeg ? frontLeg.bounds.height : 550;
+      }),
+    });
+
+    rows.push({
+      code: 'POM-09',
+      pointOfMeasurement: 'Largo de Entrepierna - Bermuda (Inseam Length)',
+      tolerance_mm: 8,
+      values: computeValues((res) => {
+        const frontLeg = res.parts.front_leg;
+        if (frontLeg && frontLeg.points.crotch_tip && frontLeg.points.hem_in) {
+          return Math.abs(frontLeg.points.hem_in.y - frontLeg.points.crotch_tip.y);
+        }
+        return 320;
+      }),
+    });
+
+
+    rows.push({
+      code: 'POM-10',
+      pointOfMeasurement: 'Semiancho de Ruedo / Bajo de Pierna - Bermuda (Half Leg Opening)',
+      tolerance_mm: 6,
+      values: computeValues((res) => {
+        const frontLeg = res.parts.front_leg;
+        if (frontLeg && frontLeg.points.hem_in && frontLeg.points.hem_out) {
+          return Math.abs(frontLeg.points.hem_out.x - frontLeg.points.hem_in.x);
+        }
+        return 240;
+      }),
+    });
+
+    return rows;
+  }
+
+  if (isBottomOnly) {
+    rows.push({
+      code: 'POM-01',
+      pointOfMeasurement: 'Contorno Total de Cintura (Total Waist Circumference)',
+      tolerance_mm: 8,
+      values: computeValues((res) => {
+        const wb = res.parts.waistband;
+        if (wb) return wb.bounds.width * 2;
+        return res.measurements.waist_circumference_mm + (dna.ease.waist_ease_mm ?? 30);
+      }),
+    });
+
+    rows.push({
+      code: 'POM-02',
+      pointOfMeasurement: 'Contorno Total de Cadera (Total Hip Circumference)',
+      tolerance_mm: 10,
+      values: computeValues((res) => {
+        const frontLeg = res.parts.front_leg;
+        const backLeg = res.parts.back_leg;
+        if (frontLeg && backLeg) return (frontLeg.bounds.width + backLeg.bounds.width) * 2;
+        return res.measurements.hip_circumference_mm + (dna.ease.hip_ease_mm ?? 40);
+      }),
+    });
+
+    rows.push({
+      code: 'POM-03',
+      pointOfMeasurement: 'Largo Lateral Total (Outseam Length)',
+      tolerance_mm: 8,
+      values: computeValues((res) => {
+        const frontLeg = res.parts.front_leg;
+        return frontLeg ? frontLeg.bounds.height : res.measurements.waist_to_floor_mm;
+      }),
+    });
+
+    rows.push({
+      code: 'POM-04',
+      pointOfMeasurement: 'Largo de Entrepierna (Inseam Length)',
+      tolerance_mm: 8,
+      values: computeValues((res) => {
+        const frontLeg = res.parts.front_leg;
+        if (frontLeg && frontLeg.points.crotch_tip && frontLeg.points.hem_in) {
+          return Math.abs(frontLeg.points.hem_in.y - frontLeg.points.crotch_tip.y);
+        }
+        return res.measurements.inseam_mm;
+      }),
+    });
+
+    rows.push({
+      code: 'POM-05',
+      pointOfMeasurement: 'Semiancho de Muslo en Tiro (Half Thigh Width)',
+      tolerance_mm: 6,
+      values: computeValues((res) => {
+        const frontLeg = res.parts.front_leg;
+        if (frontLeg && frontLeg.points.crotch_tip && frontLeg.points.hip_side) {
+          return Math.abs(frontLeg.points.hip_side.x - frontLeg.points.crotch_tip.x);
+        }
+        return res.measurements.thigh_circumference_mm / 2 + 20;
+      }),
+    });
+
+
+    rows.push({
+      code: 'POM-06',
+      pointOfMeasurement: 'Semiancho de Ruedo / Bajo de Pierna (Half Leg Opening)',
+      tolerance_mm: 5,
+      values: computeValues((res) => {
+        const frontLeg = res.parts.front_leg;
+        if (frontLeg && frontLeg.points.hem_in && frontLeg.points.hem_out) {
+          return Math.abs(frontLeg.points.hem_out.x - frontLeg.points.hem_in.x);
+        }
+        return 220;
+      }),
+    });
+
+    return rows;
+  }
+
+  // Prenda superior regular (Hoodie, T-Shirt, Vest, Dress)
   // POM-01: Contorno Total de Pecho / Busto
   rows.push({
     code: 'POM-01',
@@ -813,30 +1337,80 @@ export function generateTechSheet(
   const wastePercentage = Math.round(wasteFactor * 100 * 10) / 10;
   const wasteMultiplier = 1 + wasteFactor;
 
+  const isSet =
+    dna.garment_category === 'set' ||
+    Boolean(dna.fabric_details) ||
+    Boolean(dna.sub_garments) ||
+    Boolean(dna.multi_piece_config) ||
+    dna.base_block === 'two_piece_set' ||
+    (dna.concept_name && dna.concept_name.toLowerCase().includes('set'));
+
   const defaultFabric =
     options.fabricType ??
     dna.tech_specs?.fabric_type ??
-    (dna.base_block.toLowerCase().includes('hoodie')
+    (isSet
+      ? 'Conjunto 2 Piezas: Lino Rústico Rojo + Denim Azul 12oz'
+      : dna.base_block.toLowerCase().includes('hoodie')
       ? 'French Terry 100% Algodón Peinado (320-350 gsm)'
       : dna.base_block.toLowerCase().includes('tshirt')
       ? 'Jersey 100% Algodón Peinado 24/1 (180-200 gsm)'
       : 'Tejido Principal');
 
-  // 3. Cálculo riguroso de consumo de tela por talla
+  // 3. Cálculo riguroso de consumo de tela por talla y desglose multi-tela
   const perSizeConsumption: Record<StandardSize, SizeFabricConsumption> = {} as Record<
     StandardSize,
     SizeFabricConsumption
   >;
   let totalLinearMetersSum = 0;
 
+  // Desglose para conjuntos de 2 telas
+  const mainFabricName =
+    dna.fabric_details?.main_fabric?.name ||
+    dna.fabric_details?.main_fabric?.type ||
+    dna.sub_garments?.top?.tech_specs?.fabric_type ||
+    'Lino Rústico Rojo / Rustic Red Linen Canvas (260 gsm)';
+  const mainFabricWidth = dna.fabric_details?.main_fabric?.width_mm || fabricWidth_mm;
+
+  const secFabricName =
+    dna.fabric_details?.secondary_fabric?.name ||
+    dna.fabric_details?.secondary_fabric?.type ||
+    dna.sub_garments?.bottom?.tech_specs?.fabric_type ||
+    'Denim Azul Índigo 12oz / 12oz Blue Denim';
+  const secFabricWidth = dna.fabric_details?.secondary_fabric?.width_mm || fabricWidth_mm;
+
+  const mainPerSize: Record<StandardSize, SizeFabricConsumption> = {} as Record<
+    StandardSize,
+    SizeFabricConsumption
+  >;
+  const secPerSize: Record<StandardSize, SizeFabricConsumption> = {} as Record<
+    StandardSize,
+    SizeFabricConsumption
+  >;
+  let mainTotalMetersSum = 0;
+  let secTotalMetersSum = 0;
+
+  const mainPiecesSet = new Set<string>();
+  const secPiecesSet = new Set<string>();
+
   for (const [size, result] of sizeMap.entries()) {
     let sizeNetArea_mm2 = 0;
+    let mainNetArea_mm2 = 0;
+    let secNetArea_mm2 = 0;
 
-    for (const part of Object.values(result.parts)) {
+    for (const [partName, part] of Object.entries(result.parts)) {
       const cutCount = part.cutCount ?? 1;
       const foldFactor = part.onFold ? 2 : 1;
       const pieceNetArea = part.area_mm2 * foldFactor * cutCount;
       sizeNetArea_mm2 += pieceNetArea;
+
+      const partFabric = inferFabricForPart(partName, dna, defaultFabric);
+      if (partFabric === mainFabricName || (!isSet && !secFabricName)) {
+        mainNetArea_mm2 += pieceNetArea;
+        mainPiecesSet.add(part.label || part.name);
+      } else {
+        secNetArea_mm2 += pieceNetArea;
+        secPiecesSet.add(part.label || part.name);
+      }
     }
 
     const totalNetArea_m2 = sizeNetArea_mm2 / 1_000_000;
@@ -856,6 +1430,40 @@ export function generateTechSheet(
     };
 
     totalLinearMetersSum += estimatedLinearMeters;
+
+    if (isSet) {
+      const mainNet_m2 = mainNetArea_mm2 / 1_000_000;
+      const mainIdealMeters = mainNet_m2 / (mainFabricWidth / 1000);
+      const mainEstMeters = Math.round(mainIdealMeters * wasteMultiplier * 100) / 100;
+
+      mainPerSize[size] = {
+        size,
+        totalNetArea_mm2: Math.round(mainNetArea_mm2),
+        totalNetArea_m2: Math.round(mainNet_m2 * 10000) / 10000,
+        fabricWidth_mm: mainFabricWidth,
+        wastePercentage,
+        wasteMultiplier,
+        idealLinearMeters: Math.round(mainIdealMeters * 100) / 100,
+        estimatedLinearMeters: mainEstMeters,
+      };
+      mainTotalMetersSum += mainEstMeters;
+
+      const secNet_m2 = secNetArea_mm2 / 1_000_000;
+      const secIdealMeters = secNet_m2 / (secFabricWidth / 1000);
+      const secEstMeters = Math.round(secIdealMeters * wasteMultiplier * 100) / 100;
+
+      secPerSize[size] = {
+        size,
+        totalNetArea_mm2: Math.round(secNetArea_mm2),
+        totalNetArea_m2: Math.round(secNet_m2 * 10000) / 10000,
+        fabricWidth_mm: secFabricWidth,
+        wastePercentage,
+        wasteMultiplier,
+        idealLinearMeters: Math.round(secIdealMeters * 100) / 100,
+        estimatedLinearMeters: secEstMeters,
+      };
+      secTotalMetersSum += secEstMeters;
+    }
   }
 
   const sizeCount = allSizes.length;
@@ -871,6 +1479,40 @@ export function generateTechSheet(
     averageLinearMeters,
     totalLinearMetersAllSizes: Math.round(totalLinearMetersSum * 100) / 100,
     sizeCount,
+    ...(isSet
+      ? {
+          breakdown_by_fabric: {
+            main_fabric: {
+              fabricKey: 'main_fabric',
+              fabricName: mainFabricName,
+              fabricType: dna.fabric_details?.main_fabric?.type ?? 'rustic_red_linen_canvas',
+              color: dna.fabric_details?.main_fabric?.color ?? 'Rojo Escarlata / Scarlet Red',
+              width_mm: mainFabricWidth,
+              wastePercentage,
+              wasteMultiplier,
+              averageLinearMeters:
+                sizeCount > 0 ? Math.round((mainTotalMetersSum / sizeCount) * 100) / 100 : 0,
+              totalLinearMetersAllSizes: Math.round(mainTotalMetersSum * 100) / 100,
+              perSize: mainPerSize,
+              pieces: Array.from(mainPiecesSet),
+            },
+            secondary_fabric: {
+              fabricKey: 'secondary_fabric',
+              fabricName: secFabricName,
+              fabricType: dna.fabric_details?.secondary_fabric?.type ?? 'blue_indigo_denim_12oz',
+              color: dna.fabric_details?.secondary_fabric?.color ?? 'Azul Índigo Lavado / Washed Indigo Blue',
+              width_mm: secFabricWidth,
+              wastePercentage,
+              wasteMultiplier,
+              averageLinearMeters:
+                sizeCount > 0 ? Math.round((secTotalMetersSum / sizeCount) * 100) / 100 : 0,
+              totalLinearMetersAllSizes: Math.round(secTotalMetersSum * 100) / 100,
+              perSize: secPerSize,
+              pieces: Array.from(secPiecesSet),
+            },
+          },
+        }
+      : {}),
   };
 
   // 4. Detalle de piezas de corte (referencia talla base)
@@ -978,6 +1620,8 @@ export function generateTechSheet(
   };
 }
 
+
+
 /**
  * Exporta la ficha técnica en formato Markdown estándar estructurado
  *
@@ -1025,17 +1669,46 @@ export function generateTechSheetMarkdown(data: TechSheetData): string {
   lines.push(`- **Consumo consolidado (${fabricConsumption.sizeCount} tallas):** **${fabricConsumption.totalLinearMetersAllSizes.toFixed(2)} m lineales**`);
   lines.push(``);
 
-  lines.push(`| Talla | Área Neta (mm²) | Área Neta (m²) | Ancho Tela | Merma (%) | Consumo Ideal (m) | **Metros Lineales Estimados (m)** |`);
-  lines.push(`| :--- | :---: | :---: | :---: | :---: | :---: | :---: |`);
-  for (const size of allSizes) {
-    const c = fabricConsumption.perSize[size];
-    if (c) {
-      lines.push(
-        `| **${size}** | ${c.totalNetArea_mm2.toLocaleString()} | ${c.totalNetArea_m2.toFixed(3)} | ${(c.fabricWidth_mm / 1000).toFixed(2)} m | ${c.wastePercentage}% | ${c.idealLinearMeters.toFixed(2)} m | **${c.estimatedLinearMeters.toFixed(2)} m** |`
-      );
+  if (fabricConsumption.breakdown_by_fabric) {
+    const { main_fabric, secondary_fabric } = fabricConsumption.breakdown_by_fabric;
+    lines.push(`### 1.1 Desglose por Tipo de Tela (Conjunto de 2 Piezas)`);
+    if (main_fabric) {
+      lines.push(`- **Tela 1 (Pieza Superior / Top):** ${main_fabric.fabricName} (${main_fabric.color ?? 'Principal'})`);
+      lines.push(`  - Ancho de rollo: ${(main_fabric.width_mm / 1000).toFixed(2)} m | Promedio por prenda: **${main_fabric.averageLinearMeters.toFixed(2)} m** | Total lote: **${main_fabric.totalLinearMetersAllSizes.toFixed(2)} m**`);
     }
+    if (secondary_fabric) {
+      lines.push(`- **Tela 2 (Pieza Inferior / Bottom):** ${secondary_fabric.fabricName} (${secondary_fabric.color ?? 'Secundaria'})`);
+      lines.push(`  - Ancho de rollo: ${(secondary_fabric.width_mm / 1000).toFixed(2)} m | Promedio por prenda: **${secondary_fabric.averageLinearMeters.toFixed(2)} m** | Total lote: **${secondary_fabric.totalLinearMetersAllSizes.toFixed(2)} m**`);
+    }
+    lines.push(``);
+
+    lines.push(`| Talla | Tela 1: Top (m) | Tela 2: Bottom (m) | **Total Combinado (m)** | Área Neta Total (m²) |`);
+    lines.push(`| :--- | :---: | :---: | :---: | :---: |`);
+    for (const size of allSizes) {
+      const c = fabricConsumption.perSize[size];
+      const m1 = main_fabric?.perSize[size];
+      const m2 = secondary_fabric?.perSize[size];
+      if (c) {
+        lines.push(
+          `| **${size}** | ${m1 ? m1.estimatedLinearMeters.toFixed(2) : '-'} m | ${m2 ? m2.estimatedLinearMeters.toFixed(2) : '-'} m | **${c.estimatedLinearMeters.toFixed(2)} m** | ${c.totalNetArea_m2.toFixed(3)} m² |`
+        );
+      }
+    }
+    lines.push(``);
+  } else {
+    lines.push(`| Talla | Área Neta (mm²) | Área Neta (m²) | Ancho Tela | Merma (%) | Consumo Ideal (m) | **Metros Lineales Estimados (m)** |`);
+    lines.push(`| :--- | :---: | :---: | :---: | :---: | :---: | :---: |`);
+    for (const size of allSizes) {
+      const c = fabricConsumption.perSize[size];
+      if (c) {
+        lines.push(
+          `| **${size}** | ${c.totalNetArea_mm2.toLocaleString()} | ${c.totalNetArea_m2.toFixed(3)} | ${(c.fabricWidth_mm / 1000).toFixed(2)} m | ${c.wastePercentage}% | ${c.idealLinearMeters.toFixed(2)} m | **${c.estimatedLinearMeters.toFixed(2)} m** |`
+        );
+      }
+    }
+    lines.push(``);
   }
-  lines.push(``);
+
 
   // 1.1 Personalización Antropométrica (si aplica)
   if (customMeasurements) {
@@ -1233,14 +1906,25 @@ export async function generateTechSheetPdf(data: TechSheetData): Promise<Buffer>
   currentY += 15;
 
   // Tabla de consumos por talla
-  const consCols = [
-    { title: 'Talla', w: 45, align: 'center' as const },
-    { title: 'Área Neta (m²)', w: 80, align: 'center' as const },
-    { title: 'Ancho Tela (m)', w: 75, align: 'center' as const },
-    { title: 'Factor Merma', w: 75, align: 'center' as const },
-    { title: 'Consumo Ideal (m)', w: 95, align: 'center' as const },
-    { title: 'Consumo Estimado (m)', w: 153.28, align: 'center' as const },
-  ];
+  const isSetBreakdown = Boolean(data.fabricConsumption.breakdown_by_fabric);
+  const consCols = isSetBreakdown
+    ? [
+        { title: 'Talla', w: 40, align: 'center' as const },
+        { title: 'Tela 1: Top (m)', w: 90, align: 'center' as const },
+        { title: 'Tela 2: Bottom (m)', w: 95, align: 'center' as const },
+        { title: 'Total (m)', w: 80, align: 'center' as const },
+        { title: 'Merma', w: 60, align: 'center' as const },
+        { title: 'Área Total (m²)', w: 75, align: 'center' as const },
+        { title: 'Consumo Est. (m)', w: 83.28, align: 'center' as const },
+      ]
+    : [
+        { title: 'Talla', w: 45, align: 'center' as const },
+        { title: 'Área Neta (m²)', w: 80, align: 'center' as const },
+        { title: 'Ancho Tela (m)', w: 75, align: 'center' as const },
+        { title: 'Factor Merma', w: 75, align: 'center' as const },
+        { title: 'Consumo Ideal (m)', w: 95, align: 'center' as const },
+        { title: 'Consumo Estimado (m)', w: 153.28, align: 'center' as const },
+      ];
 
   // Header de tabla
   doc.save();
@@ -1262,26 +1946,52 @@ export async function generateTechSheetPdf(data: TechSheetData): Promise<Buffer>
     doc.rect(margin, currentY, contentWidth, 14).fill(rowBg);
     let rX = margin;
 
-    doc.fontSize(7.5).font('Helvetica-Bold').fillColor('#0f172a').text(sz, rX, currentY + 3, { width: consCols[0].w, align: 'center' });
-    rX += consCols[0].w;
+    if (isSetBreakdown) {
+      const m1 = data.fabricConsumption.breakdown_by_fabric?.main_fabric?.perSize[sz];
+      const m2 = data.fabricConsumption.breakdown_by_fabric?.secondary_fabric?.perSize[sz];
 
-    doc.font('Helvetica').fillColor('#334155').text(c ? c.totalNetArea_m2.toFixed(3) : '0', rX, currentY + 3, { width: consCols[1].w, align: 'center' });
-    rX += consCols[1].w;
+      doc.fontSize(7.5).font('Helvetica-Bold').fillColor('#0f172a').text(sz, rX, currentY + 3, { width: consCols[0].w, align: 'center' });
+      rX += consCols[0].w;
 
-    doc.text(c ? (c.fabricWidth_mm / 1000).toFixed(2) : '1.50', rX, currentY + 3, { width: consCols[2].w, align: 'center' });
-    rX += consCols[2].w;
+      doc.font('Helvetica').fillColor('#334155').text(m1 ? `${m1.estimatedLinearMeters.toFixed(2)} m` : '-', rX, currentY + 3, { width: consCols[1].w, align: 'center' });
+      rX += consCols[1].w;
 
-    doc.text(c ? `${c.wastePercentage}%` : '15%', rX, currentY + 3, { width: consCols[3].w, align: 'center' });
-    rX += consCols[3].w;
+      doc.text(m2 ? `${m2.estimatedLinearMeters.toFixed(2)} m` : '-', rX, currentY + 3, { width: consCols[2].w, align: 'center' });
+      rX += consCols[2].w;
 
-    doc.text(c ? `${c.idealLinearMeters.toFixed(2)} m` : '0 m', rX, currentY + 3, { width: consCols[4].w, align: 'center' });
-    rX += consCols[4].w;
+      doc.text(c ? `${c.idealLinearMeters.toFixed(2)} m` : '0 m', rX, currentY + 3, { width: consCols[3].w, align: 'center' });
+      rX += consCols[3].w;
 
-    doc.font('Helvetica-Bold').fillColor('#1e3a8a').text(c ? `${c.estimatedLinearMeters.toFixed(2)} m` : '0 m', rX, currentY + 3, { width: consCols[5].w, align: 'center' });
+      doc.text(c ? `${c.wastePercentage}%` : '15%', rX, currentY + 3, { width: consCols[4].w, align: 'center' });
+      rX += consCols[4].w;
+
+      doc.text(c ? c.totalNetArea_m2.toFixed(3) : '0', rX, currentY + 3, { width: consCols[5].w, align: 'center' });
+      rX += consCols[5].w;
+
+      doc.font('Helvetica-Bold').fillColor('#1e3a8a').text(c ? `${c.estimatedLinearMeters.toFixed(2)} m` : '0 m', rX, currentY + 3, { width: consCols[6].w, align: 'center' });
+    } else {
+      doc.fontSize(7.5).font('Helvetica-Bold').fillColor('#0f172a').text(sz, rX, currentY + 3, { width: consCols[0].w, align: 'center' });
+      rX += consCols[0].w;
+
+      doc.font('Helvetica').fillColor('#334155').text(c ? c.totalNetArea_m2.toFixed(3) : '0', rX, currentY + 3, { width: consCols[1].w, align: 'center' });
+      rX += consCols[1].w;
+
+      doc.text(c ? (c.fabricWidth_mm / 1000).toFixed(2) : '1.50', rX, currentY + 3, { width: consCols[2].w, align: 'center' });
+      rX += consCols[2].w;
+
+      doc.text(c ? `${c.wastePercentage}%` : '15%', rX, currentY + 3, { width: consCols[3].w, align: 'center' });
+      rX += consCols[3].w;
+
+      doc.text(c ? `${c.idealLinearMeters.toFixed(2)} m` : '0 m', rX, currentY + 3, { width: consCols[4].w, align: 'center' });
+      rX += consCols[4].w;
+
+      doc.font('Helvetica-Bold').fillColor('#1e3a8a').text(c ? `${c.estimatedLinearMeters.toFixed(2)} m` : '0 m', rX, currentY + 3, { width: consCols[5].w, align: 'center' });
+    }
 
     doc.restore();
     currentY += 14;
   });
+
 
   // Fila resumen de promedio
   doc.save();

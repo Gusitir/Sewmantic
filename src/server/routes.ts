@@ -426,6 +426,7 @@ export async function handleGetPresets(
       if (key === 'vest') displayName = 'Cyberpunk Shinobi Tactical Vest';
       if (key === 'pirate_vest') displayName = 'Straw Pirate Adventurer Vest';
       if (key === 'pirate_shorts') displayName = 'Straw Pirate Denim Shorts';
+      if (key === 'straw_pirate_full_set') displayName = 'Straw Pirate Full Cosplay Set (Vest + Bermuda)';
 
       return {
         id: key,
