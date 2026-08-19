@@ -3,715 +3,276 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pattern-ai-core | Generador Paramétrico de Patrones IA</title>
+  <title>pattern-ai-core | Studio — Generador Paramétrico de Moldería Textil IA</title>
+  
+  <!-- Tipografía Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #0b0f19;
-      --card-bg: #111827;
-      --card-border: #1f2937;
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --accent: #8b5cf6;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --radius: 10px;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      padding: 24px;
-    }
-
-    .container {
-      max-width: 1280px;
-      margin: 0 auto;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--card-border);
-      margin-bottom: 32px;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .logo-badge {
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      color: white;
-      font-weight: 700;
-      font-size: 1.25rem;
-      padding: 10px 14px;
-      border-radius: 12px;
-      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
-    }
-
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .subtitle {
-      font-size: 0.875rem;
-      color: var(--text-muted);
-    }
-
-    .status-badges {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .badge {
-      font-size: 0.75rem;
-      font-family: 'JetBrains Mono', monospace;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      background: #1f2937;
-      color: #93c5fd;
-      border: 1px solid #374151;
-    }
-
-    .badge.green {
-      background: rgba(16, 185, 129, 0.15);
-      color: #34d399;
-      border-color: rgba(16, 185, 129, 0.3);
-    }
-
-    .grid-layout {
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 28px;
-    }
-
-    @media (max-width: 960px) {
-      .grid-layout {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 24px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-    }
-
-    .card-title {
-      font-size: 1.15rem;
-      font-weight: 600;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #fff;
-    }
-
-    .form-group {
-      margin-bottom: 18px;
-    }
-
-    label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: #d1d5db;
-      margin-bottom: 6px;
-    }
-
-    input[type="text"],
-    textarea,
-    select {
-      width: 100%;
-      background: #0d1321;
-      border: 1px solid #374151;
-      border-radius: 8px;
-      padding: 10px 14px;
-      color: #fff;
-      font-size: 0.9rem;
-      font-family: inherit;
-      transition: border-color 0.2s;
-    }
-
-    input[type="text"]:focus,
-    textarea:focus,
-    select:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 85px;
-    }
-
-    .presets-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .preset-chip {
-      background: #1e293b;
-      border: 1px solid #334155;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      color: #cbd5e1;
-      transition: all 0.15s ease;
-    }
-
-    .preset-chip:hover {
-      background: #334155;
-      color: #fff;
-      border-color: var(--primary);
-    }
-
-    .row {
-      display: flex;
-      gap: 12px;
-    }
-
-    .col {
-      flex: 1;
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      font-size: 0.875rem;
-      color: #d1d5db;
-    }
-
-    button.btn-primary {
-      width: 100%;
-      background: linear-gradient(135deg, var(--primary), #2563eb);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 12px 20px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: opacity 0.2s;
-      margin-top: 8px;
-    }
-
-    button.btn-primary:hover {
-      opacity: 0.92;
-    }
-
-    button.btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .pattern-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      max-height: 620px;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
-
-    .pattern-item {
-      background: #162032;
-      border: 1px solid #283548;
-      border-radius: 8px;
-      padding: 16px;
-      transition: border-color 0.2s;
-    }
-
-    .pattern-item:hover {
-      border-color: #3b82f6;
-    }
-
-    .pattern-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 8px;
-    }
-
-    .pattern-name {
-      font-weight: 600;
-      font-size: 0.95rem;
-      color: #f3f4f6;
-    }
-
-    .pattern-meta {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-    }
-
-    .pattern-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .btn-action {
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: #93c5fd;
-      font-size: 0.75rem;
-      padding: 5px 10px;
-      border-radius: 6px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      cursor: pointer;
-    }
-
-    .btn-action:hover {
-      background: #2563eb;
-      color: white;
-      border-color: #2563eb;
-    }
-
-    .btn-action.zip {
-      color: #34d399;
-    }
-    .btn-action.zip:hover {
-      background: #10b981;
-      color: white;
-      border-color: #10b981;
-    }
-
-    /* Modal */
-    .modal-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(4px);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .modal-content {
-      background: #111827;
-      border: 1px solid #374151;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 900px;
-      max-height: 90vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 20px;
-      border-bottom: 1px solid #1f2937;
-    }
-
-    .modal-body {
-      padding: 20px;
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    .modal-close {
-      background: transparent;
-      border: none;
-      color: #9ca3af;
-      font-size: 1.25rem;
-      cursor: pointer;
-    }
-
-    .svg-viewer {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 16px;
-      min-height: 400px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: auto;
-    }
-
-    .svg-viewer svg {
-      max-width: 100%;
-      height: auto;
-    }
-
-    pre.json-viewer {
-      background: #0d1321;
-      padding: 14px;
-      border-radius: 8px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
-      color: #a5f3fc;
-      overflow-x: auto;
-    }
-
-    .spinner {
-      border: 3px solid rgba(255, 255, 255, 0.2);
-      border-top-color: #fff;
-      border-radius: 50%;
-      width: 18px;
-      height: 18px;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Estilos del Visor y del Studio -->
+  <link rel="stylesheet" href="viewer.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="modulepreload" href="viewer.js" />
 </head>
-<body>
-  <div class="container">
-    <header>
-      <div class="brand">
-        <div class="logo-badge">PAC</div>
-        <div>
-          <h1>pattern-ai-core</h1>
-          <div class="subtitle">Motor Paramétrico FreeSewing v3 & API REST Local</div>
-        </div>
+<body class="theme-dark">
+  <!-- 1. BARRA SUPERIOR DE NAVEGACIÓN -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo-badge">PAC</div>
+      <div class="brand-info">
+        <h1>pattern-ai-core <span style="color: var(--accent-cyan); font-weight: 400; font-size: 0.9rem;">| Studio</span></h1>
+        <div class="brand-tagline">Motor Geométrico FreeSewing v3 • IA Generativa & Moldería Industrial 1:1</div>
       </div>
-      <div class="status-badges" id="statusBadges">
-        <span class="badge green">● Conectado</span>
-        <span class="badge" id="versionBadge">v0.1.0</span>
-        <span class="badge" id="providerBadge">IA: Mock</span>
+    </div>
+
+    <div class="header-status-group">
+      <div class="status-badge online" id="serverStatusBadge">
+        <span class="status-dot"></span> Conectado
       </div>
-    </header>
+      <span class="status-badge" id="versionBadge">v0.1.0</span>
+      <span class="status-badge" id="providerBadge">IA: MOCK</span>
+      <button class="btn-icon" id="themeToggleBtn" title="Alternar Modo Oscuro / Claro">
+        <span id="themeIcon">☀️</span> Modo
+      </button>
+    </div>
+  </header>
 
-    <div class="grid-layout">
-      <!-- PANEL IZQUIERDO: FORMULARIO GENERADOR -->
-      <section class="card">
-        <h2 class="card-title">⚡ Generar Moldería Textil IA</h2>
-
-        <div class="form-group">
-          <label>Presets Rápidos de Patronaje:</label>
-          <div class="presets-container" id="presetsContainer">
-            <span class="preset-chip" data-prompt="Sudadera oversize streetwear con capucha cruzada y bolsillo canguro">🧥 Hoodie Oversize</span>
-            <span class="preset-chip" data-prompt="Camiseta manga corta cuello redondo regular fit 100% algodón">👕 T-Shirt Regular</span>
-            <span class="preset-chip" data-prompt="Vestido túnica ceremonial anime fantasy sacerdotisa con mangas kimono">👗 Vestido Priestess</span>
-            <span class="preset-chip" data-prompt="Chaleco táctico cyberpunk shinobi sin mangas con bolsillos cargo">🦺 Chaleco Shinobi</span>
-            <span class="preset-chip" data-prompt="Chaleco pirata de anime con escote en V pronunciado y bajo en pico">🏴‍☠️ Pirate Captain Vest</span>
-          </div>
+  <!-- 2. STUDIO WORKSPACE (3 PANELES) -->
+  <main class="studio-layout">
+    <!-- PANEL IZQUIERDO: CONTROLES DE GENERACIÓN & MEDIDAS -->
+    <aside class="left-panel">
+      <section class="studio-card">
+        <div class="card-heading">
+          <h2 class="card-title">⚡ Generar Moldería Textil IA</h2>
+          <span style="font-size: 0.75rem; color: var(--accent-cyan); font-family: var(--font-mono);">v3 Engine</span>
         </div>
 
-        <form id="generateForm">
+        <form id="generateForm" style="display: flex; flex-direction: column; gap: 14px;">
+          <!-- Presets de Catálogo Rápido -->
           <div class="form-group">
-            <label for="promptInput">Prompt de la Prenda o Modificaciones:</label>
-            <textarea id="promptInput" placeholder="Ej: Sudadera oversize con capucha cruzada y bolsillo canguro..." required rows="3"></textarea>
-          </div>
-
-          <div class="row">
-            <div class="col form-group">
-              <label for="providerSelect">Proveedor IA:</label>
-              <select id="providerSelect">
-                <option value="mock">mock (Offline / Rápido)</option>
-                <option value="agy">agy (Claude/CLI)</option>
-                <option value="opencode">opencode (CLI)</option>
-                <option value="api">api (Direct API)</option>
-              </select>
-            </div>
-            <div class="col form-group">
-              <label for="sizesInput">Tallas Graduadas:</label>
-              <input type="text" id="sizesInput" value="S, M, L, XL, 2XL" placeholder="XS, S, M, L..." />
+            <label class="form-label">Catálogo de Presets Rápidos:</label>
+            <div class="presets-grid" id="presetsContainer">
+              <!-- Inyectado dinámicamente por app.js -->
             </div>
           </div>
 
+          <!-- Prompt en Lenguaje Natural -->
           <div class="form-group">
-            <label for="measurementsInput">Medidas Personalizadas en JSON (Opcional):</label>
-            <input type="text" id="measurementsInput" placeholder='{"chest_circumference_mm": 1040, "waist_circumference_mm": 880}' />
+            <label class="form-label" for="promptInput">Prompt o Descripción del Diseño:</label>
+            <textarea id="promptInput" class="prompt-input" placeholder="Ej: Sudadera oversize streetwear con capucha cruzada y bolsillo canguro..." required></textarea>
           </div>
 
+          <!-- Proveedor IA -->
           <div class="form-group">
-            <label class="checkbox-label">
-              <input type="checkbox" id="bundleCheckbox" checked />
-              <span>Empaquetar automáticamente ZIP Comercial y Metadatos Etsy</span>
-            </label>
+            <label class="form-label" for="providerSelect">Proveedor de Inteligencia Artificial:</label>
+            <select id="providerSelect" class="control-select">
+              <option value="mock">mock (Offline / Rápido - 100% Determinista)</option>
+              <option value="agy">agy (Claude / Antigravity CLI)</option>
+              <option value="opencode">opencode (OpenCode CLI)</option>
+              <option value="api">api (Direct API)</option>
+            </select>
           </div>
 
-          <button type="submit" class="btn-primary" id="generateBtn">
-            <span id="btnText">Generar Patrón Paramétrico</span>
-            <div id="btnSpinner" class="spinner" style="display: none;"></div>
+          <!-- Sliders Biométricos Interactivos -->
+          <div class="form-group">
+            <div class="form-label">
+              <span>Personalización Antropométrica (mm):</span>
+              <button type="button" class="btn-tool" id="resetBioBtn" style="padding: 2px 6px; font-size: 0.7rem;">Restablecer</button>
+            </div>
+            
+            <div class="sliders-group">
+              <div class="slider-item">
+                <div class="form-label">
+                  <span>Pecho / Busto:</span>
+                  <span class="value-badge" id="chestVal">1040 mm (104.0 cm)</span>
+                </div>
+                <input type="range" class="bio-slider" id="chestSlider" min="700" max="1500" step="5" value="1040" />
+              </div>
+
+              <div class="slider-item">
+                <div class="form-label">
+                  <span>Cintura:</span>
+                  <span class="value-badge" id="waistVal">860 mm (86.0 cm)</span>
+                </div>
+                <input type="range" class="bio-slider" id="waistSlider" min="600" max="1400" step="5" value="860" />
+              </div>
+
+              <div class="slider-item">
+                <div class="form-label">
+                  <span>Cadera:</span>
+                  <span class="value-badge" id="hipVal">1020 mm (102.0 cm)</span>
+                </div>
+                <input type="range" class="bio-slider" id="hipSlider" min="700" max="1500" step="5" value="1020" />
+              </div>
+
+              <div class="slider-item">
+                <div class="form-label">
+                  <span>Tiro / Largo Pierna:</span>
+                  <span class="value-badge" id="inseamVal">800 mm (80.0 cm)</span>
+                </div>
+                <input type="range" class="bio-slider" id="inseamSlider" min="500" max="1100" step="5" value="800" />
+              </div>
+
+              <div class="slider-item">
+                <div class="form-label">
+                  <span>Largo de Manga:</span>
+                  <span class="value-badge" id="sleeveVal">650 mm (65.0 cm)</span>
+                </div>
+                <input type="range" class="bio-slider" id="sleeveSlider" min="400" max="850" step="5" value="650" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Selector de Tallas Graduadas -->
+          <div class="form-group">
+            <label class="form-label">Tallas a Graduar:</label>
+            <div class="size-pills-row" id="sizePillsContainer">
+              <!-- Inyectado por app.js -->
+            </div>
+          </div>
+
+          <!-- Botón de Generación Principal -->
+          <button type="submit" class="btn-generate-main" id="generateBtn">
+            <span id="generateBtnText">⚡ Generar Patrón Paramétrico</span>
+            <div id="generateBtnSpinner" class="pac-spinner" style="display: none;"></div>
           </button>
         </form>
       </section>
+    </aside>
 
-      <!-- PANEL DERECHO: PATRONES GENERADOS -->
-      <section class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h2 class="card-title" style="margin-bottom: 0;">📁 Biblioteca de Patrones</h2>
-          <button id="refreshPatternsBtn" class="btn-action">🔄 Actualizar</button>
+    <!-- PANEL CENTRAL: VISOR VECTORIAL 2D & TECHPACK WORKSPACE -->
+    <section class="center-panel">
+      <!-- Pestañas de Vista Superior -->
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <nav class="center-tabs-nav">
+          <button class="tab-btn active" id="tabBtnVector">📐 Patrón Vectorial 2D</button>
+          <button class="tab-btn" id="tabBtnTechpack">📋 Ficha Técnica (Tech Pack)</button>
+          <button class="tab-btn" id="tabBtnEtsy">🛍️ Metadatos Etsy</button>
+        </nav>
+
+        <!-- Toolbar del Visor Vectorial -->
+        <div class="viewer-toolbar" id="viewerToolbar">
+          <div class="toolbar-group">
+            <button class="btn-tool" id="btnZoomIn" title="Acercar Zoom (Rueda mouse hacia arriba)">➕</button>
+            <button class="btn-tool" id="btnZoomOut" title="Alejar Zoom (Rueda mouse hacia abajo)">➖</button>
+            <button class="btn-tool" id="btnFitView" title="Ajustar Vista a Pantalla">🎯 Centrar / Fit</button>
+            <button class="btn-tool" id="btnResetView" title="Restablecer Escala 100%">1:1</button>
+          </div>
+
+          <div class="toolbar-group">
+            <select class="control-select" id="gridModeSelect" style="padding: 4px 8px; font-size: 0.75rem; width: auto;" title="Cuadrícula de Paginación">
+              <option value="off">Cuadrícula: Desactivada</option>
+              <option value="A4">📄 Grilla A4 (210×297 mm)</option>
+              <option value="letter">📄 Grilla US Letter (8.5×11 in)</option>
+            </select>
+            <button class="btn-tool" id="btnCheckCalibration" title="Inspeccionar Cuadro 10x10 cm">📏 Calibración 10x10</button>
+          </div>
+
+          <div class="toolbar-group" id="viewerSizePills">
+            <!-- Píldoras de capa por talla inyectadas dinámicamente -->
+          </div>
         </div>
+      </div>
 
-        <div class="pattern-list" id="patternsList">
-          <div style="text-align: center; color: var(--text-muted); padding: 32px 0;">
-            Cargando patrones...
+      <!-- 1. VISTA: VISOR VECTORIAL 2D (DEFAULT) -->
+      <div class="viewer-container-wrapper" id="viewVector2d">
+        <div id="viewerStage" style="width: 100%; height: 100%;"></div>
+      </div>
+
+      <!-- 2. VISTA: FICHA TÉCNICA INDUSTRIAL (TECHPACK) -->
+      <div class="tab-content-container" id="viewTechpack">
+        <div style="text-align: center; color: var(--text-dim); padding: 40px 0;">
+          Genera o selecciona un patrón para visualizar su ficha técnica completa.
+        </div>
+      </div>
+
+      <!-- 3. VISTA: METADATOS ETSY & COMERCIAL -->
+      <div class="tab-content-container" id="viewEtsy">
+        <div style="text-align: center; color: var(--text-dim); padding: 40px 0;">
+          Genera o selecciona un patrón para inspeccionar el paquete de metadatos Etsy.
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL DERECHO: CONSUMO DE TELA, ENTREGABLES & BIBLIOTECA -->
+    <aside class="right-panel">
+      <!-- Tarjeta de Consumo y Ficha Rápida -->
+      <section class="studio-card">
+        <div class="card-heading">
+          <h2 class="card-title">📊 Resumen Textil</h2>
+        </div>
+        
+        <div class="fabric-stat-grid">
+          <div class="fabric-stat-box">
+            <div class="fabric-stat-value" id="fabricConsumptionVal">1.40 m</div>
+            <div class="fabric-stat-label">Consumo de Tela</div>
+          </div>
+          <div class="fabric-stat-box">
+            <div class="fabric-stat-value" id="totalPartsCountVal">4</div>
+            <div class="fabric-stat-label">Piezas de Corte</div>
+          </div>
+          <div class="fabric-stat-box">
+            <div class="fabric-stat-value" id="fabricWidthVal">1500 mm</div>
+            <div class="fabric-stat-label">Ancho de Rollo</div>
+          </div>
+          <div class="fabric-stat-box">
+            <div class="fabric-stat-value" id="wasteFactorVal">15%</div>
+            <div class="fabric-stat-label">Merma Textil</div>
           </div>
         </div>
       </section>
-    </div>
-  </div>
 
-  <!-- MODAL DE VISOR SVG Y FICHA TÉCNICA -->
-  <div class="modal-backdrop" id="modalBackdrop">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 id="modalTitle" style="font-size: 1.1rem;">Visor</h3>
-        <button class="modal-close" id="modalCloseBtn">&times;</button>
-      </div>
-      <div class="modal-body" id="modalBody"></div>
-    </div>
-  </div>
+      <!-- Tarjeta de Descargas Directas con 1 Clic -->
+      <section class="studio-card">
+        <div class="card-heading">
+          <h2 class="card-title">📥 Descargas Directas (1 Clic)</h2>
+        </div>
 
-  <script>
-    const API_BASE = '';
+        <div class="downloads-grid">
+          <a class="btn-download-action" id="downloadA4Btn" href="#" download>
+            <span>📄 PDF A4 Paginado (Hojas Imprimibles)</span>
+            <span>⬇️</span>
+          </a>
+          <a class="btn-download-action" id="downloadLetterBtn" href="#" download>
+            <span>📄 PDF US Letter (Hojas Imprimibles)</span>
+            <span>⬇️</span>
+          </a>
+          <a class="btn-download-action" id="downloadA0Btn" href="#" download>
+            <span>🖨️ PDF Plotter A0 Continuo</span>
+            <span>⬇️</span>
+          </a>
+          <a class="btn-download-action" id="downloadSvgBtn" href="#" download>
+            <span>📐 SVG Vectorial Continuo</span>
+            <span>⬇️</span>
+          </a>
+          <a class="btn-download-action" id="downloadTechpackPdfBtn" href="#" download>
+            <span>📋 Ficha Técnica Industrial (PDF)</span>
+            <span>⬇️</span>
+          </a>
+          <a class="btn-download-action zip-btn" id="downloadBundleZipBtn" href="#" download>
+            <span>🛍️ Paquete Comercial Etsy (.ZIP)</span>
+            <span>📦</span>
+          </a>
+        </div>
+      </section>
 
-    // Referencias DOM
-    const generateForm = document.getElementById('generateForm');
-    const promptInput = document.getElementById('promptInput');
-    const providerSelect = document.getElementById('providerSelect');
-    const sizesInput = document.getElementById('sizesInput');
-    const measurementsInput = document.getElementById('measurementsInput');
-    const bundleCheckbox = document.getElementById('bundleCheckbox');
-    const generateBtn = document.getElementById('generateBtn');
-    const btnText = document.getElementById('btnText');
-    const btnSpinner = document.getElementById('btnSpinner');
-    const patternsList = document.getElementById('patternsList');
-    const refreshPatternsBtn = document.getElementById('refreshPatternsBtn');
-    const versionBadge = document.getElementById('versionBadge');
-    const providerBadge = document.getElementById('providerBadge');
+      <!-- Biblioteca de Patrones Recientes -->
+      <section class="studio-card">
+        <div class="card-heading">
+          <h2 class="card-title">📁 Biblioteca de Patrones</h2>
+          <button class="btn-tool" id="refreshLibraryBtn" style="padding: 2px 8px; font-size: 0.75rem;">🔄 Actualizar</button>
+        </div>
 
-    const modalBackdrop = document.getElementById('modalBackdrop');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalBody = document.getElementById('modalBody');
-    const modalCloseBtn = document.getElementById('modalCloseBtn');
+        <div class="library-list" id="libraryListContainer">
+          <div style="color: var(--text-dim); padding: 12px 0; text-align: center;">Cargando biblioteca...</div>
+        </div>
+      </section>
+    </aside>
+  </main>
 
-    // Cargar estado inicial
-    async function loadStatus() {
-      try {
-        const res = await fetch(`${API_BASE}/api/status`);
-        if (!res.ok) return;
-        const data = await res.json();
-        versionBadge.textContent = `v${data.version || '0.1.0'}`;
-        providerBadge.textContent = `IA: ${data.activeProvider || 'mock'}`;
-      } catch (err) {
-        console.error('Error fetching status:', err);
-      }
-    }
-
-    // Cargar Presets de API
-    async function loadPresets() {
-      try {
-        const res = await fetch(`${API_BASE}/api/presets`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.presets && data.presets.length > 0) {
-          const container = document.getElementById('presetsContainer');
-          container.innerHTML = '';
-          data.presets.forEach(p => {
-            const chip = document.createElement('span');
-            chip.className = 'preset-chip';
-            chip.textContent = `${p.name}`;
-            chip.addEventListener('click', () => {
-              promptInput.value = p.description || p.name;
-              if (p.target_layers) {
-                sizesInput.value = p.target_layers.join(', ');
-              }
-            });
-            container.appendChild(chip);
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching presets:', err);
-      }
-    }
-
-    // Cargar Lista de Patrones
-    async function loadPatterns() {
-      try {
-        patternsList.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 24px 0;">Cargando...</div>';
-        const res = await fetch(`${API_BASE}/api/patterns`);
-        if (!res.ok) throw new Error('Error al listar patrones');
-        const data = await res.json();
-        const patterns = data.patterns || [];
-
-        if (patterns.length === 0) {
-          patternsList.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 32px 0;">No se encontraron patrones generados aún. ¡Genera el primero!</div>';
-          return;
-        }
-
-        patternsList.innerHTML = '';
-        patterns.forEach(p => {
-          const item = document.createElement('div');
-          item.className = 'pattern-item';
-
-          const slug = p.concept_slug || p.concept_name;
-          const desc = p.description || p.base_block || 'Moldería paramétrica';
-
-          item.innerHTML = `
-            <div class="pattern-header">
-              <span class="pattern-name">${p.concept_name || slug}</span>
-              <span class="badge">${p.base_block || 'sloper'}</span>
-            </div>
-            <div class="pattern-meta">${desc}</div>
-            <div class="pattern-actions">
-              ${p.hasSvg ? `<button class="btn-action" onclick="viewSvg('${slug}')">📐 Ver SVG</button>` : ''}
-              ${p.hasTechpack ? `<button class="btn-action" onclick="viewTechpack('${slug}')">📋 Ficha Técnica</button>` : ''}
-              ${p.hasBundle ? `<a class="btn-action zip" href="${API_BASE}/api/patterns/${slug}/bundle" download>📦 Descargar ZIP</a>` : ''}
-            </div>
-          `;
-          patternsList.appendChild(item);
-        });
-      } catch (err) {
-        patternsList.innerHTML = `<div style="color: var(--danger); padding: 16px;">Error al cargar biblioteca: ${err.message}</div>`;
-      }
-    }
-
-    // Modal Handlers
-    function openModal(title, contentHtml) {
-      modalTitle.textContent = title;
-      modalBody.innerHTML = contentHtml;
-      modalBackdrop.style.display = 'flex';
-    }
-
-    modalCloseBtn.addEventListener('click', () => {
-      modalBackdrop.style.display = 'none';
-    });
-
-    modalBackdrop.addEventListener('click', (e) => {
-      if (e.target === modalBackdrop) modalBackdrop.style.display = 'none';
-    });
-
-    // Ver SVG en Modal
-    window.viewSvg = async function(slug) {
-      try {
-        const res = await fetch(`${API_BASE}/api/patterns/${slug}/svg`);
-        if (!res.ok) throw new Error('No se pudo cargar el archivo SVG');
-        const svgText = await res.text();
-        openModal(`Moldería Vectorial: ${slug}`, `<div class="svg-viewer">${svgText}</div>`);
-      } catch (err) {
-        alert('Error: ' + err.message);
-      }
-    };
-
-    // Ver Ficha Técnica en Modal
-    window.viewTechpack = async function(slug) {
-      try {
-        const res = await fetch(`${API_BASE}/api/patterns/${slug}/techpack`);
-        if (!res.ok) throw new Error('No se pudo cargar la ficha técnica');
-        const json = await res.json();
-        openModal(`Ficha Técnica: ${slug}`, `<pre class="json-viewer">${JSON.stringify(json, null, 2)}</pre>`);
-      } catch (err) {
-        alert('Error: ' + err.message);
-      }
-    };
-
-    // Manejo de Formulario de Generación
-    generateForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const prompt = promptInput.value.trim();
-      if (!prompt) return;
-
-      const provider = providerSelect.value;
-      const sizes = sizesInput.value
-        .split(/[,;\s]+/)
-        .map(s => s.trim().toUpperCase())
-        .filter(Boolean);
-
-      let measurements = undefined;
-      if (measurementsInput.value.trim()) {
-        try {
-          measurements = JSON.parse(measurementsInput.value.trim());
-        } catch (err) {
-          alert('El JSON de medidas personalizadas no es válido: ' + err.message);
-          return;
-        }
-      }
-
-      const bundle = bundleCheckbox.checked;
-
-      generateBtn.disabled = true;
-      btnText.textContent = 'Generando moldería...';
-      btnSpinner.style.display = 'block';
-
-      try {
-        const res = await fetch(`${API_BASE}/api/generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt,
-            provider,
-            sizes,
-            measurements,
-            bundle
-          })
-        });
-
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || 'Falló la generación del patrón');
-        }
-
-        await loadPatterns();
-        if (data.conceptSlug) {
-          viewSvg(data.conceptSlug);
-        }
-      } catch (err) {
-        alert('Error al generar moldería: ' + err.message);
-      } finally {
-        generateBtn.disabled = false;
-        btnText.textContent = 'Generar Patrón Paramétrico';
-        btnSpinner.style.display = 'none';
-      }
-    });
-
-    refreshPatternsBtn.addEventListener('click', loadPatterns);
-
-    // Inicio
-    loadStatus();
-    loadPresets();
-    loadPatterns();
-  </script>
+  <!-- Scripts principales como Módulos ES6 -->
+  <script type="module" src="viewer.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

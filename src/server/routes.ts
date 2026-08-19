@@ -356,6 +356,50 @@ export async function handleGetStatus(
   sendJson(res, 200, statusData);
 }
 
+const PIRATE_SHORTS_PRESET: PatternDna = {
+  concept_name: 'straw_pirate_denim_shorts',
+  description: 'Anime pirate captain denim bermuda shorts with rolled cuffs and knee length',
+  base_block: 'pants_sloper',
+  garment_category: 'bottom',
+  ease: {
+    chest_ease_mm: 0,
+    waist_ease_mm: 25,
+    hip_ease_mm: 45,
+    crotch_ease_mm: 20,
+    knee_ease_mm: 60,
+  },
+  modifications: {
+    trouser_legs: {
+      type: 'straight',
+      length_type: 'shorts',
+    },
+    trouser_hem: {
+      type: 'cuffed',
+      cuff_height_mm: 35,
+    },
+    waistband: {
+      type: 'fitted',
+      height_mm: 40,
+    },
+  },
+  sizing: {
+    size: 'M',
+    waist_circ_mm: 820,
+    hip_circ_mm: 980,
+    target_layers: ['S', 'M', 'L', 'XL', '2XL'],
+  },
+  tech_specs: {
+    notions: ['1x botón metálico jeans 17mm', '1x cremallera metálica 15cm', 'hilo torzal contrastante'],
+    estimated_fabric_meters: 1.1,
+    seam_allowance_mm: 10,
+    hem_allowance_mm: 25,
+    fabric_type: 'denim_12oz_blue',
+    fabric_width_mm: 1500,
+  },
+  notions: ['1x botón metálico jeans 17mm', '1x cremallera metálica 15cm', 'hilo torzal contrastante'],
+  estimated_fabric_meters: 1.1,
+};
+
 /**
  * 2. GET /api/presets
  * Devuelve la lista de presets disponibles con descripción y bloque base
@@ -364,7 +408,12 @@ export async function handleGetPresets(
   _req: IncomingMessage,
   res: ServerResponse
 ): Promise<void> {
-  const presetList: PresetSummary[] = Object.entries(MOCK_PRESETS).map(
+  const allPresets: Record<string, PatternDna> = {
+    ...MOCK_PRESETS,
+    pirate_shorts: PIRATE_SHORTS_PRESET,
+  };
+
+  const presetList: PresetSummary[] = Object.entries(allPresets).map(
     ([key, dna]) => {
       let displayName = dna.concept_name
         .split('_')
@@ -376,6 +425,7 @@ export async function handleGetPresets(
       if (key === 'dress') displayName = 'Priestess Fantasy Dress / Robe';
       if (key === 'vest') displayName = 'Cyberpunk Shinobi Tactical Vest';
       if (key === 'pirate_vest') displayName = 'Straw Pirate Adventurer Vest';
+      if (key === 'pirate_shorts') displayName = 'Straw Pirate Denim Shorts';
 
       return {
         id: key,
@@ -383,7 +433,7 @@ export async function handleGetPresets(
         concept_name: dna.concept_name,
         description: dna.description || '',
         base_block: dna.base_block,
-        garment_category: dna.garment_category || 'top',
+        garment_category: dna.garment_category || (key === 'pirate_shorts' ? 'bottom' : 'top'),
         default_size: dna.sizing?.size || 'M',
         target_layers: dna.sizing?.target_layers || ['S', 'M', 'L', 'XL', '2XL'],
         fabric_type: dna.tech_specs?.fabric_type,
@@ -614,6 +664,127 @@ export async function handleGetPatternBundle(
 }
 
 /**
+ * 6b. GET /api/patterns/:concept/download/:fileType
+ * Descarga directamente un archivo generado específico (a4, letter, a0, svg, techpack-pdf, techpack-json, bundle, etc.)
+ */
+export async function handleGetPatternFile(
+  concept: string,
+  fileType: string,
+  _req: IncomingMessage,
+  res: ServerResponse,
+  ctx: RouteContext
+): Promise<void> {
+  const conceptDir = await findConceptDirectory(ctx.outputDir, concept);
+  if (!conceptDir) {
+    sendError(res, 404, `No se encontró el patrón para el concepto '${concept}'`);
+    return;
+  }
+
+  const scanned = await scanConceptFiles(conceptDir);
+  const normalizedType = (fileType || '').toLowerCase().replace(/[-_]/g, '');
+
+  let targetFilePath: string | undefined;
+  let contentType = 'application/octet-stream';
+
+  if (
+    normalizedType === 'a4' ||
+    normalizedType === 'tileda4' ||
+    normalizedType === 'tileda4pdf' ||
+    normalizedType === 'pdfa4'
+  ) {
+    targetFilePath = scanned.tiledA4PdfFile;
+    contentType = 'application/pdf';
+  } else if (
+    normalizedType === 'letter' ||
+    normalizedType === 'tiledletter' ||
+    normalizedType === 'tiledletterpdf' ||
+    normalizedType === 'usletter' ||
+    normalizedType === 'pdfletter'
+  ) {
+    targetFilePath = scanned.tiledLetterPdfFile;
+    contentType = 'application/pdf';
+  } else if (
+    normalizedType === 'a0' ||
+    normalizedType === 'plotter' ||
+    normalizedType === 'plottera0' ||
+    normalizedType === 'plotterpdf' ||
+    normalizedType === 'pdfa0'
+  ) {
+    targetFilePath = scanned.plotterA0PdfFile;
+    contentType = 'application/pdf';
+  } else if (
+    normalizedType === 'svg' ||
+    normalizedType === 'continuoussvg' ||
+    normalizedType === 'vector'
+  ) {
+    targetFilePath = scanned.svgFile;
+    contentType = 'image/svg+xml; charset=utf-8';
+  } else if (
+    normalizedType === 'techpackpdf' ||
+    normalizedType === 'techpack' ||
+    normalizedType === 'pdftechpack'
+  ) {
+    targetFilePath = scanned.techpackPdfFile;
+    contentType = 'application/pdf';
+  } else if (
+    normalizedType === 'techpackjson' ||
+    normalizedType === 'jsontechpack'
+  ) {
+    targetFilePath = scanned.techpackJsonFile;
+    contentType = 'application/json; charset=utf-8';
+  } else if (
+    normalizedType === 'techpackmd' ||
+    normalizedType === 'md'
+  ) {
+    targetFilePath = scanned.techpackMdFile;
+    contentType = 'text/markdown; charset=utf-8';
+  } else if (
+    normalizedType === 'bundle' ||
+    normalizedType === 'zip' ||
+    normalizedType === 'etsy'
+  ) {
+    targetFilePath = scanned.bundleZipFile;
+    contentType = 'application/zip';
+  } else if (
+    normalizedType === 'dna' ||
+    normalizedType === 'dnajson'
+  ) {
+    targetFilePath = scanned.dnaFile;
+    contentType = 'application/json; charset=utf-8';
+  }
+
+  if (!targetFilePath || !fs.existsSync(targetFilePath)) {
+    sendError(
+      res,
+      404,
+      `Archivo de tipo '${fileType}' no encontrado para el concepto '${concept}'`
+    );
+    return;
+  }
+
+  try {
+    const stat = await fs.promises.stat(targetFilePath);
+    const fileName = path.basename(targetFilePath);
+
+    setCorsHeaders(res);
+    res.statusCode = 200;
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', stat.size);
+
+    const stream = fs.createReadStream(targetFilePath);
+    stream.pipe(res);
+  } catch (err) {
+    sendError(
+      res,
+      500,
+      `Error al servir el archivo '${fileType}'`,
+      err instanceof Error ? err.message : String(err)
+    );
+  }
+}
+
+/**
  * 7. POST /api/generate
  * Recibe { prompt, provider, measurements, target_layers, sizes, bundle, imagePath, wasteFactor }
  * y orquesta generatePatternPipeline()
@@ -673,6 +844,22 @@ export async function handlePostGenerate(
 
   const inputMeasurements = measurements || customMeasurements;
 
+  let finalDirectDna = directDna;
+  if (!finalDirectDna && (!provider || provider === 'mock')) {
+    const q = (prompt || '').toLowerCase();
+    if (
+      q.includes('short') ||
+      q.includes('bermuda') ||
+      q.includes('pantalon corto') ||
+      q.includes('pantalón corto') ||
+      q.includes('pirate shorts') ||
+      q.includes('pirate_shorts') ||
+      q.includes('denim shorts')
+    ) {
+      finalDirectDna = PIRATE_SHORTS_PRESET;
+    }
+  }
+
   try {
     const pipelineReq: PipelineRequest = {
       prompt: prompt || '',
@@ -684,7 +871,7 @@ export async function handlePostGenerate(
       imagePath,
       wasteFactor: wasteFactor ? Number(wasteFactor) : undefined,
       fabricWidth_mm: fabricWidth_mm ? Number(fabricWidth_mm) : undefined,
-      directDna,
+      directDna: finalDirectDna,
     };
 
     const result = await generatePatternPipeline(pipelineReq);

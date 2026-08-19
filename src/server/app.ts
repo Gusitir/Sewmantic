@@ -18,6 +18,7 @@ import {
   handleGetPatternSvg,
   handleGetPatternTechpack,
   handleGetPatternBundle,
+  handleGetPatternFile,
   handlePostGenerate,
   handlePostBundle,
 } from './routes.js';
@@ -196,6 +197,24 @@ export async function handleRequest(
       if (bundleMatch && method === 'GET') {
         const concept = decodeURIComponent(bundleMatch[1]);
         await handleGetPatternBundle(concept, req, res, ctx);
+        return;
+      }
+
+      // GET /api/patterns/:concept/download/:type or /api/patterns/:concept/file/:type
+      const downloadMatch = pathname.match(/^\/api\/patterns\/([^/]+)\/(?:download|file|files)\/([^/]+)\/?$/);
+      if (downloadMatch && method === 'GET') {
+        const concept = decodeURIComponent(downloadMatch[1]);
+        const fileType = decodeURIComponent(downloadMatch[2]);
+        await handleGetPatternFile(concept, fileType, req, res, ctx);
+        return;
+      }
+
+      // GET /api/patterns/:concept/pdf/:format
+      const pdfMatch = pathname.match(/^\/api\/patterns\/([^/]+)\/pdf\/([^/]+)\/?$/);
+      if (pdfMatch && method === 'GET') {
+        const concept = decodeURIComponent(pdfMatch[1]);
+        const format = decodeURIComponent(pdfMatch[2]);
+        await handleGetPatternFile(concept, format, req, res, ctx);
         return;
       }
 
