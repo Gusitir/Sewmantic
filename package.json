@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@freesewing/core": "^3.0.0",
+    "archiver": "^8.0.0",
     "commander": "^12.1.0",
     "dotenv": "^16.4.7",
     "pdfkit": "^0.15.0",
@@ -19,6 +20,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/archiver": "^8.0.0",
     "@types/node": "^22.10.2",
     "@types/pdfkit": "^0.13.7",
     "@types/svg-to-pdfkit": "^0.1.3",

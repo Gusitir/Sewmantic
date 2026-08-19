@@ -13,6 +13,7 @@ import {
   exportCalibrationPdf,
   inspectPatternDnaFile,
   compileTechpackFromFile,
+  bundlePatternDirectory,
   parseMeasurementsArg,
   PipelineRequest,
 } from "./pipeline.js";
@@ -40,6 +41,7 @@ export * from "./engine/calibration_box.js";
 export * from "./utils/tiler.js";
 export * from "./engine/exporter.js";
 export * from "./engine/tech_sheet.js";
+export * from "./engine/etsy_bundler.js";
 
 // Exportación del Subsistema de Proveedores de IA
 export * from "./ai/base_provider.js";
@@ -115,13 +117,17 @@ export function initCli(): Command {
     .option("-o, --output <dir>", "Directorio base de salida", "output")
     .option("-w, --waste <number>", "Factor de merma textil (mínimo 0.10, default 0.15)", "0.15")
     .option("-m, --measurements <path_or_json>", "Medidas personalizadas exactas en JSON o ruta a archivo .json (ej: '{\"chest_circumference_mm\":1040}')")
-    .action(async (prompt: string, options: { image?: string; format?: string; sizes?: string; provider?: string; output?: string; waste?: string; measurements?: string }) => {
+    .option("-b, --bundle", "Empaqueta automáticamente el archivo ZIP comercial para Etsy y genera metadatos")
+    .action(async (prompt: string, options: { image?: string; format?: string; sizes?: string; provider?: string; output?: string; waste?: string; measurements?: string; bundle?: boolean }) => {
       try {
         console.log(`\n=============================================================`);
         console.log(`[pattern-ai-core] Generando patrón paramétrico...`);
         console.log(`Prompt: "${prompt}"`);
         console.log(`Proveedor IA: ${options.provider}`);
         console.log(`Directorio salida: ${options.output}`);
+        if (options.bundle) {
+          console.log(`Empaquetado comercial Etsy: Activado (--bundle)`);
+        }
         console.log(`=============================================================\n`);
 
         const sizes = parseSizesArg(options.sizes);
@@ -140,6 +146,7 @@ export function initCli(): Command {
           sizes,
           wasteFactor,
           customMeasurements,
+          bundle: Boolean(options.bundle),
         };
 
         const result = await generatePatternPipeline(req);
@@ -162,6 +169,21 @@ export function initCli(): Command {
             // Ignorar si no se puede leer tamaño
           }
           console.log(`  • [${key}] ${path.basename(filePath)}${sizeStr}`);
+        }
+
+        if (result.bundle) {
+          console.log(`\n-------------------------------------------------------------`);
+          console.log(`RESUMEN COMERCIAL LISTADO ETSY:`);
+          console.log(`-------------------------------------------------------------`);
+          console.log(`• Título (${result.bundle.metadata.title.length}/140 chars): "${result.bundle.metadata.title}"`);
+          console.log(`• SKU: ${result.bundle.metadata.sku}`);
+          console.log(`• Precio Sugerido: $${result.bundle.metadata.suggested_price_usd.toFixed(2)} USD`);
+          console.log(`• Tags (${result.bundle.metadata.tags.length}/13): ${result.bundle.metadata.tags.join(", ")}`);
+          console.log(`• Archivos dentro del ZIP (${result.bundle.bundledFiles.length}):`);
+          for (const f of result.bundle.bundledFiles) {
+            console.log(`    - ${f}`);
+          }
+          console.log(`-------------------------------------------------------------`);
         }
 
         console.log(`\nVerificación requerida: Imprima la Página 1 de los PDFs paginados para calibrar con regla el cuadro de 10x10 cm.`);
@@ -290,7 +312,44 @@ export function initCli(): Command {
     });
 
   // ==========================================
-  // COMANDO 5: status
+  // COMANDO 5: bundle <directory_or_concept>
+  // ==========================================
+  program
+    .command("bundle <directory_or_concept>")
+    .description("Empaqueta una carpeta de entregables en un archivo ZIP para Etsy y genera metadatos comerciales de listado")
+    .option("-o, --output <dir>", "Directorio base de salida o destino alternativo")
+    .action(async (dirOrConcept: string, options: { output?: string }) => {
+      try {
+        console.log(`\n=============================================================`);
+        console.log(`[pattern-ai-core] Empaquetando bundle comercial para Etsy...`);
+        console.log(`Objetivo: "${dirOrConcept}"`);
+        console.log(`=============================================================\n`);
+
+        const res = await bundlePatternDirectory(dirOrConcept, { outputDir: options.output });
+
+        console.log(`\n[ÉXITO] Bundle comercial de Etsy empaquetado exitosamente:`);
+        console.log(`  • ZIP:        ${res.zipPath} (${formatFileSize(res.zipSize)})`);
+        console.log(`  • Metadatos:  ${res.metadataPath}`);
+        console.log(`  • Guía PDF:   ${res.printingGuidePath}\n`);
+
+        console.log(`Resumen de Listado Etsy:`);
+        console.log(`  • Título (${res.metadata.title.length}/140 chars): "${res.metadata.title}"`);
+        console.log(`  • SKU: ${res.metadata.sku}`);
+        console.log(`  • Precio Sugerido: $${res.metadata.suggested_price_usd.toFixed(2)} USD`);
+        console.log(`  • Tags (${res.metadata.tags.length}/13 tags): ${res.metadata.tags.join(", ")}`);
+        console.log(`  • Archivos dentro del ZIP (${res.bundledFiles.length}):`);
+        for (const f of res.bundledFiles) {
+          console.log(`      - ${f}`);
+        }
+        console.log(``);
+      } catch (err) {
+        console.error(`\n[ERROR] Falló el empaquetado del bundle:`, err instanceof Error ? err.message : String(err));
+        process.exitCode = 1;
+      }
+    });
+
+  // ==========================================
+  // COMANDO 6: status
   // ==========================================
   program
     .command("status")
@@ -310,6 +369,7 @@ export function initCli(): Command {
       console.log(`• Tallas Estándar Soportadas: ${STANDARD_SIZES.join(", ")}`);
       console.log(`• Invariante de Calibración: Cuadro de 100x100 mm (283.465 pt) + Marco 4"x4" (288 pt) en Página 1`);
       console.log(`• Formatos de Exportación: PDF Paginado (A4/Letter), PDF Continuo (A0), SVG Vectorial, Ficha Técnica PDF/MD/JSON`);
+      console.log(`• Empaquetador Etsy: ZIP estructurado, Guía de impresión PDF, Metadatos SEO (13 tags, SKU, precio)`);
       console.log(`=============================================================`);
     });
 

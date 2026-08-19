@@ -50,6 +50,29 @@ import {
   generateTechSheetJson,
   TechSheetData,
 } from './engine/tech_sheet.js';
+import {
+  createEtsyBundle,
+  EtsyBundleResult,
+  EtsyListingMetadata,
+  generateEtsyListingMetadata,
+  generateEtsyTitle,
+  generateEtsyTags,
+  generateEtsyDescription,
+  generateEtsySku,
+  generateEtsyPrintingGuidePdf,
+} from './engine/etsy_bundler.js';
+
+export {
+  createEtsyBundle,
+  EtsyBundleResult,
+  EtsyListingMetadata,
+  generateEtsyListingMetadata,
+  generateEtsyTitle,
+  generateEtsyTags,
+  generateEtsyDescription,
+  generateEtsySku,
+  generateEtsyPrintingGuidePdf,
+};
 
 /**
  * Convierte un texto en un slug alfanumérico seguro para nombres de archivos y directorios
@@ -136,10 +159,12 @@ export interface PipelineRequest {
   directDna?: PatternDna;
   /** Medidas antropométricas personalizadas del cliente */
   customMeasurements?: Partial<BodyMeasurements>;
+  /** Empaqueta automáticamente el ZIP comercial para Etsy con metadatos */
+  bundle?: boolean;
 }
 
 /**
- * Rutas absolutas a los 8 archivos entregables generados
+ * Rutas absolutas a los archivos entregables generados
  */
 export interface PipelineFiles {
   tiledA4Pdf: string;
@@ -150,6 +175,9 @@ export interface PipelineFiles {
   techpackMd: string;
   dnaJson: string;
   techpackJson: string;
+  etsyBundleZip?: string;
+  etsyListingMetadata?: string;
+  etsyPrintingGuide?: string;
 }
 
 /**
@@ -165,6 +193,7 @@ export interface PipelineResult {
   sizeMap: Map<StandardSize, ModifiedPatternResult>;
   files: PipelineFiles;
   techSheet: TechSheetData;
+  bundle?: EtsyBundleResult;
   stats: {
     totalParts: number;
     averageFabricMeters: number;
@@ -350,7 +379,15 @@ export async function generatePatternPipeline(
   await fs.promises.writeFile(techpackJsonPath, techpackJsonContent, 'utf-8');
 
   // ==========================================
-  // 7. RETORNO DE RESULTADOS
+  // 9. EMPAQUETADO COMERCIAL ETSY (OPCIONAL)
+  // ==========================================
+  let bundleResult: EtsyBundleResult | undefined;
+  if (request.bundle) {
+    bundleResult = await createEtsyBundle(conceptOutputDir, conceptSlug, dna);
+  }
+
+  // ==========================================
+  // 10. RETORNO DE RESULTADOS
   // ==========================================
   const files: PipelineFiles = {
     tiledA4Pdf: a4PdfPath,
@@ -361,6 +398,13 @@ export async function generatePatternPipeline(
     techpackMd: techpackMdPath,
     dnaJson: dnaJsonPath,
     techpackJson: techpackJsonPath,
+    ...(bundleResult
+      ? {
+          etsyBundleZip: bundleResult.zipPath,
+          etsyListingMetadata: bundleResult.metadataPath,
+          etsyPrintingGuide: bundleResult.printingGuidePath,
+        }
+      : {}),
   };
 
   const totalParts = Object.keys(basePatternResult.parts).length;
@@ -377,10 +421,11 @@ export async function generatePatternPipeline(
     sizeMap,
     files,
     techSheet: techSheetData,
+    bundle: bundleResult,
     stats: {
       totalParts,
       averageFabricMeters,
-      generatedFilesCount: 8,
+      generatedFilesCount: bundleResult ? 11 : 8,
     },
   };
 }
@@ -616,4 +661,33 @@ export async function compileTechpackFromFile(
   ]);
 
   return { pdfPath, mdPath, jsonPath, techSheet };
+}
+
+/**
+ * Empaqueta un directorio de entregables o un concepto existente en un archivo ZIP para Etsy y metadatos
+ *
+ * @param targetDirOrConcept Ruta a directorio existente o nombre de concepto
+ * @param options Opciones de directorio de salida
+ */
+export async function bundlePatternDirectory(
+  targetDirOrConcept: string,
+  options: { outputDir?: string } = {}
+): Promise<EtsyBundleResult> {
+  const resolved = path.resolve(targetDirOrConcept);
+  let targetDir = resolved;
+
+  if (!fs.existsSync(resolved)) {
+    const baseOut = options.outputDir || 'output';
+    const altPath = path.resolve(baseOut, targetDirOrConcept);
+    if (fs.existsSync(altPath)) {
+      targetDir = altPath;
+    } else {
+      throw new Error(
+        `No se encontró el directorio o concepto '${targetDirOrConcept}' en '${resolved}' ni en '${altPath}'.`
+      );
+    }
+  }
+
+  const conceptSlug = slugify(path.basename(targetDir));
+  return createEtsyBundle(targetDir, conceptSlug);
 }
