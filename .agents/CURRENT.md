@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-18T23:59:00-05:00
-source_commit: [STATE] start phase 3.0 (PLAN_v0.3-web-ui.md)
+updated_at: 2026-08-19T00:06:00-05:00
+source_commit: [T-13] implement native HTTP REST API server, routes, public dashboard and CLI serve command
 assurance: Lean
 active_plan: PLAN_v0.3-web-ui.md
-active_task: T-13
+active_task: T-14
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,20 +18,16 @@ backup: local-only
 
 ## Next action
 
-1. **FASE 3 ACTIVA - TAREA [T-13]:** Implementar el Servidor API REST Local de `pattern-ai-core` (`src/server/app.ts`, `src/server/routes.ts`, `tests/server.test.ts`), proveyendo endpoints para generación de patrones, listado de entregables, previsualización de SVGs y descarga de bundles de Etsy.
+1. **FASE 3 ACTIVA - TAREA [T-14]:** Desarrollar el Visor Vectorial 2D Interactivo (`src/server/public/viewer.js`, `src/server/public/viewer.css`, `tests/viewer.test.ts`), proveyendo controles de zoom in/out, pan, visualizador de capas de tallas XS-3XL, superposición de cuadrícula A4/Letter y regla métrica virtual.
 
 ## Blockers
 
-- Ninguno. Todas las pruebas automatizadas (309/309) pasando al 100%.
+- Ninguno. Todas las pruebas automatizadas (325/325) pasando al 100%.
 
 ## Current facts
 
-- 100% de tareas de la Fase 2 (`T-09` a `T-12`) implementadas y auditadas con veredicto **APTO**:
-  - `T-09`: Sloper base de pantalón y shorts con coincidencia de entrepiernas $< 0.05\text{ mm}$.
-  - `T-10`: Modificador paramétrico de prendas inferiores con pretinas, bolsillos y dobladillos.
-  - `T-11`: Motor de personalización antropométrica por medidas exactas (`--measurements`).
-  - `T-12`: Empaquetador comercial automático para Etsy (`.zip` con 9 archivos internos, metadatos SEO y guía PDF).
-- Suite determinista completa con **309/309 tests pasando al 100%** en Vitest.
+- Tarea `T-13` completada y auditada con veredicto **APTO**: Servidor HTTP REST nativo implementado con endpoints para generación, listado de moldería, visor SVG continuo, descarga de bundles Etsy ZIP y subcomando `serve`.
+- Suite determinista completa con **325/325 tests pasando al 100%** en Vitest.
 - Reconstrucción digital de ensamble de hojas A4 verificada al 100% en PDFStitcher (curvas continuas sin desfases).
 - Generación de muestra completa en `output/streetwear_oversize_hoodie/` con 8 entregables válidos de alta calidad comercial para Etsy.
 - Sistema CLI con 5 comandos operativos (`generate`, `calibrate`, `inspect`, `techpack`, `status`).

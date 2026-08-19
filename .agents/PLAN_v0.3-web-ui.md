@@ -19,17 +19,17 @@ Assurance: Lean
 
 ### T-13 - Servidor API REST Local y Endpoints del Motor
 
-- Status: active
+- Status: done
 - Depends on: T-12
 - Scope: `src/server/app.ts`, `src/server/routes.ts`, `src/index.ts`, `tests/server.test.ts`
 - Rol: Ingeniero (Diseno de API y endpoints HTTP nativos).
 - Acceptance:
-  - [ ] Servidor HTTP ligero sin dependencias pesadas (Node.js `http` nativo o Express/Fastify).
-  - [ ] Endpoint `POST /api/generate`: Recibe prompt, proveedor, medidas personalizadas y genera el set.
-  - [ ] Endpoint `GET /api/patterns`: Lista todos los patrones generados en `output/`.
-  - [ ] Endpoint `GET /api/patterns/:concept/svg`: Devuelve el SVG vectorial continuo para visualizacion web.
-  - [ ] Endpoint `GET /api/patterns/:concept/bundle`: Descarga directa del ZIP comercial para Etsy.
-  - [ ] Endpoint `GET /api/presets`: Devuelve el catalogo de presets preconfigurados (hoodie, tshirt, vest, shorts, dress).
+  - [x] Servidor HTTP ligero sin dependencias pesadas (Node.js `http` nativo o Express/Fastify).
+  - [x] Endpoint `POST /api/generate`: Recibe prompt, proveedor, medidas personalizadas y genera el set.
+  - [x] Endpoint `GET /api/patterns`: Lista todos los patrones generados en `output/`.
+  - [x] Endpoint `GET /api/patterns/:concept/svg`: Devuelve el SVG vectorial continuo para visualizacion web.
+  - [x] Endpoint `GET /api/patterns/:concept/bundle`: Descarga directa del ZIP comercial para Etsy.
+  - [x] Endpoint `GET /api/presets`: Devuelve el catalogo de presets preconfigurados (hoodie, tshirt, vest, shorts, dress).
 - Gates: `npm test`
 - Human checks: none
 - Risk triggers: Puertos ocupados o rutas de archivos bloqueadas.

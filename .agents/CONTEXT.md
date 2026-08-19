@@ -202,3 +202,13 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
   - T-15: Dashboard Web Studio (Prompt IA, Sliders Antropométricos y Descarga ZIP).
   - T-16: Generador de Conjuntos Completos de 2 Piezas (Top + Bottom / Set Pirata).
 - Active Task: `[T-13] Servidor API REST Local y Endpoints del Motor`.
+
+## 2026-08-19T00:06:00-05:00 - TASK T-13 AUDIT: REST API SERVER & WEB DASHBOARD (Arquitecto / Ingeniero)
+
+- Decision and reason: Implementación del servidor HTTP nativo (`src/server/app.ts`, `src/server/routes.ts`, `src/server/index.ts`), endpoints REST (`/api/status`, `/api/presets`, `/api/patterns`, `/api/patterns/:concept/svg`, `/api/patterns/:concept/bundle`, `/api/generate`), dashboard web HTML interactivo (`src/server/public/index.html`) y subcomando CLI `serve`.
+- Verification:
+  - 16 nuevos tests en `tests/server.test.ts` (Total: 325/325 tests passing al 100% en Vitest).
+  - Verificación de cabeceras CORS universales, parseo streaming JSON seguro y descargas de binarios ZIP con cabeceras correctas.
+- Evidence: Commit `[T-13] implement native HTTP REST API server, routes, public dashboard and CLI serve command` (hash: `e0e3fb0`).
+- Verdict: **APTO**.
+- Next: Tarea `[T-14] Visor Vectorial 2D Interactivo`.
