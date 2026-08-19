@@ -177,6 +177,45 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
 };
 
 /**
+ * Límites de seguridad anatómica para evitar geometrías textiles colapsadas o físicamente imposibles
+ */
+export const ANATOMICAL_LIMITS: Record<
+  keyof BodyMeasurements,
+  { min: number; max: number; label: string }
+> = {
+  chest_circumference_mm: { min: 600, max: 2000, label: 'Contorno de Pecho / Busto' },
+  waist_circumference_mm: { min: 500, max: 2000, label: 'Contorno de Cintura' },
+  hip_circumference_mm: { min: 600, max: 2200, label: 'Contorno de Cadera' },
+  neck_circumference_mm: { min: 250, max: 650, label: 'Contorno de Cuello' },
+  shoulder_to_shoulder_mm: { min: 300, max: 700, label: 'Ancho Hombro a Hombro' },
+  shoulder_slope_deg: { min: 5, max: 35, label: 'Inclinación de Hombro (°)' },
+  back_length_mm: { min: 450, max: 1100, label: 'Largo Talle Espalda' },
+  front_length_mm: { min: 450, max: 1150, label: 'Largo Talle Delantero' },
+  sleeve_length_mm: { min: 400, max: 950, label: 'Largo Total de Manga' },
+  bicep_circumference_mm: { min: 180, max: 650, label: 'Contorno de Bíceps' },
+  wrist_circumference_mm: { min: 120, max: 320, label: 'Contorno de Muñeca' },
+  head_circumference_mm: { min: 450, max: 750, label: 'Contorno de Cabeza' },
+  waist_to_floor_mm: { min: 700, max: 1500, label: 'Cintura al Suelo' },
+  crotch_depth_mm: { min: 180, max: 450, label: 'Tiro / Altura de Entrepierna' },
+  inseam_mm: { min: 500, max: 1100, label: 'Largo Interior de Pierna' },
+  thigh_circumference_mm: { min: 350, max: 1100, label: 'Contorno de Muslo' },
+  knee_circumference_mm: { min: 250, max: 700, label: 'Contorno de Rodilla' },
+  ankle_circumference_mm: { min: 150, max: 450, label: 'Contorno de Tobillo' },
+};
+
+/**
+ * Aplica clamping de seguridad anatómica a una medida individual
+ */
+export function clampMeasurement(key: keyof BodyMeasurements, value: number): number {
+  const limits = ANATOMICAL_LIMITS[key];
+  if (!limits) return Math.round(value);
+  if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+    return limits.min;
+  }
+  return Math.round(Math.max(limits.min, Math.min(limits.max, value)));
+}
+
+/**
  * Obtiene las medidas corporales estándar para una talla dada
  * @param size Talla estándar ('XS' | 'S' | 'M' | 'L' | 'XL' | '2XL' | '3XL')
  * @returns Medidas corporales en mm
@@ -190,4 +229,141 @@ export function getStandardMeasurements(size: StandardSize): BodyMeasurements {
   }
   // Clonar para evitar mutaciones accidentales
   return { ...measurements };
+}
+
+/**
+ * Calcula un conjunto completo de medidas anatómicas a partir de medidas exactas o parciales proporcionadas por el usuario.
+ * Si se proporcionan medidas parciales (ej: solo pecho y cintura), interpola y escala de forma armónica y monotónica
+ * las medidas derivadas (bíceps, hombros, cuello, largo de manga, perneras, etc.), aplicando clamping de seguridad.
+ *
+ * @param custom Medidas personalizadas parciales o completas
+ * @param referenceSize Talla estándar de referencia base (por defecto 'M')
+ * @returns Medidas corporales completas y validadas
+ */
+export function calculateCustomMeasurements(
+  custom: Partial<BodyMeasurements> = {},
+  referenceSize: StandardSize = 'M'
+): BodyMeasurements {
+  const base = getStandardMeasurements(referenceSize);
+  const explicit: Partial<Record<keyof BodyMeasurements, number>> = {};
+
+  // 1. Extraer y asegurar medidas explícitas dadas por el usuario
+  for (const [k, v] of Object.entries(custom)) {
+    const key = k as keyof BodyMeasurements;
+    if (typeof v === 'number' && !isNaN(v) && isFinite(v)) {
+      explicit[key] = clampMeasurement(key, v);
+    }
+  }
+
+  // 2. Determinar factores de escala principales armónicos
+  // Escala de contorno superior (pecho / torso)
+  let scaleChest = 1.0;
+  if (explicit.chest_circumference_mm !== undefined) {
+    scaleChest = explicit.chest_circumference_mm / base.chest_circumference_mm;
+  } else if (explicit.waist_circumference_mm !== undefined) {
+    scaleChest = explicit.waist_circumference_mm / base.waist_circumference_mm;
+  } else if (explicit.hip_circumference_mm !== undefined) {
+    scaleChest = explicit.hip_circumference_mm / base.hip_circumference_mm;
+  }
+
+  // Escala de contorno de cintura
+  const scaleWaist =
+    explicit.waist_circumference_mm !== undefined
+      ? explicit.waist_circumference_mm / base.waist_circumference_mm
+      : scaleChest;
+
+  // Escala de contorno inferior (cadera / tren inferior)
+  let scaleHip = scaleChest;
+  if (explicit.hip_circumference_mm !== undefined) {
+    scaleHip = explicit.hip_circumference_mm / base.hip_circumference_mm;
+  } else if (explicit.waist_circumference_mm !== undefined) {
+    scaleHip = explicit.waist_circumference_mm / base.waist_circumference_mm;
+  } else if (explicit.thigh_circumference_mm !== undefined) {
+    scaleHip = explicit.thigh_circumference_mm / base.thigh_circumference_mm;
+  }
+
+  // Escala vertical / alturas
+  let scaleVertical = 1.0;
+  if (explicit.back_length_mm !== undefined) {
+    scaleVertical = explicit.back_length_mm / base.back_length_mm;
+  } else if (explicit.front_length_mm !== undefined) {
+    scaleVertical = explicit.front_length_mm / base.front_length_mm;
+  } else if (explicit.waist_to_floor_mm !== undefined) {
+    scaleVertical = explicit.waist_to_floor_mm / base.waist_to_floor_mm;
+  } else if (explicit.inseam_mm !== undefined) {
+    scaleVertical = explicit.inseam_mm / base.inseam_mm;
+  } else if (explicit.sleeve_length_mm !== undefined) {
+    scaleVertical = explicit.sleeve_length_mm / base.sleeve_length_mm;
+  } else {
+    // Si no se proporcionaron medidas verticales, escala suavemente con el contorno de pecho
+    scaleVertical = 1.0 + (scaleChest - 1.0) * 0.35;
+  }
+
+  // 3. Interpolación armónica y monotónica de todas las medidas
+  const rawMeasurements: BodyMeasurements = {
+    chest_circumference_mm:
+      explicit.chest_circumference_mm ?? Math.round(base.chest_circumference_mm * scaleChest),
+    waist_circumference_mm:
+      explicit.waist_circumference_mm ?? Math.round(base.waist_circumference_mm * scaleWaist),
+    hip_circumference_mm:
+      explicit.hip_circumference_mm ?? Math.round(base.hip_circumference_mm * scaleHip),
+    neck_circumference_mm:
+      explicit.neck_circumference_mm ??
+      Math.round(base.neck_circumference_mm * (1.0 + (scaleChest - 1.0) * 0.6)),
+    shoulder_to_shoulder_mm:
+      explicit.shoulder_to_shoulder_mm ??
+      Math.round(base.shoulder_to_shoulder_mm * (1.0 + (scaleChest - 1.0) * 0.65)),
+    shoulder_slope_deg: explicit.shoulder_slope_deg ?? base.shoulder_slope_deg,
+    back_length_mm:
+      explicit.back_length_mm ?? Math.round(base.back_length_mm * scaleVertical),
+    front_length_mm:
+      explicit.front_length_mm ??
+      (explicit.back_length_mm !== undefined
+        ? Math.round(
+            explicit.back_length_mm * (base.front_length_mm / base.back_length_mm)
+          )
+        : Math.round(base.front_length_mm * scaleVertical)),
+    sleeve_length_mm:
+      explicit.sleeve_length_mm ??
+      Math.round(
+        base.sleeve_length_mm *
+          (1.0 + (scaleVertical - 1.0) * 0.85 + (scaleChest - 1.0) * 0.15)
+      ),
+    bicep_circumference_mm:
+      explicit.bicep_circumference_mm ??
+      Math.round(base.bicep_circumference_mm * (1.0 + (scaleChest - 1.0) * 0.85)),
+    wrist_circumference_mm:
+      explicit.wrist_circumference_mm ??
+      Math.round(base.wrist_circumference_mm * (1.0 + (scaleChest - 1.0) * 0.55)),
+    head_circumference_mm:
+      explicit.head_circumference_mm ??
+      Math.round(base.head_circumference_mm * (1.0 + (scaleChest - 1.0) * 0.3)),
+    waist_to_floor_mm:
+      explicit.waist_to_floor_mm ?? Math.round(base.waist_to_floor_mm * scaleVertical),
+    crotch_depth_mm:
+      explicit.crotch_depth_mm ??
+      Math.round(
+        base.crotch_depth_mm *
+          (1.0 + (scaleHip - 1.0) * 0.4 + (scaleVertical - 1.0) * 0.4)
+      ),
+    inseam_mm: explicit.inseam_mm ?? Math.round(base.inseam_mm * scaleVertical),
+    thigh_circumference_mm:
+      explicit.thigh_circumference_mm ??
+      Math.round(base.thigh_circumference_mm * (1.0 + (scaleHip - 1.0) * 0.85)),
+    knee_circumference_mm:
+      explicit.knee_circumference_mm ??
+      Math.round(base.knee_circumference_mm * (1.0 + (scaleHip - 1.0) * 0.6)),
+    ankle_circumference_mm:
+      explicit.ankle_circumference_mm ??
+      Math.round(base.ankle_circumference_mm * (1.0 + (scaleHip - 1.0) * 0.45)),
+  };
+
+  // 4. Clamping final de seguridad anatómica en todas las dimensiones
+  const finalMeasurements: BodyMeasurements = {} as BodyMeasurements;
+  for (const [k, v] of Object.entries(rawMeasurements)) {
+    const key = k as keyof BodyMeasurements;
+    finalMeasurements[key] = clampMeasurement(key, v);
+  }
+
+  return finalMeasurements;
 }

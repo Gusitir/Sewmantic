@@ -27,7 +27,11 @@ import { parsePatternDna } from './schema/pattern_schema.js';
 import { AiProviderFactory } from './ai/factory.js';
 import { AiProviderConfig } from './ai/base_provider.js';
 import { modifyPatternMultiSize, ModifiedPatternResult } from './engine/modifier.js';
-import { STANDARD_SIZES } from './engine/base_blocks/measurements.js';
+import {
+  STANDARD_SIZES,
+  BodyMeasurements,
+  calculateCustomMeasurements,
+} from './engine/base_blocks/measurements.js';
 import {
   exportTiledPdf,
   exportContinuousPdf,
@@ -58,8 +62,54 @@ export function slugify(text: string): string {
       .replace(/[\u0300-\u036f]/g, '') // Elimina acentos y diacríticos
       .replace(/[^a-z0-9]+/g, '_') // Reemplaza caracteres no alfanuméricos por guiones bajos
       .replace(/^_+|_+$/g, '') || // Elimina guiones iniciales o finales
-    'pattern'
+      'pattern'
   );
+}
+
+/**
+ * Parsea el argumento de medidas personalizadas, que puede ser un string JSON directo o la ruta a un archivo .json
+ * @param arg Cadena con JSON directo (ej: '{"chest_circumference_mm":1040}') o ruta a archivo '.json'
+ * @returns Objeto de medidas corporales parciales tipadas
+ */
+export function parseMeasurementsArg(
+  arg?: string
+): Partial<BodyMeasurements> | undefined {
+  if (!arg || typeof arg !== 'string' || arg.trim().length === 0) {
+    return undefined;
+  }
+  const trimmed = arg.trim();
+  let jsonString = trimmed;
+
+  // Si no empieza con '{' o '[', asumimos que es una ruta a un archivo .json
+  if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+    const resolvedPath = path.resolve(trimmed);
+    if (!fs.existsSync(resolvedPath)) {
+      throw new Error(
+        `No se encontró el archivo de medidas personalizadas en: '${trimmed}'`
+      );
+    }
+    jsonString = fs.readFileSync(resolvedPath, 'utf-8');
+  }
+
+  try {
+    let toParse = jsonString;
+    if (toParse.includes("'") && !toParse.includes('"')) {
+      toParse = toParse.replace(/'/g, '"');
+    }
+    const parsed = JSON.parse(toParse);
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new Error(
+        'El contenido de medidas debe ser un objeto JSON válido con claves numéricas'
+      );
+    }
+    return parsed as Partial<BodyMeasurements>;
+  } catch (err) {
+    throw new Error(
+      `Error al procesar medidas personalizadas: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
+  }
 }
 
 /**
@@ -84,6 +134,8 @@ export interface PipelineRequest {
   fabricWidth_mm?: number;
   /** Inyección directa de ADN paramétrico (útil para pruebas o pre-generados) */
   directDna?: PatternDna;
+  /** Medidas antropométricas personalizadas del cliente */
+  customMeasurements?: Partial<BodyMeasurements>;
 }
 
 /**
@@ -138,6 +190,7 @@ export async function generatePatternPipeline(
     wasteFactor,
     fabricWidth_mm,
     directDna,
+    customMeasurements: inputCustomMeasurements,
   } = request;
 
   // ==========================================
@@ -177,6 +230,29 @@ export async function generatePatternPipeline(
       : requestedSizes.includes('M')
       ? 'M'
       : requestedSizes[0] || 'M';
+
+  // Procesar e inyectar medidas antropométricas personalizadas si están presentes
+  const rawCustomMeasurements: Partial<BodyMeasurements> = {
+    ...(dna.custom_measurements || {}),
+    ...(dna.sizing?.custom_measurements || {}),
+    ...(inputCustomMeasurements || {}),
+  };
+
+  if (Object.keys(rawCustomMeasurements).length > 0) {
+    const calculated = calculateCustomMeasurements(
+      rawCustomMeasurements,
+      primarySize
+    );
+    dna.custom_measurements = rawCustomMeasurements;
+    dna.sizing = {
+      ...dna.sizing,
+      size: primarySize,
+      custom_measurements: rawCustomMeasurements,
+      chest_circ_mm: calculated.chest_circumference_mm,
+      waist_circ_mm: calculated.waist_circumference_mm,
+      hip_circ_mm: calculated.hip_circumference_mm,
+    };
+  }
 
   const finalSizes: StandardSize[] = Array.from(
     new Set([...requestedSizes, primarySize])
@@ -472,6 +548,7 @@ export async function compileTechpackFromFile(
     wasteFactor?: number;
     fabricWidth_mm?: number;
     sizes?: StandardSize[];
+    customMeasurements?: Partial<BodyMeasurements>;
   } = {}
 ): Promise<{
   pdfPath: string;
@@ -489,6 +566,29 @@ export async function compileTechpackFromFile(
       : dna.sizing?.target_layers && dna.sizing.target_layers.length > 0
       ? dna.sizing.target_layers
       : STANDARD_SIZES;
+
+  const primarySize: StandardSize =
+    dna.sizing?.size && STANDARD_SIZES.includes(dna.sizing.size)
+      ? dna.sizing.size
+      : targetSizes.includes('M')
+      ? 'M'
+      : targetSizes[0] || 'M';
+
+  if (options.customMeasurements && Object.keys(options.customMeasurements).length > 0) {
+    const calculated = calculateCustomMeasurements(options.customMeasurements, primarySize);
+    dna.custom_measurements = {
+      ...(dna.custom_measurements || {}),
+      ...options.customMeasurements,
+    };
+    dna.sizing = {
+      ...dna.sizing,
+      size: primarySize,
+      custom_measurements: dna.custom_measurements,
+      chest_circ_mm: calculated.chest_circumference_mm,
+      waist_circ_mm: calculated.waist_circumference_mm,
+      hip_circ_mm: calculated.hip_circumference_mm,
+    };
+  }
 
   const sizeMap = modifyPatternMultiSize(dna, targetSizes);
   const techSheet = generateTechSheet(dna, sizeMap, {

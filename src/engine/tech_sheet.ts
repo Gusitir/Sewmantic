@@ -15,7 +15,13 @@
 import PDFDocument from 'pdfkit';
 import { StandardSize, PatternDna, TechSpecs } from '../types/pattern.js';
 import { ModifiedPatternResult, modifyPatternMultiSize } from './modifier.js';
-import { STANDARD_SIZES } from './base_blocks/measurements.js';
+import {
+  STANDARD_SIZES,
+  BodyMeasurements,
+  getStandardMeasurements,
+  calculateCustomMeasurements,
+  ANATOMICAL_LIMITS,
+} from './base_blocks/measurements.js';
 import { pdfDocToBuffer } from './exporter.js';
 
 /**
@@ -133,6 +139,27 @@ export interface FinishedGarmentMeasurementRow {
 }
 
 /**
+ * Comparación de una medida corporal personalizada vs talla base
+ */
+export interface CustomMeasurementComparison {
+  key: keyof BodyMeasurements;
+  label: string;
+  baseValue_mm: number;
+  customValue_mm: number;
+  delta_mm: number;
+  isExplicit: boolean;
+}
+
+/**
+ * Resumen consolidado de personalización antropométrica
+ */
+export interface CustomMeasurementsSummary {
+  referenceSize: StandardSize;
+  providedFieldsCount: number;
+  measurements: CustomMeasurementComparison[];
+}
+
+/**
  * Estructura completa de datos de la Ficha Técnica (Tech Pack)
  */
 export interface TechSheetData {
@@ -150,6 +177,7 @@ export interface TechSheetData {
   notions: NotionItem[];
   assemblySequence: AssemblyStep[];
   finishedMeasurements: FinishedGarmentMeasurementRow[];
+  customMeasurements?: CustomMeasurementsSummary;
   notes: string[];
 }
 
@@ -734,15 +762,43 @@ export function generateTechSheet(
   options: TechSheetOptions = {}
 ): TechSheetData {
   // 1. Normalizar mapa de tallas
+  const rawCustom = dna.custom_measurements ?? dna.sizing?.custom_measurements;
+  let effectiveDna = dna;
+  if (rawCustom && Object.keys(rawCustom).length > 0) {
+    const calculated = calculateCustomMeasurements(
+      rawCustom,
+      dna.sizing?.size ?? 'M'
+    );
+    effectiveDna = {
+      ...dna,
+      sizing: {
+        ...dna.sizing,
+        size: dna.sizing?.size ?? 'M',
+        custom_measurements: rawCustom,
+        chest_circ_mm: calculated.chest_circumference_mm,
+        waist_circ_mm: calculated.waist_circumference_mm,
+        hip_circ_mm: calculated.hip_circumference_mm,
+      },
+    };
+  }
+
   let sizeMap: Map<StandardSize, ModifiedPatternResult>;
   let primarySize: StandardSize;
   if (modifiedResults instanceof Map) {
-    sizeMap = modifiedResults;
-    primarySize = dna.sizing?.size ?? (sizeMap.has('M') ? 'M' : Array.from(sizeMap.keys())[0]);
+    if (modifiedResults.size === 0) {
+      const targetSizes =
+        options.targetSizes ?? effectiveDna.sizing?.target_layers ?? STANDARD_SIZES;
+      sizeMap = modifyPatternMultiSize(effectiveDna, targetSizes);
+    } else {
+      sizeMap = modifiedResults;
+    }
+    primarySize =
+      effectiveDna.sizing?.size ?? (sizeMap.has('M') ? 'M' : Array.from(sizeMap.keys())[0]);
   } else {
     primarySize = modifiedResults.size;
-    const targetSizes = options.targetSizes ?? dna.sizing?.target_layers ?? STANDARD_SIZES;
-    sizeMap = modifyPatternMultiSize(dna, targetSizes);
+    const targetSizes =
+      options.targetSizes ?? effectiveDna.sizing?.target_layers ?? STANDARD_SIZES;
+    sizeMap = modifyPatternMultiSize(effectiveDna, targetSizes);
     // Asegurar que la talla dada esté presente
     sizeMap.set(modifiedResults.size, modifiedResults);
   }
@@ -869,6 +925,39 @@ export function generateTechSheet(
     'Todas las costuras de sobrehilado deben rematarse para evitar deshilachado durante el ciclo de uso.',
   ];
 
+  // 9. Personalización antropométrica por medidas exactas si existen
+  let customMeasurementsSummary: CustomMeasurementsSummary | undefined;
+  if (rawCustom && Object.keys(rawCustom).length > 0) {
+    const baseMeas = getStandardMeasurements(primarySize);
+    const calculatedMeas = calculateCustomMeasurements(rawCustom, primarySize);
+    const comparisons: CustomMeasurementComparison[] = [];
+    let providedCount = 0;
+
+    for (const key of Object.keys(ANATOMICAL_LIMITS) as (keyof BodyMeasurements)[]) {
+      const baseVal = baseMeas[key];
+      const customVal = calculatedMeas[key];
+      const isExplicit =
+        typeof rawCustom[key] === 'number' && !isNaN(rawCustom[key] as number);
+      if (isExplicit) {
+        providedCount++;
+      }
+      comparisons.push({
+        key,
+        label: ANATOMICAL_LIMITS[key]?.label || key,
+        baseValue_mm: baseVal,
+        customValue_mm: customVal,
+        delta_mm: customVal - baseVal,
+        isExplicit,
+      });
+    }
+
+    customMeasurementsSummary = {
+      referenceSize: primarySize,
+      providedFieldsCount: providedCount,
+      measurements: comparisons,
+    };
+  }
+
   return {
     conceptName: dna.concept_name,
     description: dna.description ?? `Ficha técnica industrial para ${dna.concept_name}`,
@@ -884,6 +973,7 @@ export function generateTechSheet(
     notions,
     assemblySequence,
     finishedMeasurements,
+    customMeasurements: customMeasurementsSummary,
     notes,
   };
 }
@@ -910,6 +1000,7 @@ export function generateTechSheetMarkdown(data: TechSheetData): string {
     notions,
     assemblySequence,
     finishedMeasurements,
+    customMeasurements,
     notes,
   } = data;
 
@@ -945,6 +1036,24 @@ export function generateTechSheetMarkdown(data: TechSheetData): string {
     }
   }
   lines.push(``);
+
+  // 1.1 Personalización Antropométrica (si aplica)
+  if (customMeasurements) {
+    lines.push(`## 1.1 PERSONALIZACIÓN ANTROPOMÉTRICA (MEDIDAS A MEDIDA DEL CLIENTE)`);
+    lines.push(`> ℹ️ **Patrón ajustado a medidas personalizadas del cliente.**`);
+    lines.push(`> Talla base de referencia: **${customMeasurements.referenceSize}** | Medidas exactas suministradas: **${customMeasurements.providedFieldsCount}** | Medidas derivadas armónicamente: **${customMeasurements.measurements.length - customMeasurements.providedFieldsCount}**`);
+    lines.push(``);
+    lines.push(`| Medida Antropométrica | Talla Base (${customMeasurements.referenceSize}) | **Medida Cliente (mm)** | Diferencia (Δ) | Origen / Método |`);
+    lines.push(`| :--- | :---: | :---: | :---: | :--- |`);
+    for (const m of customMeasurements.measurements) {
+      const deltaStr = m.delta_mm > 0 ? `+${m.delta_mm} mm` : m.delta_mm < 0 ? `${m.delta_mm} mm` : `0 mm`;
+      const originStr = m.isExplicit ? `🎯 **Exacta (Suministrada)**` : `📐 Interpolación Armónica`;
+      lines.push(
+        `| **${m.label}** | ${m.baseValue_mm} mm | **${m.customValue_mm} mm** | ${deltaStr} | ${originStr} |`
+      );
+    }
+    lines.push(``);
+  }
 
   // 2. Lista de Piezas de Corte
   lines.push(`## 2. LISTA DETALLADA DE PIEZAS DE CORTE`);
@@ -1187,6 +1296,100 @@ export async function generateTechSheetPdf(data: TechSheetData): Promise<Buffer>
   );
   doc.restore();
   currentY += 24;
+
+  // ==========================================
+  // SECCIÓN 1.1: PERSONALIZACIÓN ANTROPOMÉTRICA (SI APLICA)
+  // ==========================================
+  if (data.customMeasurements) {
+    const cm = data.customMeasurements;
+    checkPageBreak(130);
+    doc.save();
+    doc
+      .fontSize(10)
+      .font('Helvetica-Bold')
+      .fillColor('#1e293b')
+      .text('1.1 PERSONALIZACIÓN ANTROPOMÉTRICA (MEDIDAS A MEDIDA)', margin, currentY);
+    doc
+      .fontSize(7)
+      .font('Helvetica')
+      .fillColor('#64748b')
+      .text(
+        `Comparación entre medidas del cliente y talla estándar de referencia (${cm.referenceSize}). ${cm.providedFieldsCount} medidas exactas suministradas.`,
+        margin,
+        currentY + 12
+      );
+    doc.restore();
+    currentY += 24;
+
+    const customCols = [
+      { title: 'Medida Antropométrica', w: 160, align: 'left' as const },
+      { title: `Base (${cm.referenceSize})`, w: 75, align: 'center' as const },
+      { title: 'A Medida', w: 75, align: 'center' as const },
+      { title: 'Diferencia (Δ)', w: 75, align: 'center' as const },
+      { title: 'Origen / Estado', w: 138.28, align: 'left' as const },
+    ];
+
+    doc.save();
+    doc.rect(margin, currentY, contentWidth, 16).fill('#4338ca');
+    let chX = margin;
+    customCols.forEach((c) => {
+      doc
+        .fontSize(7.5)
+        .font('Helvetica-Bold')
+        .fillColor('#ffffff')
+        .text(c.title, chX + 4, currentY + 4, { width: c.w - 8, align: c.align });
+      chX += c.w;
+    });
+    doc.restore();
+    currentY += 16;
+
+    cm.measurements.forEach((m, idx) => {
+      checkPageBreak(15);
+      const rowBg = idx % 2 === 0 ? '#eef2ff' : '#ffffff';
+      doc.save();
+      doc.rect(margin, currentY, contentWidth, 14).fill(rowBg);
+
+      let crX = margin;
+      doc
+        .fontSize(7)
+        .font(m.isExplicit ? 'Helvetica-Bold' : 'Helvetica')
+        .fillColor('#0f172a')
+        .text(m.label, crX + 4, currentY + 3.5, { width: customCols[0].w - 8 });
+      crX += customCols[0].w;
+
+      doc
+        .font('Helvetica')
+        .fillColor('#475569')
+        .text(`${m.baseValue_mm} mm`, crX, currentY + 3.5, { width: customCols[1].w, align: 'center' });
+      crX += customCols[1].w;
+
+      doc
+        .font('Helvetica-Bold')
+        .fillColor(m.isExplicit ? '#4338ca' : '#0f172a')
+        .text(`${m.customValue_mm} mm`, crX, currentY + 3.5, { width: customCols[2].w, align: 'center' });
+      crX += customCols[2].w;
+
+      const deltaStr =
+        m.delta_mm > 0 ? `+${m.delta_mm} mm` : m.delta_mm < 0 ? `${m.delta_mm} mm` : '0 mm';
+      const deltaColor =
+        m.delta_mm !== 0 ? (m.delta_mm > 0 ? '#047857' : '#b91c1c') : '#64748b';
+      doc
+        .font('Helvetica-Bold')
+        .fillColor(deltaColor)
+        .text(deltaStr, crX, currentY + 3.5, { width: customCols[3].w, align: 'center' });
+      crX += customCols[3].w;
+
+      const originStr = m.isExplicit ? 'Exacta (Suministrada)' : 'Interpolación Armónica';
+      doc
+        .font(m.isExplicit ? 'Helvetica-Bold' : 'Helvetica-Oblique')
+        .fillColor(m.isExplicit ? '#4338ca' : '#64748b')
+        .text(originStr, crX + 4, currentY + 3.5, { width: customCols[4].w - 8 });
+
+      doc.restore();
+      currentY += 14;
+    });
+    currentY += 18;
+  }
 
   // ==========================================
   // SECCIÓN 2: LISTA DE PIEZAS DE CORTE

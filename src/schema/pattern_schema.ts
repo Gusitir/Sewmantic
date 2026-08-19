@@ -401,6 +401,102 @@ export const ModificationTreeSchema = z.object({
 });
 
 /**
+ * Esquema de validación para medidas corporales exactas / personalizadas
+ */
+export const CustomMeasurementsSchema = z.object({
+  chest_circumference_mm: z
+    .number()
+    .min(500, "Chest circumference must be at least 500mm")
+    .max(2500, "Chest circumference exceeds 2500mm")
+    .optional(),
+  waist_circumference_mm: z
+    .number()
+    .min(400, "Waist circumference must be at least 400mm")
+    .max(2500, "Waist circumference exceeds 2500mm")
+    .optional(),
+  hip_circumference_mm: z
+    .number()
+    .min(500, "Hip circumference must be at least 500mm")
+    .max(2500, "Hip circumference exceeds 2500mm")
+    .optional(),
+  neck_circumference_mm: z
+    .number()
+    .min(200, "Neck circumference must be at least 200mm")
+    .max(800, "Neck circumference exceeds 800mm")
+    .optional(),
+  shoulder_to_shoulder_mm: z
+    .number()
+    .min(250, "Shoulder width must be at least 250mm")
+    .max(900, "Shoulder width exceeds 900mm")
+    .optional(),
+  shoulder_slope_deg: z
+    .number()
+    .min(0, "Shoulder slope must be positive")
+    .max(45, "Shoulder slope exceeds 45 degrees")
+    .optional(),
+  back_length_mm: z
+    .number()
+    .min(350, "Back length must be at least 350mm")
+    .max(1300, "Back length exceeds 1300mm")
+    .optional(),
+  front_length_mm: z
+    .number()
+    .min(350, "Front length must be at least 350mm")
+    .max(1350, "Front length exceeds 1350mm")
+    .optional(),
+  sleeve_length_mm: z
+    .number()
+    .min(300, "Sleeve length must be at least 300mm")
+    .max(1100, "Sleeve length exceeds 1100mm")
+    .optional(),
+  bicep_circumference_mm: z
+    .number()
+    .min(150, "Bicep circumference must be at least 150mm")
+    .max(750, "Bicep circumference exceeds 750mm")
+    .optional(),
+  wrist_circumference_mm: z
+    .number()
+    .min(100, "Wrist circumference must be at least 100mm")
+    .max(400, "Wrist circumference exceeds 400mm")
+    .optional(),
+  head_circumference_mm: z
+    .number()
+    .min(350, "Head circumference must be at least 350mm")
+    .max(850, "Head circumference exceeds 850mm")
+    .optional(),
+  waist_to_floor_mm: z
+    .number()
+    .min(500, "Waist to floor must be at least 500mm")
+    .max(1800, "Waist to floor exceeds 1800mm")
+    .optional(),
+  crotch_depth_mm: z
+    .number()
+    .min(150, "Crotch depth must be at least 150mm")
+    .max(600, "Crotch depth exceeds 600mm")
+    .optional(),
+  inseam_mm: z
+    .number()
+    .min(400, "Inseam must be at least 400mm")
+    .max(1300, "Inseam exceeds 1300mm")
+    .optional(),
+  thigh_circumference_mm: z
+    .number()
+    .min(250, "Thigh circumference must be at least 250mm")
+    .max(1300, "Thigh circumference exceeds 1300mm")
+    .optional(),
+  knee_circumference_mm: z
+    .number()
+    .min(200, "Knee circumference must be at least 200mm")
+    .max(850, "Knee circumference exceeds 850mm")
+    .optional(),
+  ankle_circumference_mm: z
+    .number()
+    .min(120, "Ankle circumference must be at least 120mm")
+    .max(550, "Ankle circumference exceeds 550mm")
+    .optional(),
+});
+
+/**
  * Esquema de configuración de tallaje
  */
 export const SizingSettingsSchema = z.object({
@@ -426,6 +522,7 @@ export const SizingSettingsSchema = z.object({
     .max(2000, "Hip circumference exceeds 2000mm")
     .optional(),
   target_layers: z.array(StandardSizeSchema).optional(),
+  custom_measurements: CustomMeasurementsSchema.optional(),
 });
 
 /**
@@ -475,6 +572,7 @@ export const PatternDnaSchema = z.object({
   ease: EaseSettingsSchema,
   modifications: ModificationTreeSchema.default({}),
   sizing: SizingSettingsSchema.optional(),
+  custom_measurements: CustomMeasurementsSchema.optional(),
   tech_specs: TechSpecsSchema.optional(),
   notions: z.array(z.string()).optional(),
   estimated_fabric_meters: z

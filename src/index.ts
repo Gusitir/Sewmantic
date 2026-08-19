@@ -13,6 +13,7 @@ import {
   exportCalibrationPdf,
   inspectPatternDnaFile,
   compileTechpackFromFile,
+  parseMeasurementsArg,
   PipelineRequest,
 } from "./pipeline.js";
 import { StandardSize } from "./types/pattern.js";
@@ -113,7 +114,8 @@ export function initCli(): Command {
     .option("-p, --provider <provider>", "Proveedor de IA ('mock', 'agy', 'opencode', 'api')", process.env.AI_PROVIDER || "agy")
     .option("-o, --output <dir>", "Directorio base de salida", "output")
     .option("-w, --waste <number>", "Factor de merma textil (mínimo 0.10, default 0.15)", "0.15")
-    .action(async (prompt: string, options: { image?: string; format?: string; sizes?: string; provider?: string; output?: string; waste?: string }) => {
+    .option("-m, --measurements <path_or_json>", "Medidas personalizadas exactas en JSON o ruta a archivo .json (ej: '{\"chest_circumference_mm\":1040}')")
+    .action(async (prompt: string, options: { image?: string; format?: string; sizes?: string; provider?: string; output?: string; waste?: string; measurements?: string }) => {
       try {
         console.log(`\n=============================================================`);
         console.log(`[pattern-ai-core] Generando patrón paramétrico...`);
@@ -124,6 +126,11 @@ export function initCli(): Command {
 
         const sizes = parseSizesArg(options.sizes);
         const wasteFactor = options.waste ? parseFloat(options.waste) : undefined;
+        const customMeasurements = parseMeasurementsArg(options.measurements);
+
+        if (customMeasurements) {
+          console.log(`Medidas personalizadas: ${Object.keys(customMeasurements).length} cotas exactas aplicadas.`);
+        }
 
         const req: PipelineRequest = {
           prompt,
@@ -132,6 +139,7 @@ export function initCli(): Command {
           outputDir: options.output,
           sizes,
           wasteFactor,
+          customMeasurements,
         };
 
         const result = await generatePatternPipeline(req);
@@ -255,16 +263,19 @@ export function initCli(): Command {
     .option("-o, --output <dir>", "Directorio de salida", "output")
     .option("-s, --sizes <sizes>", "Tallas a incluir (ej: 'S,M,L')")
     .option("-w, --waste <number>", "Factor de merma textil (default: 0.15)", "0.15")
-    .action(async (file: string, options: { output?: string; sizes?: string; waste?: string }) => {
+    .option("-m, --measurements <path_or_json>", "Medidas personalizadas en JSON o ruta a archivo .json")
+    .action(async (file: string, options: { output?: string; sizes?: string; waste?: string; measurements?: string }) => {
       try {
         console.log(`[pattern-ai-core] Compilando Ficha Técnica desde: ${file}`);
         const sizes = parseSizesArg(options.sizes);
         const wasteFactor = options.waste ? parseFloat(options.waste) : 0.15;
+        const customMeasurements = parseMeasurementsArg(options.measurements);
 
         const res = await compileTechpackFromFile(file, {
           outputDir: options.output,
           sizes,
           wasteFactor,
+          customMeasurements,
         });
 
         console.log(`\n[ÉXITO] Ficha técnica compilada exitosamente:`);

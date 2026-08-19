@@ -22,6 +22,7 @@ import {
   TrouserPocketModSchema,
   GarmentCategorySchema,
   StandardSizeSchema,
+  CustomMeasurementsSchema,
 } from "../src/schema/pattern_schema.js";
 import type { PatternDna, StandardSize } from "../src/types/pattern.js";
 
@@ -622,6 +623,48 @@ Espero que este patrón sea perfecto para tu confección. ¡Avisa si requieres a
       expect(GarmentCategorySchema.parse("set")).toBe("set");
       // @ts-expect-error categoría inválida
       expect(() => GarmentCategorySchema.parse("accessory")).toThrow();
+    });
+
+    it("debe validar y sanitizar medidas personalizadas (CustomMeasurementsSchema)", () => {
+      const validCustom = {
+        chest_circumference_mm: 1040,
+        waist_circumference_mm: 880,
+        hip_circumference_mm: 1060,
+        sleeve_length_mm: 650,
+      };
+      const parsed = CustomMeasurementsSchema.parse(validCustom);
+      expect(parsed.chest_circumference_mm).toBe(1040);
+      expect(parsed.waist_circumference_mm).toBe(880);
+
+      // Rechazar valores fuera de rangos
+      expect(() =>
+        CustomMeasurementsSchema.parse({ chest_circumference_mm: 100 })
+      ).toThrow(/Chest circumference must be at least/);
+      expect(() =>
+        CustomMeasurementsSchema.parse({ waist_circumference_mm: 3000 })
+      ).toThrow(/Waist circumference exceeds/);
+    });
+
+    it("debe validar PatternDna con custom_measurements a nivel raíz y en sizing", () => {
+      const dnaWithCustom = {
+        concept_name: "custom_fit_hoodie",
+        base_block: "menswear_torso_oversize",
+        ease: { chest_ease_mm: 120 },
+        custom_measurements: {
+          chest_circumference_mm: 1060,
+          waist_circumference_mm: 900,
+        },
+        sizing: {
+          size: "M",
+          custom_measurements: {
+            bicep_circumference_mm: 360,
+          },
+        },
+      };
+
+      const parsed = parsePatternDna(dnaWithCustom);
+      expect(parsed.custom_measurements?.chest_circumference_mm).toBe(1060);
+      expect(parsed.sizing?.custom_measurements?.bicep_circumference_mm).toBe(360);
     });
   });
 });

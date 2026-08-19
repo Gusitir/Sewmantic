@@ -276,6 +276,8 @@ export interface EaseSettings {
   ankle_ease_mm?: number;
 }
 
+import type { BodyMeasurements } from '../engine/base_blocks/measurements.js';
+
 /**
  * Configuración de tallaje y medidas corporales
  */
@@ -286,6 +288,7 @@ export interface SizingSettings {
   waist_circ_mm?: number;
   hip_circ_mm?: number;
   target_layers?: StandardSize[];
+  custom_measurements?: Partial<Record<keyof BodyMeasurements, number>>;
 }
 
 /**
@@ -311,6 +314,7 @@ export interface PatternDna {
   ease: EaseSettings;
   modifications: ModificationTree;
   sizing?: SizingSettings;
+  custom_measurements?: Partial<Record<keyof BodyMeasurements, number>>;
   tech_specs?: TechSpecs;
   notions?: string[];
   estimated_fabric_meters?: number;
