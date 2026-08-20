@@ -61,8 +61,9 @@ export function resolvePublicDirectory(customDir?: string): string {
   const __dirname = path.dirname(__filename);
 
   const candidates = [
-    path.join(__dirname, 'public'),
     path.join(process.cwd(), 'src', 'server', 'public'),
+    path.join(__dirname, '..', '..', 'src', 'server', 'public'),
+    path.join(__dirname, 'public'),
     path.join(process.cwd(), 'dist', 'server', 'public'),
     path.join(process.cwd(), 'public'),
   ];
@@ -74,7 +75,7 @@ export function resolvePublicDirectory(customDir?: string): string {
   }
 
   // Si ninguno existe, crear/usar el local relativo
-  const defaultDir = path.join(__dirname, 'public');
+  const defaultDir = path.join(process.cwd(), 'src', 'server', 'public');
   return path.resolve(defaultDir);
 }
 
@@ -130,6 +131,9 @@ export async function serveStaticFile(
     res.statusCode = 200;
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Length', content.length);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.end(content);
     return true;
   } catch {

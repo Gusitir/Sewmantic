@@ -33,18 +33,16 @@ if not exist "node_modules\" (
     echo.
 )
 
-if not exist "dist\index.js" (
-    echo [2/3] Compilando TypeScript...
-    call npm run build
-    if %errorlevel% neq 0 (
-        color 0C
-        echo [ERROR] Fallo la compilacion de TypeScript.
-        pause
-        exit /b 1
-    )
-    echo [OK] Compilacion completada.
-    echo.
+echo [2/3] Compilando y sincronizando Web Studio...
+call npm run build
+if %errorlevel% neq 0 (
+    color 0C
+    echo [ERROR] Fallo la compilacion de TypeScript / Web Studio.
+    pause
+    exit /b 1
 )
+echo [OK] Web Studio actualizado y listo.
+echo.
 
 echo [3/3] Iniciando servidor Web Studio en http://127.0.0.1:3030 ...
 echo Presiona Ctrl+C para detener el servidor.
