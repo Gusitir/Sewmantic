@@ -9,8 +9,8 @@ Assurance: Lean
 | Tarea | Descripción | Rol Principal | Rol Secundario | Puerta Determinista | Estado |
 |---|---|---|---|---|:---:|
 | **T-21** | Sloper Base Femenino con Pinzas de Busto y Falda (`womenswear_bodice`, `skirt`) | Ingeniero | Obrero | `npm test` | ✅ DONE |
-| **T-22** | Modificador de Vestidos, Kimonos Anime/Haori y Faldas en ADN | Ingeniero | Obrero | `npm test` | 🟡 READY |
-| **T-23** | Puente Automatizado Blender Headless para Malla 3D y Exportación `.glb` | Ingeniero / Scripts | Obrero | `node scripts/test_blender_export.js` | ⚪ QUEUED |
+| **T-22** | Modificador de Vestidos, Kimonos Anime/Haori y Faldas en ADN | Ingeniero | Obrero | `npm test` | ✅ DONE |
+| **T-23** | Puente Automatizado Blender Headless para Malla 3D y Exportación `.glb` | Ingeniero / Scripts | Obrero | `node scripts/test_blender_export.js` | 🟡 READY |
 | **T-24** | Integración del Visor 3D WebGL en Web Studio y Empaquetado de Assets 3D | Obrero | Ingeniero | `npm test && node dist/index.js` | ⚪ QUEUED |
 
 ---
@@ -37,14 +37,14 @@ Assurance: Lean
 
 ### T-22 - Modificador de Vestidos, Kimonos Anime/Haori y Faldas en ADN
 
-- Status: ready
+- Status: done
 - Depends on: T-21
 - Scope: `src/types/pattern.ts`, `src/schema/pattern_schema.ts`, `src/engine/modifier.ts`, `src/ai/mock_provider.ts`, `tests/dresses.test.ts`
 - Rol: Ingeniero (Modelado paramétrico de prendas enteras y batas).
 - Acceptance:
-  - [ ] Soportar `garment_category: 'dress'` combinando bodice + falda en una sola prenda coordinada.
-  - [ ] Modificador de Kimono/Haori tradicional y anime (mangas cuadradas de gran caída *furisode*, cuello cruzado plano).
-  - [ ] Presets oficiales: `anime_water_goddess_dress` y `demon_slayer_haori_kimono`.
+  - [x] Soportar `garment_category: 'dress'` combinando bodice + falda en una sola prenda coordinada.
+  - [x] Modificador de Kimono/Haori tradicional y anime (mangas cuadradas de gran caída *furisode*, cuello cruzado plano).
+  - [x] Presets oficiales: `anime_water_goddess_dress` y `demon_slayer_haori_kimono`.
 - Gates: `npm test`
 - Human checks: none
 
@@ -52,7 +52,7 @@ Assurance: Lean
 
 ### T-23 - Puente Automatizado Blender Headless para Malla 3D y Exportación `.glb`
 
-- Status: queued
+- Status: ready
 - Depends on: T-22
 - Scope: `scripts/build_vest_blender.py`, `scripts/export_glb_headless.py`, `src/engine/blender_bridge.ts`
 - Rol: Ingeniero / Scripts (Pipeline de simulación 3D headless).

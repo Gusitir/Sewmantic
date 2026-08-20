@@ -406,6 +406,22 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-21] implement parametric womenswear bodice with bust darts and skirt sloper base blocks` (hash `b7b420a`).
 - Next: Despachar tarea `[T-22] Modificador de Vestidos, Kimonos Anime/Haori y Faldas en ADN`.
 
+## 2026-08-20T17:54:00-05:00 - TASK T-22 AUDIT: DRESSES, ANIME KIMONOS/HAORIS & SKIRTS (Arquitecto / Ingeniero)
+
+- Decision and reason: El Ingeniero integró el soporte de prendas completas para vestidos coordinados, kimonos/haoris tradicionales y faldas en el Modifier Engine, ADN y catálogo de presets.
+- Features Implemented:
+  1. `src/types/pattern.ts` & `src/schema/pattern_schema.ts`: `garment_category: 'dress' | 'kimono' | 'haori'`, esquemas Zod `DressDetailsSchema` y `KimonoDetailsSchema`.
+  2. `src/engine/modifier.ts`: `modifyDressPattern` (corpiño + falda coordinados con piquetes pareados en cintura), `modifyKimonoPattern` (mangas cuadradas Furisode con caída profunda y abertura de muñeca, cuello en banda y obi), `modifySkirtPattern` (falda independiente con pretina).
+  3. `src/ai/mock_provider.ts`: Presets oficiales `anime_water_goddess_dress` y `demon_slayer_haori_kimono`.
+  4. `tests/dresses.test.ts`: 29 pruebas unitarias verificando todas las tallas y variantes.
+- Verification:
+  - 447/447 tests unitarios pasando al 100% en Vitest (15/15 suites).
+  - Compilación `tsc` limpia sin errores.
+- Verdict: **APTO**.
+- Evidence: Commit `[T-22] implement dress, anime haori kimono and skirt parametric pattern modifiers and presets` (hash `a0c2ed4`).
+- Next: Despachar tarea `[T-23] Puente Automatizado Blender Headless para Malla 3D y Exportación .glb`.
+
+
 
 
 
