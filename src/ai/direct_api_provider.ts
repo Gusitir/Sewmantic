@@ -275,7 +275,7 @@ export class DirectApiProvider implements IAiProvider {
         requestBody = {
           model: this.model,
           temperature: 0.15,
-          max_tokens: 4000,
+          max_tokens: 6000,
           top_k: 40,
           presence_penalty: 0,
           frequency_penalty: 0,
@@ -294,7 +294,7 @@ export class DirectApiProvider implements IAiProvider {
         requestBody = {
           model: this.model,
           temperature: 0.15,
-          max_tokens: 4000,
+          max_tokens: 6000,
           top_k: 40,
           presence_penalty: 0,
           frequency_penalty: 0,
@@ -331,15 +331,21 @@ export class DirectApiProvider implements IAiProvider {
         choices?: Array<{
           message?: {
             content?: string;
+            reasoning_content?: string;
           };
           text?: string;
         }>;
       };
 
       const choice = data.choices?.[0];
-      const content = choice?.message?.content || choice?.text;
+      let content = choice?.message?.content || choice?.text;
+      // Si content está vacío o fue truncado por longitud durante razonamiento, intentar extraer desde reasoning_content si existe
+      if ((!content || content.trim().length === 0) && (choice?.message as any)?.reasoning_content) {
+        console.log('[DirectApiProvider] Extrayendo JSON desde reasoning_content...');
+        content = (choice?.message as any).reasoning_content;
+      }
       if (!content || content.trim().length === 0) {
-        throw new Error("No content returned in API completion choices");
+        throw new Error('No content returned in API completion choices');
       }
 
       return sanitizeAndParseLlmJson(content);

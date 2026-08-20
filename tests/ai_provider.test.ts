@@ -41,6 +41,9 @@ describe("AI Provider Subsystem & Factory (Fireworks AI & Direct API)", () => {
     it("debe construir el System Prompt con restricciones de esquema, bloques base y reglas de confección", () => {
       const systemPrompt = PromptBuilder.buildSystemPrompt();
 
+      // Directiva para modelos de razonamiento
+      expect(systemPrompt).toContain("Be direct and concise in your technical reasoning");
+
       // Reglas de formato y restricciones
       expect(systemPrompt).toContain("PatternDna");
       expect(systemPrompt).toContain("ONLY a valid, single JSON object");
@@ -398,6 +401,7 @@ Bloque base: menswear_torso_oversize.
       expect(url).toBe("https://api.fireworks.ai/inference/v1/chat/completions");
       const requestBody = JSON.parse(options?.body as string);
       expect(requestBody.model).toBe("accounts/fireworks/models/qwen3p8-max");
+      expect(requestBody.max_tokens).toBe(6000);
       expect(requestBody.top_k).toBe(40);
       expect(requestBody.presence_penalty).toBe(0);
       expect(requestBody.frequency_penalty).toBe(0);
@@ -460,6 +464,7 @@ Bloque base: menswear_torso_oversize.
         const [, options] = fetchSpy.mock.calls[0];
         const requestBody = JSON.parse(options?.body as string);
         expect(requestBody.model).toBe("accounts/fireworks/models/qwen3p8-max");
+        expect(requestBody.max_tokens).toBe(6000);
         expect(requestBody.top_k).toBe(40);
         expect(requestBody.presence_penalty).toBe(0);
         expect(requestBody.frequency_penalty).toBe(0);
@@ -525,6 +530,81 @@ Bloque base: menswear_torso_oversize.
       expect(requestBody.messages[1].content[1].image_url.url).toBe(sampleDataUrl);
 
       expect(() => parsePatternDna(result)).not.toThrow();
+    });
+
+    it("debe extraer y parsear el JSON desde reasoning_content si content viene vacío", async () => {
+      const provider = new DirectApiProvider({
+        apiKey: "fw-test-secret-key",
+        baseUrl: "https://api.fireworks.ai/inference/v1",
+        model: "accounts/fireworks/models/qwen3p8-max",
+      });
+
+      const mockResponseWithEmptyContentButReasoning = {
+        choices: [
+          {
+            message: {
+              content: "",
+              reasoning_content: `Thinking Process:
+1. Analyzing garment request for oversized hoodie.
+2. Selecting base_block menswear_torso_oversize with 160mm chest ease.
+3. Adding crossover hood.
+
+\`\`\`json
+{
+  "concept_name": "reasoning_extracted_hoodie",
+  "base_block": "menswear_torso_oversize",
+  "ease": { "chest_ease_mm": 160 },
+  "modifications": {
+    "hood": { "type": "crossover" }
+  }
+}
+\`\`\``,
+            },
+          },
+        ],
+      };
+
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => mockResponseWithEmptyContentButReasoning,
+      } as Response);
+
+      const result = await provider.generatePatternDna("Hoodie oversize razonado");
+      expect(result.concept_name).toBe("reasoning_extracted_hoodie");
+      expect(result.base_block).toBe("menswear_torso_oversize");
+      expect(result.ease.chest_ease_mm).toBe(160);
+      expect(result.modifications.hood?.type).toBe("crossover");
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+      const [, options] = fetchSpy.mock.calls[0];
+      const requestBody = JSON.parse(options?.body as string);
+      expect(requestBody.max_tokens).toBe(6000);
+
+      expect(() => parsePatternDna(result)).not.toThrow();
+    });
+
+    it("debe lanzar un error descriptivo si tanto content como reasoning_content están vacíos", async () => {
+      const provider = new DirectApiProvider({
+        apiKey: "fw-test-secret-key",
+      });
+
+      vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: "",
+                reasoning_content: "",
+              },
+            },
+          ],
+        }),
+      } as Response);
+
+      await expect(provider.generatePatternDna("Test")).rejects.toThrow(
+        /No content returned in API completion choices/
+      );
     });
 
     it("debe lanzar un error claro cuando la API responde con un código de error HTTP", async () => {
