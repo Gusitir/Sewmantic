@@ -194,21 +194,36 @@ export class DirectApiProvider implements IAiProvider {
       );
     }
 
-    let effectivePrompt = prompt;
     let imageDataUrl: string | undefined;
-
     if (imagePath && imagePath.trim().length > 0) {
       imageDataUrl = this.resolveImageDataUrl(imagePath.trim());
+    }
 
+    const defaultImagePrompt =
+      "Generar patrón paramétrico preciso a partir del diseño y silueta de la imagen";
+    let effectivePrompt =
+      prompt && prompt.trim().length > 0
+        ? prompt.trim()
+        : imageDataUrl
+        ? defaultImagePrompt
+        : "";
+
+    if (!effectivePrompt && !imageDataUrl) {
+      throw new Error(
+        "[DirectApiProvider] Se requiere un prompt descriptivo o una imagen de referencia."
+      );
+    }
+
+    if (imageDataUrl) {
       // Si el modelo principal no es de visión nativa, realizamos pre-análisis de visión
       if (!this.isNativeVisionModel(this.model)) {
         try {
           const visualAnalysis = await this.analyzeImageWithVision(
             imageDataUrl,
-            prompt
+            effectivePrompt
           );
           if (visualAnalysis) {
-            effectivePrompt = `${prompt}\n\n[ANÁLISIS TÉCNICO DE IMAGEN DE REFERENCIA]:\n${visualAnalysis}`;
+            effectivePrompt = `${effectivePrompt}\n\n[ANÁLISIS TÉCNICO DE IMAGEN DE REFERENCIA]:\n${visualAnalysis}`;
           }
         } catch (visionErr) {
           console.warn(

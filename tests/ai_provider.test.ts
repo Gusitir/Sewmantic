@@ -4,6 +4,9 @@
  * pattern-ai-core
  */
 
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   PromptBuilder,
@@ -378,9 +381,12 @@ Bloque base: menswear_torso_oversize.
         json: async () => mockResponseData,
       } as Response);
 
+      const sampleDataUrl =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
       const result = await provider.generatePatternDna(
         "Crop top boxy streetwear",
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        sampleDataUrl
       );
 
       expect(result.concept_name).toBe("streetwear_boxy_crop");
@@ -393,7 +399,130 @@ Bloque base: menswear_torso_oversize.
       const requestBody = JSON.parse(options?.body as string);
       expect(requestBody.model).toBe("accounts/fireworks/models/qwen3p7-plus");
       expect(Array.isArray(requestBody.messages[1].content)).toBe(true);
+      expect(requestBody.messages[1].content[0].type).toBe("text");
       expect(requestBody.messages[1].content[1].type).toBe("image_url");
+      expect(requestBody.messages[1].content[1].image_url.url).toBe(sampleDataUrl);
+      expect(requestBody.images).toEqual([sampleDataUrl]);
+
+      // Verificación de solidez de esquema Zod
+      expect(() => parsePatternDna(result)).not.toThrow();
+    });
+
+    it("debe resolver una ruta local de disco a Data URL Base64 y estructurar el payload multimodal para Qwen 3.7 Plus", async () => {
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "pac-ai-test-"));
+      const tempImagePath = path.join(tempDir, "sample_garment.png");
+      const dummyPngBuffer = Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "base64"
+      );
+      fs.writeFileSync(tempImagePath, dummyPngBuffer);
+
+      try {
+        const provider = new DirectApiProvider({
+          apiKey: "fw-test-secret-key",
+          baseUrl: "https://api.fireworks.ai/inference/v1",
+          model: "accounts/fireworks/models/qwen3p7-plus",
+        });
+
+        const mockResponseData = {
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  concept_name: "custom_anime_kimono_dress",
+                  base_block: "dress_sloper",
+                  ease: { chest_ease_mm: 50 },
+                  modifications: {
+                    sleeves: { type: "kimono" },
+                  },
+                }),
+              },
+            },
+          ],
+        };
+
+        const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+          ok: true,
+          json: async () => mockResponseData,
+        } as Response);
+
+        const result = await provider.generatePatternDna(
+          "Vestido ceremonial japonés",
+          tempImagePath
+        );
+
+        expect(result.concept_name).toBe("custom_anime_kimono_dress");
+        expect(result.base_block).toBe("dress_sloper");
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+        const [, options] = fetchSpy.mock.calls[0];
+        const requestBody = JSON.parse(options?.body as string);
+        expect(requestBody.model).toBe("accounts/fireworks/models/qwen3p7-plus");
+
+        const expectedDataUrlPrefix = "data:image/png;base64,";
+        expect(requestBody.messages[1].content[1].type).toBe("image_url");
+        expect(
+          requestBody.messages[1].content[1].image_url.url.startsWith(
+            expectedDataUrlPrefix
+          )
+        ).toBe(true);
+        expect(requestBody.images[0].startsWith(expectedDataUrlPrefix)).toBe(
+          true
+        );
+
+        // Validación estricta con Zod
+        expect(() => parsePatternDna(result)).not.toThrow();
+      } finally {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("debe usar el prompt por defecto cuando solo se proporciona una imagen sin prompt de texto", async () => {
+      const provider = new DirectApiProvider({
+        apiKey: "fw-test-secret-key",
+        baseUrl: "https://api.fireworks.ai/inference/v1",
+        model: "accounts/fireworks/models/qwen3p7-plus",
+      });
+
+      const mockResponseData = {
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                concept_name: "image_derived_vest",
+                base_block: "menswear_torso",
+                ease: { chest_ease_mm: 40 },
+                modifications: {
+                  sleeves: { type: "sleeveless" },
+                },
+              }),
+            },
+          },
+        ],
+      };
+
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => mockResponseData,
+      } as Response);
+
+      const sampleDataUrl =
+        "data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==";
+
+      const result = await provider.generatePatternDna("", sampleDataUrl);
+
+      expect(result.concept_name).toBe("image_derived_vest");
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+      const [, options] = fetchSpy.mock.calls[0];
+      const requestBody = JSON.parse(options?.body as string);
+      const userTextContent = requestBody.messages[1].content[0].text;
+      expect(userTextContent).toContain(
+        "Generar patrón paramétrico preciso a partir del diseño y silueta de la imagen"
+      );
+      expect(requestBody.messages[1].content[1].image_url.url).toBe(sampleDataUrl);
+
+      expect(() => parsePatternDna(result)).not.toThrow();
     });
 
     it("debe lanzar un error claro cuando la API responde con un código de error HTTP", async () => {

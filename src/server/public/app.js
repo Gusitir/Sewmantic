@@ -124,29 +124,86 @@ function initTheme() {
 }
 
 /**
+ * Procesa y comprime opcionalmente una imagen en un canvas virtual si excede 4MB
+ */
+function processImageFile(file, onComplete) {
+  if (!file) return;
+
+  const validExtensions = ['png', 'jpg', 'jpeg', 'webp'];
+  const ext = (file.name || '').split('.').pop()?.toLowerCase() || '';
+  const isValidMime =
+    file.type?.startsWith('image/') ||
+    ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(file.type);
+  const isValidExt = validExtensions.includes(ext);
+
+  if (!isValidMime && !isValidExt) {
+    alert('Por favor selecciona un archivo de imagen válido (PNG, JPG, JPEG o WEBP).');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const rawDataUrl = e.target.result;
+    const MAX_SIZE_BYTES = 4 * 1024 * 1024; // 4MB
+
+    if (file.size > MAX_SIZE_BYTES) {
+      // Redimensionado y compresión ligera en canvas virtual para proteger la memoria
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDimension = 1920;
+
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          onComplete(compressedDataUrl, file.name);
+        } else {
+          onComplete(rawDataUrl, file.name);
+        }
+      };
+      img.onerror = () => {
+        onComplete(rawDataUrl, file.name);
+      };
+      img.src = rawDataUrl;
+    } else {
+      onComplete(rawDataUrl, file.name);
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+/**
  * Inicializa el cargador de imágenes por Drag & Drop
  */
 function initImageUploader() {
   if (!imageDropzone || !imageFileInput) return;
 
   const handleFile = (file) => {
-    if (!file || !file.type.startsWith('image/')) {
-      alert('Por favor selecciona un archivo de imagen válido (PNG, JPG, WEBP).');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      state.uploadedImageData = e.target.result;
-      state.uploadedImageName = file.name;
+    processImageFile(file, (dataUrl, fileName) => {
+      state.uploadedImageData = dataUrl;
+      state.uploadedImageName = fileName;
 
       if (imagePreviewImg && imagePreviewContainer) {
-        imagePreviewImg.src = state.uploadedImageData;
+        imagePreviewImg.src = dataUrl;
         imagePreviewContainer.style.display = 'block';
         imageDropzone.style.display = 'none';
       }
-    };
-    reader.readAsDataURL(file);
+    });
   };
 
   imageDropzone.addEventListener('click', () => {
@@ -849,13 +906,17 @@ function initGenerateForm() {
 
   generateForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const prompt = promptInput?.value?.trim() || '';
+    const rawPrompt = promptInput?.value?.trim() || '';
     const imagePath = state.uploadedImageData;
 
-    if (!prompt && !imagePath) {
+    if (!rawPrompt && !imagePath) {
       alert('Por favor escribe una descripción de la prenda o arrastra una imagen de referencia.');
       return;
     }
+
+    const defaultImagePrompt =
+      'Generar patrón paramétrico preciso a partir del diseño y silueta de la imagen';
+    const prompt = rawPrompt || (imagePath ? defaultImagePrompt : '');
 
     const provider = providerSelect?.value || 'api';
     const sizes = state.selectedSizes;
@@ -863,7 +924,9 @@ function initGenerateForm() {
 
     if (generateBtn) generateBtn.disabled = true;
     if (generateBtnText) {
-      generateBtnText.textContent = imagePath ? 'Analizando Imagen & Creando Moldería...' : 'Orquestando Geometría IA...';
+      generateBtnText.textContent = imagePath
+        ? 'Analizando Imagen & Creando Moldería...'
+        : 'Orquestando Geometría IA...';
     }
     if (generateBtnSpinner) generateBtnSpinner.style.display = 'block';
 
@@ -872,7 +935,7 @@ function initGenerateForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: prompt || 'Generar patrón a partir de imagen de referencia',
+          prompt,
           provider,
           sizes,
           customMeasurements,

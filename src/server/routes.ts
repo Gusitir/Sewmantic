@@ -830,11 +830,15 @@ export async function handlePostGenerate(
     directDna,
   } = body;
 
+  const rawImagePath = imagePath || body.image || body.imageData;
+  const defaultImagePrompt =
+    'Generar patrón paramétrico preciso a partir del diseño y silueta de la imagen';
+
   const effectivePrompt =
     prompt && prompt.trim().length > 0
       ? prompt.trim()
-      : imagePath
-      ? 'Generar patron parametrico de molderia textil a partir del diseno y proporciones de la imagen'
+      : rawImagePath
+      ? defaultImagePrompt
       : '';
 
   if (!effectivePrompt && !directDna) {
