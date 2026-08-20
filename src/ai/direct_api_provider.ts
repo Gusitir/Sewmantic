@@ -36,7 +36,7 @@ export class DirectApiProvider implements IAiProvider {
       config?.model ||
       process.env.FIREWORKS_MODEL ||
       process.env.AI_MODEL ||
-      "accounts/fireworks/models/deepseek-v3";
+      "accounts/fireworks/models/deepseek-v4-pro-0813";
 
     this.visionModel =
       process.env.FIREWORKS_VISION_MODEL ||
@@ -127,8 +127,9 @@ export class DirectApiProvider implements IAiProvider {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: {
+          "Accept": "application/json",
           "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
+          "Authorization": `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
           model: this.visionModel,
@@ -164,9 +165,10 @@ export class DirectApiProvider implements IAiProvider {
       }
 
       const data = (await res.json()) as {
-        choices?: Array<{ message?: { content?: string } }>;
+        choices?: Array<{ message?: { content?: string }; text?: string }>;
       };
-      return data.choices?.[0]?.message?.content?.trim() || "";
+      const choice = data.choices?.[0];
+      return choice?.message?.content?.trim() || choice?.text?.trim() || "";
     } finally {
       clearTimeout(timer);
     }
@@ -192,7 +194,7 @@ export class DirectApiProvider implements IAiProvider {
     if (imagePath && imagePath.trim().length > 0) {
       imageDataUrl = this.resolveImageDataUrl(imagePath.trim());
 
-      // Si el modelo principal no es de visión (ej. DeepSeek-V3 / DeepSeek-R1), realizamos pre-análisis de visión
+      // Si el modelo principal no es de visión, realizamos pre-análisis de visión
       if (!this.isNativeVisionModel(this.model)) {
         try {
           const visualAnalysis = await this.analyzeImageWithVision(
@@ -213,28 +215,37 @@ export class DirectApiProvider implements IAiProvider {
     const systemPrompt = PromptBuilder.buildSystemPrompt();
     const userPrompt = PromptBuilder.buildUserPrompt(effectivePrompt, undefined);
 
-    const endpoint = `${this.baseUrl.replace(/\/+$/, "")}/chat/completions`;
+    const isCompletionsMode = this.baseUrl.endsWith("/completions");
+    const endpoint = isCompletionsMode
+      ? this.baseUrl
+      : `${this.baseUrl.replace(/\/+$/, "")}/chat/completions`;
 
     const controller = new AbortController();
     const timeoutHandle = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      // Si el modelo principal soporta visión nativa y hay imagen, enviar la imagen directamente en el payload
-      let userMessageContent: any = userPrompt;
-      if (imageDataUrl && this.isNativeVisionModel(this.model)) {
-        userMessageContent = [
-          { type: "text", text: userPrompt },
-          { type: "image_url", image_url: { url: imageDataUrl } },
-        ];
-      }
+      let requestBody: Record<string, any>;
 
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
+      if (isCompletionsMode) {
+        requestBody = {
+          model: this.model,
+          temperature: 0.15,
+          max_tokens: 4096,
+          top_k: 40,
+          presence_penalty: 0,
+          frequency_penalty: 0,
+          prompt: `System: ${systemPrompt}\n\nUser: ${userPrompt}\n\nAssistant (JSON only):`,
+        };
+      } else {
+        let userMessageContent: any = userPrompt;
+        if (imageDataUrl && this.isNativeVisionModel(this.model)) {
+          userMessageContent = [
+            { type: "text", text: userPrompt },
+            { type: "image_url", image_url: { url: imageDataUrl } },
+          ];
+        }
+
+        requestBody = {
           model: this.model,
           temperature: 0.15,
           max_tokens: 4096,
@@ -242,7 +253,17 @@ export class DirectApiProvider implements IAiProvider {
             { role: "system", content: systemPrompt },
             { role: "user", content: userMessageContent },
           ],
-        }),
+        };
+      }
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify(requestBody),
         signal: controller.signal,
       });
 
@@ -258,10 +279,12 @@ export class DirectApiProvider implements IAiProvider {
           message?: {
             content?: string;
           };
+          text?: string;
         }>;
       };
 
-      const content = data.choices?.[0]?.message?.content;
+      const choice = data.choices?.[0];
+      const content = choice?.message?.content || choice?.text;
       if (!content || content.trim().length === 0) {
         throw new Error("No content returned in API completion choices");
       }

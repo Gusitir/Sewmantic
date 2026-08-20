@@ -192,7 +192,7 @@ describe("AI Provider Subsystem & Factory (Fireworks AI & Direct API)", () => {
       const provider = new DirectApiProvider();
       expect(provider.apiKey).toBe("fw-key-999");
       expect(provider.baseUrl).toBe("https://api.fireworks.ai/inference/v1");
-      expect(provider.model).toBe("accounts/fireworks/models/deepseek-v3");
+      expect(provider.model).toBe("accounts/fireworks/models/deepseek-v4-pro-0813");
       expect(provider.visionModel).toBe("accounts/fireworks/models/llama-v3p2-11b-vision-instruct");
       expect(provider.getProviderName()).toBe("api");
     });
