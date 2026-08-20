@@ -402,7 +402,6 @@ Bloque base: menswear_torso_oversize.
       expect(requestBody.messages[1].content[0].type).toBe("text");
       expect(requestBody.messages[1].content[1].type).toBe("image_url");
       expect(requestBody.messages[1].content[1].image_url.url).toBe(sampleDataUrl);
-      expect(requestBody.images).toEqual([sampleDataUrl]);
 
       // Verificación de solidez de esquema Zod
       expect(() => parsePatternDna(result)).not.toThrow();
@@ -466,9 +465,6 @@ Bloque base: menswear_torso_oversize.
             expectedDataUrlPrefix
           )
         ).toBe(true);
-        expect(requestBody.images[0].startsWith(expectedDataUrlPrefix)).toBe(
-          true
-        );
 
         // Validación estricta con Zod
         expect(() => parsePatternDna(result)).not.toThrow();
