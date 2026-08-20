@@ -36,7 +36,7 @@ export class DirectApiProvider implements IAiProvider {
       config?.model ||
       process.env.FIREWORKS_MODEL ||
       process.env.AI_MODEL ||
-      "accounts/fireworks/models/qwen3p7-plus";
+      "accounts/fireworks/models/qwen3p8-max";
 
     this.visionModel =
       process.env.FIREWORKS_VISION_MODEL ||
@@ -295,6 +295,9 @@ export class DirectApiProvider implements IAiProvider {
           model: this.model,
           temperature: 0.15,
           max_tokens: 4000,
+          top_k: 40,
+          presence_penalty: 0,
+          frequency_penalty: 0,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userMessageContent },

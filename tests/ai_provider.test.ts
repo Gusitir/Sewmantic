@@ -195,7 +195,7 @@ describe("AI Provider Subsystem & Factory (Fireworks AI & Direct API)", () => {
       const provider = new DirectApiProvider();
       expect(provider.apiKey).toBe("fw-key-999");
       expect(provider.baseUrl).toBe("https://api.fireworks.ai/inference/v1");
-      expect(provider.model).toBe("accounts/fireworks/models/qwen3p7-plus");
+      expect(provider.model).toBe("accounts/fireworks/models/qwen3p8-max");
       expect(provider.getProviderName()).toBe("api");
     });
 
@@ -350,11 +350,11 @@ Bloque base: menswear_torso_oversize.
       expect(result.modifications.hood?.type).toBe("crossover");
     });
 
-    it("debe realizar llamada directa multimodal de 1 solo paso con Qwen 3.7 Plus al detectar soporte nativo de visión", async () => {
+    it("debe realizar llamada directa multimodal de 1 solo paso con Qwen 3.8 Max al detectar soporte nativo de visión", async () => {
       const provider = new DirectApiProvider({
         apiKey: "fw-test-secret-key",
         baseUrl: "https://api.fireworks.ai/inference/v1",
-        model: "accounts/fireworks/models/qwen3p7-plus",
+        model: "accounts/fireworks/models/qwen3p8-max",
       });
 
       const mockResponseData = {
@@ -397,7 +397,10 @@ Bloque base: menswear_torso_oversize.
       const [url, options] = fetchSpy.mock.calls[0];
       expect(url).toBe("https://api.fireworks.ai/inference/v1/chat/completions");
       const requestBody = JSON.parse(options?.body as string);
-      expect(requestBody.model).toBe("accounts/fireworks/models/qwen3p7-plus");
+      expect(requestBody.model).toBe("accounts/fireworks/models/qwen3p8-max");
+      expect(requestBody.top_k).toBe(40);
+      expect(requestBody.presence_penalty).toBe(0);
+      expect(requestBody.frequency_penalty).toBe(0);
       expect(Array.isArray(requestBody.messages[1].content)).toBe(true);
       expect(requestBody.messages[1].content[0].type).toBe("text");
       expect(requestBody.messages[1].content[1].type).toBe("image_url");
@@ -407,7 +410,7 @@ Bloque base: menswear_torso_oversize.
       expect(() => parsePatternDna(result)).not.toThrow();
     });
 
-    it("debe resolver una ruta local de disco a Data URL Base64 y estructurar el payload multimodal para Qwen 3.7 Plus", async () => {
+    it("debe resolver una ruta local de disco a Data URL Base64 y estructurar el payload multimodal para Qwen 3.8 Max", async () => {
       const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "pac-ai-test-"));
       const tempImagePath = path.join(tempDir, "sample_garment.png");
       const dummyPngBuffer = Buffer.from(
@@ -420,7 +423,7 @@ Bloque base: menswear_torso_oversize.
         const provider = new DirectApiProvider({
           apiKey: "fw-test-secret-key",
           baseUrl: "https://api.fireworks.ai/inference/v1",
-          model: "accounts/fireworks/models/qwen3p7-plus",
+          model: "accounts/fireworks/models/qwen3p8-max",
         });
 
         const mockResponseData = {
@@ -456,7 +459,10 @@ Bloque base: menswear_torso_oversize.
 
         const [, options] = fetchSpy.mock.calls[0];
         const requestBody = JSON.parse(options?.body as string);
-        expect(requestBody.model).toBe("accounts/fireworks/models/qwen3p7-plus");
+        expect(requestBody.model).toBe("accounts/fireworks/models/qwen3p8-max");
+        expect(requestBody.top_k).toBe(40);
+        expect(requestBody.presence_penalty).toBe(0);
+        expect(requestBody.frequency_penalty).toBe(0);
 
         const expectedDataUrlPrefix = "data:image/png;base64,";
         expect(requestBody.messages[1].content[1].type).toBe("image_url");
@@ -477,7 +483,7 @@ Bloque base: menswear_torso_oversize.
       const provider = new DirectApiProvider({
         apiKey: "fw-test-secret-key",
         baseUrl: "https://api.fireworks.ai/inference/v1",
-        model: "accounts/fireworks/models/qwen3p7-plus",
+        model: "accounts/fireworks/models/qwen3p8-max",
       });
 
       const mockResponseData = {

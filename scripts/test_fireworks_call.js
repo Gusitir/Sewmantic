@@ -1,6 +1,6 @@
 /**
  * scripts/test_fireworks_call.js
- * Script de diagnóstico aislado para verificar la conectividad con Fireworks AI y Qwen 3.7 Plus
+ * Script de diagnóstico aislado para verificar la conectividad con Fireworks AI y Qwen 3.8 Max
  * pattern-ai-core
  */
 
@@ -12,7 +12,7 @@ async function runDiagnostics() {
   console.log("===============================================================\n");
 
   const apiKey = (process.env.FIREWORKS_API_KEY || "").trim();
-  const model = (process.env.FIREWORKS_MODEL || "accounts/fireworks/models/qwen3p7-plus").trim();
+  const model = (process.env.FIREWORKS_MODEL || "accounts/fireworks/models/qwen3p8-max").trim();
   const rawBaseUrl = (process.env.FIREWORKS_BASE_URL || "https://api.fireworks.ai/inference/v1").trim();
   const baseUrl = rawBaseUrl.replace(/\/+$/, "");
 
@@ -34,6 +34,9 @@ async function runDiagnostics() {
     model: model,
     max_tokens: maxTokens,
     temperature: 0.1,
+    top_k: 40,
+    presence_penalty: 0,
+    frequency_penalty: 0,
     messages: [
       {
         role: "system",

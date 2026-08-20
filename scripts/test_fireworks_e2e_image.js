@@ -1,7 +1,7 @@
 /**
  * scripts/test_fireworks_e2e_image.js
  * Prueba End-to-End en Vivo de Generación por Imagen & Auditoría
- * pattern-ai-core — Fireworks AI (Qwen 3.7 Plus) & FreeSewing Engine
+ * pattern-ai-core — Fireworks AI (Qwen 3.8 Max) & FreeSewing Engine
  */
 
 import "dotenv/config";
@@ -27,7 +27,7 @@ async function runE2EImageTest() {
   console.log("===============================================================================\n");
 
   const apiKey = (process.env.FIREWORKS_API_KEY || "").trim();
-  const model = (process.env.FIREWORKS_MODEL || "accounts/fireworks/models/qwen3p7-plus").trim();
+  const model = (process.env.FIREWORKS_MODEL || "accounts/fireworks/models/qwen3p8-max").trim();
   const baseUrl = (process.env.FIREWORKS_BASE_URL || "https://api.fireworks.ai/inference/v1").trim();
 
   console.log("[1/5] Verificación de Entorno y Configuración de Fireworks AI:");
@@ -80,7 +80,7 @@ async function runE2EImageTest() {
   console.log("\n[4/5] Ejecutando generatePatternPipeline...");
   console.log(`  • Prompt:     "${promptText}"`);
   console.log(`  • Imagen:     ${testImagePath}`);
-  console.log(`  • Provider:   api (Fireworks AI Qwen 3.7 Plus)`);
+  console.log(`  • Provider:   api (Fireworks AI Qwen 3.8 Max)`);
   console.log(`  • Bundle:     true (Etsy ZIP + SEO Metadata + Printing Guide)`);
   console.log(`  • Output Dir: ${outputBaseDir}\n`);
 
