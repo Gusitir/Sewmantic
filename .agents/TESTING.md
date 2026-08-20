@@ -1,10 +1,10 @@
 # TESTING — Matriz de Pruebas y Verificación (`pattern-ai-core`)
 
-Guía completa de pruebas automatizadas, semi-automatizadas y verificación humana/funcional para las Fases 1.0, 2.0 y 3.0.
+Guía completa de pruebas automatizadas, semi-automatizadas y verificación humana/funcional para las Fases 1.0, 2.0, 3.0 y 4.0.
 
 ---
 
-## 1. Suite de Pruebas Automatizadas (375/375 PASS — 13 Suites Vitest)
+## 1. Suite de Pruebas Automatizadas (369/369 PASS — 13 Suites Vitest)
 
 Para ejecutar la suite completa de pruebas deterministas:
 ```powershell
@@ -16,7 +16,7 @@ npm test
 | Suite de Test | Módulo / Archivo | Tests | Qué valida |
 | :--- | :--- | :---: | :--- |
 | `tests/schema.test.ts` | `src/schema/pattern_schema.ts` | 41 | Contratos Zod para ADN paramétrico, límites antropométricos, sub-prendas, telas y árboles de modificación. |
-| `tests/ai_provider.test.ts` | `src/ai/` | 28 | AI Provider Factory, `AgyCliProvider`, `OpenCodeCliProvider`, `DirectApiProvider` y `MockAiProvider`. |
+| `tests/ai_provider.test.ts` | `src/ai/` | 22 | AI Provider Factory, `DirectApiProvider` (Fireworks AI / Qwen 3.7 Plus) y `MockAiProvider`. |
 | `tests/base_blocks.test.ts` | `src/engine/base_blocks/` | 51 | Slopers FreeSewing de Torso, Mangas, Capucha y Bolsillo; curvas Bézier y polígonos cerrados. |
 | `tests/trousers.test.ts` | `src/engine/base_blocks/trousers.ts` | 35 | Slopers de Pantalón y Bermuda; aplomo central y ecualización de entrepierna ($\Delta \le 0.05\text{ mm}$). |
 | `tests/modifier.test.ts` | `src/engine/modifier.ts` | 67 | Modificaciones superiores e inferiores; recálculo sisa-manga ($< 3\text{ mm}$); pretinas, bolsillos y dobladillos. |
@@ -28,81 +28,54 @@ npm test
 | `tests/server.test.ts` | `src/server/app.ts` | 16 | Servidor HTTP REST nativo; CORS universal, streaming JSON seguro y endpoints de API. |
 | `tests/viewer.test.ts` | `src/server/public/viewer.js` | 22 | Visor Vectorial 2D; transformaciones matemáticas (Zoom, Pan, Fit View), capas XS-3XL y cuadrícula A4. |
 | `tests/e2e.test.ts` | `src/pipeline.ts` | 11 | Pipeline End-to-End generando físicamente todos los entregables en disco. |
-| **TOTAL** | **13 suites** | **375** | **100% PASS (0 errores)** |
+| **TOTAL** | **13 suites** | **369** | **100% PASS (0 errores)** |
 
 ---
 
-## 2. Guía de Pruebas Manuales y de Experiencia de Usuario (Paso a Paso)
+## 2. Pruebas de Diagnóstico y Conectividad Externa (Fase 4)
+
+### Test de Aislamiento de Fireworks AI
+Para verificar que la clave `FIREWORKS_API_KEY` en `.env` y el modelo `accounts/fireworks/models/qwen3p7-plus` responden correctamente de forma aislada:
+```powershell
+node scripts/test_fireworks_call.js
+```
+**Resultado esperado:**
+- Lee `.env` localmente.
+- Realiza una llamada HTTP de prueba.
+- Imprime: Status 200 OK, Latencia (ms), y respuesta estructurada de la IA (o código y mensaje de error exacto en caso de fallo).
+
+---
+
+## 3. Guía de Pruebas Manuales y de Experiencia de Usuario
 
 ### Test 1: Inicio en 1 Clic con el Launcher `.bat`
-1. Haz doble clic en el archivo `start_web_studio.bat` en la raíz del proyecto.
-2. **Resultado esperado:**
-   - La ventana de consola CMD se abre con encabezado azul/celeste.
-   - Detecta Node.js y compila si es necesario.
-   - Abre automáticamente el navegador en `http://127.0.0.1:3030`.
-- **Estado:** ✅ [VERIFICADO OK - Launcher por lotes corregido y validado]
+1. Haz doble clic en `start_web_studio.bat`.
+2. **Resultado esperado:** Recompila `src/` automáticamente, sincroniza assets a `dist/server/public/` y abre `http://127.0.0.1:3030`.
+- **Estado:** ✅ [VERIFICADO OK]
+
+### Test 2: Subida y Análisis de Imagen de Prenda
+1. En el Web Studio, arrastra un archivo PNG/JPG de un boceto o prenda al área de "Imagen de Referencia".
+2. Selecciona proveedor `api (Fireworks AI • Qwen 3.7 Plus / Direct API)`.
+3. Haz clic en "⚡ Generar Patrón Paramétrico".
+4. **Resultado esperado:**
+   - La terminal muestra los logs transparentes del proceso.
+   - El visor 2D se actualiza con el patrón generado a escala real.
+   - Las pestañas "Ficha Técnica" y "Metadatos Etsy" se cargan de inmediato.
 
 ---
 
-### Test 2: Visor Vectorial 2D Interactivo (Web Studio)
-1. Con el Web Studio abierto en `http://127.0.0.1:3030`, selecciona el preset **"Straw Pirate Full Set"** en el panel izquierdo y haz clic en **"Generar Patrón Paramétrico"**.
-2. **Pruebas en el visor:**
-   - **Zoom:** Usa la rueda del ratón hacia adelante/atrás (el zoom debe centrarse en el cursor).
-   - **Pan:** Haz clic izquierdo sostenido y arrastra para mover el lienzo.
-   - **Selector de Capas:** Activa y desactiva las tallas `XS` a `3XL` en la barra superior; los trazos de colores graduados se resaltan y ocultan en tiempo real.
-   - **Cuadrícula A4:** Activa el botón "Cuadrícula A4" para ver las páginas numeradas (`A1`, `A2`, `B1`...) sobrepuestas en el patrón.
-   - **Calibración 10x10 cm:** Pasa el cursor o haz clic en "Verificar 10x10cm" para inspeccionar el recuadro de prueba.
-- **Estado:** ✅ [VERIFICADO OK - Capas multi-talla activas e interactivas]
-
----
-
-### Test 3: Personalización Antropométrica por Medidas a Medida
-1. En el panel izquierdo del Web Studio, modifica los sliders:
-   - **Contorno de Pecho:** Sube a `1060 mm`.
-   - **Contorno de Cintura:** Ajusta a `880 mm`.
-   - **Contorno de Cadera:** Ajusta a `1020 mm`.
-   - **Tiro / Inseam:** Ajusta a `820 mm`.
-2. Haz clic en **"Generar Patrón Paramétrico"**.
-3. **Resultado esperado:**
-   - El visor 2D se actualiza en tiempo real reflejando las nuevas proporciones del torso y de las bermudas.
-   - En la pestaña **"Ficha Técnica"**, aparece la sección *"👤 Personalización Antropométrica Aplicada"* comparando las cotas a medida.
-- **Estado:** ✅ [VERIFICADO OK - Escalado continuo anatómico aplicado a Top y Bottom]
-
----
-
-### Test 4: Descarga 1-Clic de Entregables Comerciales
-1. En el panel derecho/inferior del Web Studio, prueba los botones de descarga directa:
-   - `[PDF A4 Paginado]`: Descarga el archivo multi-página listo para imprimir en casa.
-   - `[PDF US Letter]`: Descarga el formato para impresoras estándar americanas.
-   - `[PDF Plotter A0]`: Descarga el plano continuo para copistería.
-   - `[SVG Vectorial]`: Descarga el vector continuo multi-capa editable.
-   - `[Ficha Técnica PDF]`: Descarga el PDF estilizado con consumo de telas y ensamble.
-   - `[🛍️ Paquete Comercial Etsy (.ZIP)]`: Descarga el archivo `.zip` completo estructurado en 6 carpetas.
-2. Abre el `.zip` descargado y verifica que contenga las 6 subcarpetas con la guía `README_Etsy_Printing_Instructions.pdf`.
-- **Estado:** ✅ [VERIFICADO OK - Paquetes ZIP y PDFs descargables]
-
----
-
-### Test 5: Generación por CLI (Línea de Comandos)
-Prueba la generación de un conjunto completo desde PowerShell:
-```powershell
-node dist/index.js generate "straw_pirate_full_set" -b "two_piece_set" -p mock --bundle
-```
-**Resultado verificado empíricamente:**
-- Genera los 11 archivos en `output/straw_pirate_full_set/`, incluyendo `straw_pirate_full_set_etsy_bundle.zip` (160 KB) y metadatos con 13 tags SEO.
-- **Estado:** ✅ [VERIFICADO OK - Ejecución determinista 100%]
-
-## 3. Verificaciones Físicas Indispensables (Stop Conditions)
+## 4. Verificaciones Físicas Indispensables (Stop Conditions)
 
 | Código | Descripción de la Prueba | Criterio de Aceptación | Estado |
 | :--- | :--- | :--- | :---: |
 | **H-01** | Impresión física de Página 1 a escala 100% (Sin ajustar a página). | Medición con regla métrica del recuadro exterior: exactamente $10.0\text{ cm} \times 10.0\text{ cm}$ ($100\text{ mm} \times 100\text{ mm}$). | ✅ [VERIFICADO OK] |
 | **H-02** | Continuidad de ensamble de hojas A4/Letter. | Las líneas de corte y curvas Bézier entre páginas contiguas (`A1` con `A2`, etc.) empalman sin escalones ni desfases. | ✅ [VERIFICADO OK] |
+| **H-03** | Verificación visual de patrón generado por imagen en Visor 2D. | Las proporciones de sisa, escote y largos coinciden con el boceto subido. | 🟡 [PENDIENTE DE PRUEBA EN VIVO T-20] |
 
 ---
 
-## 4. Resumen de Estado del Sistema
+## 5. Resumen de Estado del Sistema
 
 - **Versión del Motor:** `pattern-ai-core v0.1.0`
 - **Ambiente:** Node.js v24+ (ESM) / Windows 11 (PowerShell / CMD)
-- **Veredicto Global de Auditoría:** **APTO (Fases 1.0, 2.0 y 3.0 Completadas y Verificadas al 100%)**
+- **Veredicto Global de Auditoría:** **APTO (Fases 1.0, 2.0 y 3.0 Archivadas | Fase 4.0 Activa)**

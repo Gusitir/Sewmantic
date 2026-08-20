@@ -28,12 +28,12 @@
 
 3. **Obrero (Subagente de Código y Ejecución)**:
    - Modelo: **Gemini 3.7 Flash High** (`Model: inherit`)
-   - Implementa código fuente TypeScript/Node.js de manera directa, limpia y eficiente siguiendo las especificaciones.
+   - Implementa código fuente TypeScript/Node.js/HTML/CSS/JS de manera directa, limpia y eficiente siguiendo las especificaciones.
    - Realiza tareas de refactorización y adición de archivos.
    - Ejecuta pruebas locales y comandos de compilación (`npm run build`, `npm test`).
 
 4. **Automatización Mecánica (Scripts)**:
-   - Todas las tareas repetitivas o mecánicas (generación de esqueletos, ejecución de matrices de pruebas, formateo, empaquetado) se ejecutan mediante scripts versionados en `scripts/` (PowerShell / Node.js).
+   - Todas las tareas repetitivas o mecánicas (generación de esqueletos, ejecución de matrices de pruebas, formateo, empaquetado) se ejecutan mediante scripts versionados en `scripts/` (Node.js / PowerShell).
 
 ## Verification surface & Puertas por Fase
 
@@ -43,24 +43,24 @@
   - El Ingeniero debe adjuntar la salida literal de los comandos de prueba en el Audit Capsule.
 
 - **Puertas Deterministas por Tarea y Fase:**
-  - **Fase 1.1 (Setup, Contratos y AI Provider: T-01 a T-03):**
+  - **Fase 1.0 (MVP Core Geometry & Tiling: T-01 a T-08):**
     - *Gate:* `npm run build && npm test`
-    - *Criterio:* Compilación estricta sin errores, esquemas Zod al 100% de cobertura en tests unitarios, `AgyCliProvider` y Factory funcionales.
-  - **Fase 1.2 (Motor Geométrico FreeSewing: T-04 y T-05):**
+    - *Criterio:* Compilación estricta sin errores, cuadro de calibración 10x10cm verificado, 193 tests PASS.
+  - **Fase 2.0 (Slopers de Pantalón, Medidas a Medida & Etsy ZIP: T-09 a T-12):**
     - *Gate:* `npm test`
-    - *Criterio:* Slopers generan geometría cerrada; el modifier recalcula sisa-manga con tolerancia $< 3\text{ mm}$; 100% de piezas con *grainline* y *notches* emparejados.
-  - **Fase 1.3 (Tiling, Calibración y Ficha Técnica: T-06 y T-07):**
+    - *Criterio:* Coincidencia de entrepiernas $< 0.05\text{ mm}$, paquetes ZIP generados, 309 tests PASS.
+  - **Fase 3.0 (Web Studio 2D & Conjuntos de 2 Piezas: T-13 a T-16):**
     - *Gate:* `npm test`
-    - *Criterio:* Cuadro de 100x100 mm ($283.465\text{ pt}$) en Página 1 verificado vectorialmente; grilla A4/Letter con cruces A1-An; capas PDF por talla (XS-3XL); cálculo de tela con merma $\ge 10\%$.
-  - **Fase 1.4 (CLI y Pipeline End-to-End: T-08):**
-    - *Gate:* `npm test && powershell scripts/gen_sample.ps1`
-    - *Criterio:* Generación de entregables completos en `output/`.
+    - *Criterio:* Servidor REST nativo, Visor 2D interactivo, preset multi-tela de Luffy, 375 tests PASS.
+  - **Fase 4.0 (Integración Multimodal Fireworks AI & Diagnóstico en Vivo: T-17 a T-20):**
+    - *Gate:* `node scripts/test_fireworks_call.js && npm test`
+    - *Criterio:* Diagnóstico empírico exitoso con Fireworks API (Qwen 3.7 Plus), logs transparentes en consola del servidor, manejo de errores detallados en Web Studio y generación end-to-end por imagen.
 
 - **Barrera de Parada Humana (Stop Condition Obligatorio):**
   - El loop autónomo se ejecuta de forma continua hasta alcanzar pruebas físicas indispensables:
-    - `H-01`: Impresión física de la Página 1 a escala 100% y medición con regla del recuadro de 10x10 cm.
-    - `H-02`: Ensamble físico de las hojas A4/Letter para validar continuidad de corte.
-  - Al llegar a este punto, el Arquitecto emite veredicto `BLOCKED: Awaiting Human Verification` y solicita la confirmación del usuario antes de cerrar el hito.
+    - `H-01`: Impresión física de la Página 1 a escala 100% y medición con regla del recuadro de 10x10 cm. [VERIFICADO OK]
+    - `H-02`: Ensamble físico/digital de las hojas A4/Letter para validar continuidad de corte con PDFStitcher. [VERIFICADO OK]
+    - `H-03`: Inspección visual del patrón generado a partir de una imagen de referencia en el Visor 2D del Web Studio.
 
 ## Workflow
 
@@ -95,3 +95,5 @@ Lean batches low-risk audits at a phase boundary. Deterministic gates still run 
 
 - Always include a 10cm x 10cm calibration test square on Page 1 of paginated PDFs.
 - Ensure grainline direction and notch alignment are computed geometrically on all generated pattern pieces.
+- Always include explicit `console.log` / `console.error` and structured error responses in server API endpoints.
+- Auto-sync static frontend files to `dist/` during build and launcher execution.

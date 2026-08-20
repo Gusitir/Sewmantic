@@ -1,40 +1,44 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-19T00:30:00-05:00
-source_commit: [T-16] implement two-piece coordinated set pattern generator and multi-fabric techpack
+updated_at: 2026-08-20T14:02:00-05:00
+source_commit: [FIX] Auto-sync static public assets during build and start_web_studio.bat
 assurance: Lean
-active_plan: PLAN_v0.3-web-ui.md
-active_task: none (Phase 3.0 Completed)
+active_plan: PLAN_v0.4-fireworks-multimodal.md
+active_task: T-17 (Diagnóstico y Aislamiento de Fireworks API con Qwen 3.7 Plus)
 last_verdict: APTO
 backup: local-only
 ```
 
 ## Jerarquía Multi-Agente Activa
 
-- **Arquitecto (Lead)**: Planificación, control plane (`.agents/`), auditorías de fase, commits `[STATE]`.
-- **Ingeniero**: Razonamiento, FreeSewing, Zod/TS, mini-auditorías de tarea, Audit Capsules.
-- **Obrero**: Codificación directa, refactorizaciones, ejecución de scripts de automatización.
+- **Arquitecto (Lead / Planner / Auditor General)**: Planificación, control plane (`.agents/`), auditorías de fase, commits `[STATE]`.
+- **Ingeniero (Subagente de Razonamiento & Diagnóstico)**: Diagnóstico empírico de APIs, FreeSewing, Zod/TS, mini-auditorías de tarea, Audit Capsules.
+- **Obrero (Subagente de Código)**: Implementación TypeScript/HTML/CSS/JS, scripts de prueba, ejecución de tests.
 
 ## Next action
 
-1. **FASE 3.0 CONCLUIDA CON ÉXITO:** Tareas T-13 a T-16 completadas y auditadas con veredicto APTO.
-2. Iniciar planificación de Fase 4 (Presets Avanzados de Anime/Cosplay, Graduación Femenina e Integración 3D/glTF para Visor WebGL).
+1. **Despachar Tarea `T-17` (Diagnóstico y Aislamiento de Fireworks API):**
+   - Crear y ejecutar `scripts/test_fireworks_call.js` para probar en vivo la API Key del usuario contra el endpoint de Fireworks con `accounts/fireworks/models/qwen3p7-plus`.
+   - Capturar e imprimir la respuesta real (código de estado, latencia, contenido o mensaje de error exacto).
+2. **Proceder con `T-18`:** Agregar observabilidad y logs explícitos en `/api/generate` (`src/server/routes.ts`) para que la consola muestre exactamente cada paso y el frontend reciba `error.details`.
 
 ## Blockers
 
-- Ninguno. Todas las pruebas automatizadas (375/375) pasando al 100%.
+- Ninguno técnico interno (369/369 tests pasando en Vitest).
+- En espera de diagnóstico empírico de la llamada real a Fireworks API (`T-17`).
 
 ## Current facts
 
-- Tarea `T-16` completada y auditada con veredicto **APTO**: Generador de conjuntos coordinados de 2 piezas (`garment_category: 'set'`), preset oficial `straw_pirate_full_set` (Chaleco de Lino Rojo + Bermuda Denim Deshilachada), Ficha Técnica con desglose multi-tela (Lino Rojo + Denim Azul) y BOM consolidado.
-- Tareas `T-13`, `T-14` y `T-15` completadas con veredicto **APTO**: Servidor HTTP REST nativo, Visor Vectorial 2D Interactivo con zoom centrado, pan, capas XS-3XL, cuadrícula A4/Letter y Dashboard Web Studio Cyberpunk.
-- Suite determinista completa con **375/375 tests pasando al 100%** en Vitest across 13 suites.
-- Empaquetador Etsy y pipeline End-to-End generando 11 entregables completos por concepto.
+- **Fases 1, 2 y 3 cerradas y archivadas** en `.agents/archive/` con veredicto APTO.
+- **Arquitectura de IA simplificada:** Se eliminaron las implementaciones legacy de CLI por bash (`agy`, `opencode`) y se consolidaron **Direct API** (`api` con Fireworks AI) y **Mock Offline** (`mock`).
+- **Modelo por defecto:** `accounts/fireworks/models/qwen3p7-plus` (Visión Multimodal Nativa).
+- **Frontend Web Studio:** Sincronización automática de archivos estáticos en `dist/server/public/`, soporte Drag & Drop de imágenes (PNG/JPG/WEBP), visualización de Ficha Técnica, Metadatos Etsy, capas por talla (XS-3XL) y descarga directa de paquetes ZIP.
+- **Suite Determinista:** **13/13 suites passing (369/369 tests en verde)**.
 
 ## Open findings
 
-- Ninguno.
+- En pruebas de usuario en vivo, el endpoint `/api/generate` capturó un fallo interno devolviendo el mensaje genérico *"Falló la ejecución del pipeline de moldería"* sin traza en terminal. Esto motivó la activación del Plan v0.4 (`T-17` a `T-20`) para aislar la API y dotar al servidor de trazabilidad absoluta.
 
 ## Human actions
 

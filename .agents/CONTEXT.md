@@ -262,3 +262,26 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commits `[T-13]` a `[T-16]`, hash `bcb7fae`. Commit de control `[STATE] close phase 3.0`.
 - Next: Planificación de Fase 4 (Graduación Femenina, Presets Avanzados Cosplay/Anime y Renderizado 3D/glTF para Visor WebGL).
 
+## 2026-08-20T13:50:00-05:00 - AI ARCHITECTURE TRANSITION & LAUNCHER FIXES (Arquitecto / Ingeniero)
+
+- Changed: 
+  1. Eliminación de implementaciones experimentales de CLI por bash (`agy`, `opencode`) debido a problemas de permisos y seguridad en Windows.
+  2. Consolidación de la arquitectura de inferencia en **Direct API** con **Fireworks AI** (`https://api.fireworks.ai/inference/v1`) y **Mock Offline**.
+  3. Selección y configuración de **Qwen 3.7 Plus** (`accounts/fireworks/models/qwen3p7-plus`) como modelo multimodal nativo de 1 solo paso (visión + patronaje).
+  4. Corrección en `start_web_studio.bat` y `package.json` para auto-sincronizar archivos estáticos (`index.html`, `app.js`, `style.css`) a `dist/server/public/` en cada compilación y desactivar la caché del navegador con `Cache-Control: no-cache`.
+- Verification: 369/369 tests pasando en Vitest (13 suites).
+- Evidence: Commits `75eadf5`, `7014ecd`, `4702497`.
+
+## 2026-08-20T14:02:00-05:00 - MAINTAIN, REINDEX & ACTIVATION OF PHASE 4.0 (Arquitecto)
+
+- Decision and reason: Tras reporte de excepción interna en `/api/generate` durante pruebas en vivo con el usuario, el Arquitecto realiza una operación formal de MAINTAIN y REINDEX bajo la skill `agents-workflow`:
+  1. Archivo de planes cerrados en `.agents/archive/` (`PLAN_v0.1-mvp.md`, `PLAN_v0.2-features.md`, `PLAN_v0.3-web-ui.md`).
+  2. Actualización integral y exhaustiva de todos los archivos del plano de control (`AGENTS.md`, `APPCORE.md`, `CURRENT.md`, `INDEX.md`, `TESTING.md`, `PLAN.md`).
+  3. Activación formal del plan **`PLAN_v0.4-fireworks-multimodal.md`** con 4 tareas deterministas:
+     - `T-17`: Diagnóstico y Aislamiento de Fireworks API con Qwen 3.7 Plus (`scripts/test_fireworks_call.js`).
+     - `T-18`: Servidor REST Logging Transparente y Reporte de Errores Detallados en `/api/generate`.
+     - `T-19`: Integración Multimodal de Imágenes en Web Studio & Pipeline DirectAPI.
+     - `T-20`: Verificación End-to-End en Vivo de Generación por Imagen & Auditoría.
+- Status: Fase 4.0 activa. Próxima acción: Despachar `T-17` al Ingeniero.
+
+
