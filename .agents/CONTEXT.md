@@ -379,6 +379,18 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Verdict: **APTO**.
 - Evidence: Commit `[FEAT] Upgrade default Fireworks AI model to Qwen 3.8 Max with full multimodal support` (hash `2942d9d`).
 
+## 2026-08-20T17:43:00-05:00 - PHASE 5.0 KICKOFF: WOMENSWEAR, ANIME DRESSES/KIMONOS & 3D BLENDER BRIDGE (Arquitecto)
+
+- Decision and reason: Activación formal del plan **`PLAN_v0.5-womenswear-and-3d-blender.md`** para expandir el motor a siluetas femeninas (bodice con pinzas de busto, falda plisada/evase, vestidos y kimonos anime) y crear el puente headless de Blender para exportación `.glb` y visor 3D WebGL.
+- Scope:
+  - `T-21`: Sloper Base Femenino con Pinzas de Busto y Falda (`womenswear_bodice`, `skirt`).
+  - `T-22`: Modificador de Vestidos, Kimonos Anime/Haori y Faldas en ADN.
+  - `T-23`: Puente Automatizado Blender Headless para Malla 3D y Exportación `.glb`.
+  - `T-24`: Integración del Visor 3D WebGL en Web Studio y Empaquetado de Assets 3D.
+- Active Task: `[T-21] Sloper Base Femenino con Pinzas de Busto y Falda`.
+- Note: Tarea de compactación `COMPACT` de `CONTEXT.md` registrada para ejecución al cierre de fase.
+
+
 
 
 
