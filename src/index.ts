@@ -42,6 +42,7 @@ export * from "./utils/tiler.js";
 export * from "./engine/exporter.js";
 export * from "./engine/tech_sheet.js";
 export * from "./engine/etsy_bundler.js";
+export * from "./engine/blender_bridge.js";
 
 // Exportación del Subsistema de Proveedores de IA
 export * from "./ai/base_provider.js";
@@ -396,6 +397,39 @@ export function initCli(): Command {
         });
       } catch (err) {
         console.error(`\n[ERROR] No se pudo iniciar el servidor HTTP:`, err instanceof Error ? err.message : String(err));
+        process.exitCode = 1;
+      }
+    });
+
+  // ==========================================
+  // COMANDO 8: export-3d <file>
+  // ==========================================
+  program
+    .command("export-3d <file>")
+    .description("Genera el modelo 3D en formato binario glTF 2.0 (.glb) a partir de un archivo ADN JSON")
+    .option("-o, --output <path>", "Ruta del archivo .glb de salida")
+    .option("-f, --fabric <fabric>", "Tipo de tejido PBR (linen, denim, cotton, silk, leather, wool)")
+    .option("-c, --color <color>", "Color base en hex o nombre (ej: #D62828, vermilion, indigo)")
+    .option("-b, --blender", "Utiliza Blender CLI headless si está disponible", false)
+    .action(async (file: string, options: { output?: string; fabric?: string; color?: string; blender?: boolean }) => {
+      try {
+        console.log(`[pattern-ai-core] Generando modelo 3D glTF 2.0 desde: ${file}`);
+        const dna = await inspectPatternDnaFile(file);
+        const { generate3DGarmentModel } = await import("./engine/blender_bridge.js");
+        const outPath = options.output || path.join("output", `${dna.concept_name}.glb`);
+        const res = await generate3DGarmentModel({
+          dna,
+          fabric: options.fabric,
+          color: options.color,
+          useBlenderCli: options.blender,
+          outputPath: outPath,
+        });
+        console.log(`\n[ÉXITO] Modelo 3D exportado exitosamente:`);
+        console.log(`  • Archivo: ${res.filePath || outPath} (${formatFileSize(res.byteLength)})`);
+        console.log(`  • Vértices: ${res.vertexCount} | Triángulos: ${res.triangleCount}`);
+        console.log(`  • Material PBR: ${res.material.name} (Roughness: ${res.material.roughness}, Metallic: ${res.material.metallic})`);
+      } catch (err) {
+        console.error(`[ERROR] Falló la exportación 3D:`, err instanceof Error ? err.message : String(err));
         process.exitCode = 1;
       }
     });
