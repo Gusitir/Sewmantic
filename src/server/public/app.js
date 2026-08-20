@@ -5,11 +5,12 @@
  */
 
 import { PatternViewer } from './viewer.js';
+import { GarmentViewer3D } from './viewer3d.js';
 
 // Estado global de la aplicación
 const state = {
   theme: localStorage.getItem('pac_theme') || 'dark',
-  activeTab: 'vector2d', // 'vector2d' | 'techpack' | 'etsy'
+  activeTab: 'vector2d', // 'vector2d' | '3d' | 'techpack' | 'etsy'
   activeConceptSlug: null,
   activePatternData: null,
   activeGrid: 'off',
@@ -28,6 +29,7 @@ const state = {
 
 // Referencias DOM
 let viewerInstance = null;
+let viewer3dInstance = null;
 
 // Elementos de la barra superior
 const themeToggleBtn = document.getElementById('themeToggleBtn');
@@ -71,10 +73,12 @@ const sizePillsContainer = document.getElementById('sizePillsContainer');
 
 // Pestañas centrales y toolbar del visor
 const tabBtnVector = document.getElementById('tabBtnVector');
+const tabBtn3D = document.getElementById('tabBtn3D');
 const tabBtnTechpack = document.getElementById('tabBtnTechpack');
 const tabBtnEtsy = document.getElementById('tabBtnEtsy');
 
 const viewVector2d = document.getElementById('viewVector2d');
+const view3d = document.getElementById('view3d');
 const viewTechpack = document.getElementById('viewTechpack');
 const viewEtsy = document.getElementById('viewEtsy');
 
@@ -92,6 +96,7 @@ const totalPartsCountVal = document.getElementById('totalPartsCountVal');
 const fabricWidthVal = document.getElementById('fabricWidthVal');
 const wasteFactorVal = document.getElementById('wasteFactorVal');
 
+const downloadGlbBtn = document.getElementById('downloadGlbBtn');
 const downloadA4Btn = document.getElementById('downloadA4Btn');
 const downloadLetterBtn = document.getElementById('downloadLetterBtn');
 const downloadA0Btn = document.getElementById('downloadA0Btn');
@@ -118,6 +123,9 @@ function initTheme() {
       themeIcon.textContent = state.theme === 'dark' ? '☀️' : '🌙';
       if (viewerInstance) {
         viewerInstance.setTheme(state.theme);
+      }
+      if (viewer3dInstance) {
+        viewer3dInstance.setTheme(state.theme);
       }
     });
   }
@@ -474,31 +482,69 @@ function initViewer() {
 }
 
 /**
- * Alterna entre las pestañas centrales (Visor 2D, Techpack, Etsy)
+ * Inicializa el visor interactivo 3D WebGL
+ */
+function initViewer3D() {
+  const stage = document.getElementById('viewer3dStage');
+  if (stage) {
+    viewer3dInstance = new GarmentViewer3D(stage, {
+      theme: state.theme,
+      autoRotate: true,
+    });
+  }
+}
+
+/**
+ * Alterna entre las pestañas centrales (Visor 2D, Visor 3D, Techpack, Etsy)
  */
 function initTabs() {
   const switchTab = (tabKey) => {
     state.activeTab = tabKey;
-    [tabBtnVector, tabBtnTechpack, tabBtnEtsy].forEach((btn) => btn?.classList.remove('active'));
-    [viewVector2d, viewTechpack, viewEtsy].forEach((view) => view?.classList.remove('active'));
+    [tabBtnVector, tabBtn3D, tabBtnTechpack, tabBtnEtsy].forEach((btn) => btn?.classList.remove('active'));
+    [viewVector2d, view3d, viewTechpack, viewEtsy].forEach((view) => {
+      if (view) {
+        view.classList.remove('active');
+        view.style.display = 'none';
+      }
+    });
 
     if (tabKey === 'vector2d') {
       tabBtnVector?.classList.add('active');
-      viewVector2d?.classList.add('active');
+      if (viewVector2d) {
+        viewVector2d.classList.add('active');
+        viewVector2d.style.display = 'block';
+      }
       if (viewerInstance) {
         setTimeout(() => {
           viewerInstance.updateRulers();
         }, 50);
       }
+    } else if (tabKey === '3d') {
+      tabBtn3D?.classList.add('active');
+      if (view3d) {
+        view3d.classList.add('active');
+        view3d.style.display = 'block';
+      }
+      if (viewer3dInstance) {
+        setTimeout(() => {
+          viewer3dInstance.handleResize();
+        }, 50);
+      }
     } else if (tabKey === 'techpack') {
       tabBtnTechpack?.classList.add('active');
-      viewTechpack?.classList.add('active');
+      if (viewTechpack) {
+        viewTechpack.classList.add('active');
+        viewTechpack.style.display = 'block';
+      }
       if (state.activePatternData) {
         renderTechpackView(state.activePatternData);
       }
     } else if (tabKey === 'etsy') {
       tabBtnEtsy?.classList.add('active');
-      viewEtsy?.classList.add('active');
+      if (viewEtsy) {
+        viewEtsy.classList.add('active');
+        viewEtsy.style.display = 'block';
+      }
       if (state.activePatternData) {
         renderEtsyMetadataView(state.activePatternData);
       }
@@ -506,6 +552,7 @@ function initTabs() {
   };
 
   tabBtnVector?.addEventListener('click', () => switchTab('vector2d'));
+  tabBtn3D?.addEventListener('click', () => switchTab('3d'));
   tabBtnTechpack?.addEventListener('click', () => switchTab('techpack'));
   tabBtnEtsy?.addEventListener('click', () => switchTab('etsy'));
 }
@@ -518,7 +565,7 @@ async function loadPatternIntoStudio(conceptSlug) {
   state.activeConceptSlug = conceptSlug;
 
   try {
-    // 1. Cargar archivo SVG continuo en el visor
+    // 1. Cargar archivo SVG continuo en el visor 2D
     const svgRes = await fetch(`/api/patterns/${conceptSlug}/svg`);
     if (svgRes.ok) {
       const svgText = await svgRes.text();
@@ -528,7 +575,12 @@ async function loadPatternIntoStudio(conceptSlug) {
       }
     }
 
-    // 2. Cargar Ficha Técnica JSON
+    // 2. Cargar modelo 3D GLB en el visor 3D
+    if (viewer3dInstance) {
+      viewer3dInstance.loadModel(`/api/patterns/${conceptSlug}/glb`);
+    }
+
+    // 3. Cargar Ficha Técnica JSON
     const techRes = await fetch(`/api/patterns/${conceptSlug}/techpack`);
     if (techRes.ok) {
       const techpack = await techRes.json();
@@ -538,7 +590,7 @@ async function loadPatternIntoStudio(conceptSlug) {
       updateRightPanelStats(techpack, state.activeSelectedSize);
     }
 
-    // 3. Actualizar enlaces de descarga directa
+    // 4. Actualizar enlaces de descarga directa
     updateDownloadButtons(conceptSlug);
   } catch (err) {
     console.error('Error cargando patrón en el studio:', err);
@@ -842,6 +894,7 @@ function updateRightPanelStats(techpack, targetSize) {
 function updateDownloadButtons(slug) {
   if (!slug) return;
 
+  if (downloadGlbBtn) downloadGlbBtn.href = `/api/patterns/${slug}/glb`;
   if (downloadA4Btn) downloadA4Btn.href = `/api/patterns/${slug}/download/a4`;
   if (downloadLetterBtn) downloadLetterBtn.href = `/api/patterns/${slug}/download/letter`;
   if (downloadA0Btn) downloadA0Btn.href = `/api/patterns/${slug}/download/a0`;
@@ -977,6 +1030,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBiometrics();
   initSizePills();
   initViewer();
+  initViewer3D();
   initTabs();
   initGenerateForm();
 

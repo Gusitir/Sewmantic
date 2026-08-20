@@ -207,7 +207,7 @@ describe('Etsy Bundle Creation & Internal ZIP Structure', () => {
   beforeAll(async () => {
     await fs.promises.mkdir(conceptDir, { recursive: true });
 
-    // Crear archivos simulados para representar los 8 entregables del pipeline
+    // Crear archivos simulados para representar los entregables del pipeline
     await fs.promises.writeFile(path.join(conceptDir, `${conceptSlug}_tiled_a4.pdf`), '%PDF-1.4 Mock A4');
     await fs.promises.writeFile(path.join(conceptDir, `${conceptSlug}_tiled_letter.pdf`), '%PDF-1.4 Mock Letter');
     await fs.promises.writeFile(path.join(conceptDir, `${conceptSlug}_plotter_a0.pdf`), '%PDF-1.4 Mock A0');
@@ -224,6 +224,7 @@ describe('Etsy Bundle Creation & Internal ZIP Structure', () => {
         modifications: {},
       })
     );
+    await fs.promises.writeFile(path.join(conceptDir, `${conceptSlug}.glb`), 'glTF 2.0 Mock Binary');
   });
 
   it('crea exitosamente el archivo ZIP y el JSON de metadatos de Etsy', async () => {
@@ -241,9 +242,10 @@ describe('Etsy Bundle Creation & Internal ZIP Structure', () => {
     expect(metaOnDisk.tags.length).toBe(13);
     expect(metaOnDisk.sku).toBe(result.metadata.sku);
     expect(metaOnDisk.suggested_price_usd).toBe(result.metadata.suggested_price_usd);
+    expect(metaOnDisk.description).toContain('07_3D_Interactive_Model');
   });
 
-  it('organiza el contenido interno del ZIP con la estructura exacta requerida', async () => {
+  it('organiza el contenido interno del ZIP con la estructura exacta requerida de 7 carpetas', async () => {
     const result = await createEtsyBundle(conceptDir, conceptSlug);
     const zipBuf = await fs.promises.readFile(result.zipPath);
     const entries = extractZipEntries(zipBuf);
@@ -257,17 +259,18 @@ describe('Etsy Bundle Creation & Internal ZIP Structure', () => {
     expect(entries).toContain(`05_Sewing_Guide_And_TechPack/${conceptSlug}_techpack.md`);
     expect(entries).toContain(`05_Sewing_Guide_And_TechPack/${conceptSlug}_techpack.json`);
     expect(entries).toContain(`06_Dna_Parameters/${conceptSlug}_dna.json`);
+    expect(entries).toContain(`07_3D_Interactive_Model/${conceptSlug}.glb`);
     expect(entries).toContain('README_Etsy_Printing_Instructions.pdf');
 
-    // Total de 9 archivos dentro del ZIP
-    expect(entries.length).toBe(9);
+    // Total de 10 archivos dentro del ZIP
+    expect(entries.length).toBe(10);
   });
 
   it('bundlePatternDirectory empaqueta correctamente indicando la ruta del directorio', async () => {
     const bundleRes = await bundlePatternDirectory(conceptDir);
     expect(bundleRes.conceptSlug).toBe(conceptSlug);
     expect(fs.existsSync(bundleRes.zipPath)).toBe(true);
-    expect(bundleRes.bundledFiles.length).toBe(9);
+    expect(bundleRes.bundledFiles.length).toBe(10);
   });
 
   it('bundlePatternDirectory lanza un error si el directorio no existe', async () => {
@@ -300,6 +303,8 @@ describe('Pipeline Integration con flag --bundle', () => {
     expect(result.files.etsyBundleZip).toBe(result.bundle!.zipPath);
     expect(result.files.etsyListingMetadata).toBe(result.bundle!.metadataPath);
     expect(result.files.etsyPrintingGuide).toBe(result.bundle!.printingGuidePath);
+    expect(result.files.glb).toBeDefined();
+    expect(fs.existsSync(result.files.glb!)).toBe(true);
     expect(result.stats.generatedFilesCount).toBe(11);
 
     // Verificar contenido del ZIP generado por el pipeline
@@ -313,6 +318,7 @@ describe('Pipeline Integration con flag --bundle', () => {
     expect(zipEntries).toContain(`05_Sewing_Guide_And_TechPack/${result.conceptSlug}_techpack.md`);
     expect(zipEntries).toContain(`05_Sewing_Guide_And_TechPack/${result.conceptSlug}_techpack.json`);
     expect(zipEntries).toContain(`06_Dna_Parameters/${result.conceptSlug}_dna.json`);
+    expect(zipEntries).toContain(`07_3D_Interactive_Model/${result.conceptSlug}.glb`);
     expect(zipEntries).toContain('README_Etsy_Printing_Instructions.pdf');
   });
 

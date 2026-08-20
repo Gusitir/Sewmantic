@@ -313,7 +313,7 @@ describe('Motor de Personalización Antropométrica (Custom Measurements Engine)
       expect(techSheet.customMeasurements).toBeDefined();
       expect(techSheet.customMeasurements?.referenceSize).toBe('M');
       expect(techSheet.customMeasurements?.providedFieldsCount).toBe(2);
-      expect(techSheet.customMeasurements?.measurements.length).toBe(18);
+      expect(techSheet.customMeasurements?.measurements.length).toBe(Object.keys(ANATOMICAL_LIMITS).length);
 
       // Medida explícita de pecho
       const chestComparison = techSheet.customMeasurements?.measurements.find(

@@ -55,6 +55,8 @@ export interface PatternSummary {
   hasSvg: boolean;
   hasTechpack: boolean;
   hasBundle: boolean;
+  hasGlb?: boolean;
+  has3D?: boolean;
   dna?: PatternDna;
 }
 
@@ -243,6 +245,7 @@ export async function scanConceptFiles(
   tiledA4PdfFile?: string;
   tiledLetterPdfFile?: string;
   plotterA0PdfFile?: string;
+  glbFile?: string;
   allFiles: Record<string, PatternFileMeta>;
 }> {
   const allFiles: Record<string, PatternFileMeta> = {};
@@ -255,6 +258,7 @@ export async function scanConceptFiles(
   let tiledA4PdfFile: string | undefined;
   let tiledLetterPdfFile: string | undefined;
   let plotterA0PdfFile: string | undefined;
+  let glbFile: string | undefined;
 
   try {
     const fileNames = await fs.promises.readdir(conceptDir);
@@ -297,6 +301,9 @@ export async function scanConceptFiles(
         } else if (file.endsWith('_plotter_a0.pdf')) {
           plotterA0PdfFile = fullPath;
           allFiles.plotterA0Pdf = meta;
+        } else if (ext === '.glb') {
+          glbFile = glbFile || fullPath;
+          allFiles.glb = meta;
         } else {
           allFiles[file] = meta;
         }
@@ -316,6 +323,7 @@ export async function scanConceptFiles(
     tiledA4PdfFile,
     tiledLetterPdfFile,
     plotterA0PdfFile,
+    glbFile,
     allFiles,
   };
 }
@@ -516,6 +524,8 @@ export async function handleGetPatterns(
           hasSvg: Boolean(scanned.svgFile),
           hasTechpack: Boolean(scanned.techpackJsonFile),
           hasBundle: Boolean(scanned.bundleZipFile),
+          hasGlb: Boolean(scanned.glbFile),
+          has3D: Boolean(scanned.glbFile),
           dna: parsedDna,
         });
       }
@@ -619,6 +629,55 @@ export async function handleGetPatternTechpack(
       res,
       500,
       `Error al leer la ficha técnica`,
+      err instanceof Error ? err.message : String(err)
+    );
+  }
+}
+
+/**
+ * 5b. GET /api/patterns/:concept/glb
+ * Devuelve el modelo 3D binario glTF 2.0 (.glb) con Content-Type: model/gltf-binary
+ */
+export async function handleGetPatternGlb(
+  concept: string,
+  _req: IncomingMessage,
+  res: ServerResponse,
+  ctx: RouteContext
+): Promise<void> {
+  const conceptDir = await findConceptDirectory(ctx.outputDir, concept);
+  if (!conceptDir) {
+    sendError(res, 404, `No se encontró el patrón para el concepto '${concept}'`);
+    return;
+  }
+
+  const scanned = await scanConceptFiles(conceptDir);
+  if (!scanned.glbFile || !fs.existsSync(scanned.glbFile)) {
+    sendError(
+      res,
+      404,
+      `Archivo de modelo 3D (.glb) no encontrado para el concepto '${concept}'`
+    );
+    return;
+  }
+
+  try {
+    const stat = await fs.promises.stat(scanned.glbFile);
+    const fileName = path.basename(scanned.glbFile);
+
+    setCorsHeaders(res);
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'model/gltf-binary');
+    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    res.setHeader('Content-Length', stat.size);
+    res.setHeader('Cache-Control', 'no-cache');
+
+    const stream = fs.createReadStream(scanned.glbFile);
+    stream.pipe(res);
+  } catch (err) {
+    sendError(
+      res,
+      500,
+      `Error al servir el modelo 3D (.glb)`,
       err instanceof Error ? err.message : String(err)
     );
   }
@@ -760,6 +819,15 @@ export async function handleGetPatternFile(
   ) {
     targetFilePath = scanned.dnaFile;
     contentType = 'application/json; charset=utf-8';
+  } else if (
+    normalizedType === 'glb' ||
+    normalizedType === 'gltf' ||
+    normalizedType === '3d' ||
+    normalizedType === 'model3d' ||
+    normalizedType === 'mesh'
+  ) {
+    targetFilePath = scanned.glbFile;
+    contentType = 'model/gltf-binary';
   }
 
   if (!targetFilePath || !fs.existsSync(targetFilePath)) {

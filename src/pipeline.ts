@@ -61,6 +61,7 @@ import {
   generateEtsySku,
   generateEtsyPrintingGuidePdf,
 } from './engine/etsy_bundler.js';
+import { generate3DGarmentModel } from './engine/blender_bridge.js';
 
 export {
   createEtsyBundle,
@@ -175,6 +176,7 @@ export interface PipelineFiles {
   techpackMd: string;
   dnaJson: string;
   techpackJson: string;
+  glb?: string;
   etsyBundleZip?: string;
   etsyListingMetadata?: string;
   etsyPrintingGuide?: string;
@@ -378,6 +380,16 @@ export async function generatePatternPipeline(
   );
   await fs.promises.writeFile(techpackJsonPath, techpackJsonContent, 'utf-8');
 
+  // 9. Modelo 3D glTF 2.0 (.glb)
+  const glbPath = path.join(conceptOutputDir, `${conceptSlug}.glb`);
+  await generate3DGarmentModel({
+    dna,
+    parts: basePatternResult.parts,
+    concept_name: conceptSlug,
+    size: primarySize,
+    outputPath: glbPath,
+  });
+
   // ==========================================
   // 9. EMPAQUETADO COMERCIAL ETSY (OPCIONAL)
   // ==========================================
@@ -398,6 +410,7 @@ export async function generatePatternPipeline(
     techpackMd: techpackMdPath,
     dnaJson: dnaJsonPath,
     techpackJson: techpackJsonPath,
+    glb: glbPath,
     ...(bundleResult
       ? {
           etsyBundleZip: bundleResult.zipPath,

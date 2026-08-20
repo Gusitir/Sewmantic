@@ -278,7 +278,8 @@ Your instant digital download includes an organized ZIP archive containing:
 4. 04_Vector_Layers_SVG: Multi-size layered SVG vector file for Adobe Illustrator, CLO3D, Blender, or laser cutting.
 5. 05_Sewing_Guide_And_TechPack: Complete industrial Tech Pack (PDF, Markdown & JSON) with step-by-step assembly order, Bill of Materials (BOM), and finished garment measurements.
 6. 06_Dna_Parameters: Full parametric DNA specification in JSON format.
-7. README_Etsy_Printing_Instructions.pdf: Visual step-by-step customer printing, tiling, and scale calibration guide.
+7. 07_3D_Interactive_Model: 3D interactive model (.GLB / glTF 2.0) with PBR textile textures for real-time 3D viewing, AR, gaming, and metaverse avatar fitting.
+8. README_Etsy_Printing_Instructions.pdf: Visual step-by-step customer printing, tiling, and scale calibration guide.
 
 ---
 
@@ -576,6 +577,7 @@ export async function createEtsyBundle(
   const techpackMdPath = findFile([`${conceptSlug}_techpack.md`, 'techpack.md']);
   const techpackJsonPath = findFile([`${conceptSlug}_techpack.json`, 'techpack.json']);
   const dnaJsonPath = findFile([`${conceptSlug}_dna.json`, 'dna.json']);
+  const glbPath = findFile([`${conceptSlug}.glb`, 'model.glb', `${conceptSlug}_model.glb`]);
 
   // 4. Crear el archivo ZIP empaquetado con archiver
   const zipFileName = `${conceptSlug}_etsy_bundle.zip`;
@@ -644,6 +646,13 @@ export async function createEtsyBundle(
   if (dnaJsonPath && fs.existsSync(dnaJsonPath)) {
     const internal = `06_Dna_Parameters/${conceptSlug}_dna.json`;
     archive.file(dnaJsonPath, { name: internal });
+    bundledFiles.push(internal);
+  }
+
+  // 07_3D_Interactive_Model
+  if (glbPath && fs.existsSync(glbPath)) {
+    const internal = `07_3D_Interactive_Model/${conceptSlug}.glb`;
+    archive.file(glbPath, { name: internal });
     bundledFiles.push(internal);
   }
 

@@ -1,0 +1,302 @@
+/**
+ * src/server/public/viewer3d.css
+ * Estilos del Visor 3D WebGL Interactivo (Three.js & PBR Textiles)
+ * pattern-ai-core - Tarea T-24
+ */
+
+.pac-viewer3d-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  background: radial-gradient(circle at center, #131b2e 0%, #080c14 100%);
+  overflow: hidden;
+  user-select: none;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  border-radius: 12px;
+  border: 1px solid #1e293b;
+  box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.pac-viewer3d-container.theme-light {
+  background: radial-gradient(circle at center, #f8fafc 0%, #e2e8f0 100%);
+  border-color: #cbd5e1;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.viewer3d-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.viewer3d-viewport.dragging {
+  cursor: grabbing;
+}
+
+.viewer3d-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  outline: none;
+}
+
+/* Barra superior de herramientas flotante */
+.viewer3d-floating-toolbar {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 30px;
+  padding: 6px 14px;
+  z-index: 25;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.theme-light .viewer3d-floating-toolbar {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(203, 213, 225, 0.9);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.viewer3d-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #e2e8f0;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.viewer3d-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
+
+.viewer3d-btn.active {
+  background: #38bdf8;
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.theme-light .viewer3d-btn {
+  color: #334155;
+}
+
+.theme-light .viewer3d-btn:hover {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.3);
+  color: #2563eb;
+}
+
+.theme-light .viewer3d-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* Separador vertical de toolbar */
+.viewer3d-separator {
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.theme-light .viewer3d-separator {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* Selector de tela PBR en toolbar */
+.viewer3d-select {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(71, 85, 105, 0.6);
+  color: #f1f5f9;
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.theme-light .viewer3d-select {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+/* Color picker circular */
+.viewer3d-color-picker-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+
+.viewer3d-color-input {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 50px;
+  height: 50px;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* HUD inferior con estadísticas 3D */
+.viewer3d-hud {
+  position: absolute;
+  bottom: 14px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.72rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: #cbd5e1;
+  z-index: 20;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+.theme-light .viewer3d-hud {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(203, 213, 225, 0.9);
+  color: #334155;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.viewer3d-hud-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.viewer3d-hud-label {
+  color: #94a3b8;
+}
+
+.viewer3d-hud-val {
+  font-weight: 600;
+  color: #38bdf8;
+}
+
+.theme-light .viewer3d-hud-val {
+  color: #2563eb;
+}
+
+/* Indicador de ayuda / controles en la esquina inferior derecha */
+.viewer3d-help-badge {
+  position: absolute;
+  bottom: 14px;
+  right: 20px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.68rem;
+  color: #94a3b8;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.theme-light .viewer3d-help-badge {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+/* Spinner de carga */
+.viewer3d-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 30;
+  transition: opacity 0.3s ease;
+}
+
+.viewer3d-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(56, 189, 248, 0.2);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: viewer3d-spin 0.8s linear infinite;
+}
+
+@keyframes viewer3d-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.viewer3d-loader-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #e2e8f0;
+  letter-spacing: 0.5px;
+}
+
+/* Mensaje de error */
+.viewer3d-error-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 30px;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.92);
+  z-index: 35;
+}
+
+.viewer3d-error-icon {
+  font-size: 2.2rem;
+}
+
+.viewer3d-error-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f87171;
+}
+
+.viewer3d-error-desc {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  max-width: 360px;
+  line-height: 1.5;
+}

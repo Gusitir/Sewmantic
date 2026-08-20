@@ -20,6 +20,7 @@ import {
   handleGetPatterns,
   handleGetPatternSvg,
   handleGetPatternTechpack,
+  handleGetPatternGlb,
   handleGetPatternBundle,
   handleGetPatternFile,
   handlePostGenerate,
@@ -46,6 +47,8 @@ const MIME_TYPES: Record<string, string> = {
   '.ico': 'image/x-icon',
   '.pdf': 'application/pdf',
   '.zip': 'application/zip',
+  '.glb': 'model/gltf-binary',
+  '.gltf': 'model/gltf+json',
   '.txt': 'text/plain; charset=utf-8',
 };
 
@@ -196,6 +199,14 @@ export async function handleRequest(
       if (techpackMatch && method === 'GET') {
         const concept = decodeURIComponent(techpackMatch[1]);
         await handleGetPatternTechpack(concept, req, res, ctx);
+        return;
+      }
+
+      // GET /api/patterns/:concept/glb
+      const glbMatch = pathname.match(/^\/api\/patterns\/([^/]+)\/glb\/?$/);
+      if (glbMatch && method === 'GET') {
+        const concept = decodeURIComponent(glbMatch[1]);
+        await handleGetPatternGlb(concept, req, res, ctx);
         return;
       }
 
