@@ -829,11 +829,18 @@ export async function handlePostGenerate(
     directDna,
   } = body;
 
-  if (!prompt && !directDna) {
+  const effectivePrompt =
+    prompt && prompt.trim().length > 0
+      ? prompt.trim()
+      : imagePath
+      ? 'Generar patron parametrico de molderia textil a partir del diseno y proporciones de la imagen'
+      : '';
+
+  if (!effectivePrompt && !directDna) {
     sendError(
       res,
       400,
-      "Se requiere el campo 'prompt' en lenguaje natural o 'directDna'"
+      "Se requiere el campo 'prompt' en lenguaje natural, una imagen de referencia o 'directDna'"
     );
     return;
   }
@@ -849,7 +856,7 @@ export async function handlePostGenerate(
 
   let finalDirectDna = directDna;
   if (!finalDirectDna && (!provider || provider === 'mock')) {
-    const q = (prompt || '').toLowerCase();
+    const q = effectivePrompt.toLowerCase();
     if (
       q.includes('short') ||
       q.includes('bermuda') ||
@@ -865,13 +872,13 @@ export async function handlePostGenerate(
 
   try {
     const pipelineReq: PipelineRequest = {
-      prompt: prompt || '',
-      provider: provider || process.env.AI_PROVIDER || 'mock',
+      prompt: effectivePrompt,
+      provider: provider || process.env.AI_PROVIDER || (process.env.FIREWORKS_API_KEY ? 'api' : 'mock'),
       outputDir: body.outputDir || ctx.outputDir,
       sizes: requestedSizes,
       customMeasurements: inputMeasurements,
       bundle: Boolean(bundle),
-      imagePath,
+      imagePath: imagePath || body.image || body.imageData,
       wasteFactor: wasteFactor ? Number(wasteFactor) : undefined,
       fabricWidth_mm: fabricWidth_mm ? Number(fabricWidth_mm) : undefined,
       directDna: finalDirectDna,

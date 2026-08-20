@@ -849,16 +849,22 @@ function initGenerateForm() {
 
   generateForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const prompt = promptInput?.value?.trim();
-    if (!prompt && !state.uploadedImageData) return;
+    const prompt = promptInput?.value?.trim() || '';
+    const imagePath = state.uploadedImageData;
+
+    if (!prompt && !imagePath) {
+      alert('Por favor escribe una descripción de la prenda o arrastra una imagen de referencia.');
+      return;
+    }
 
     const provider = providerSelect?.value || 'api';
     const sizes = state.selectedSizes;
     const customMeasurements = state.customMeasurements;
-    const imagePath = state.uploadedImageData;
 
     if (generateBtn) generateBtn.disabled = true;
-    if (generateBtnText) generateBtnText.textContent = 'Orquestando Geometría IA...';
+    if (generateBtnText) {
+      generateBtnText.textContent = imagePath ? 'Analizando Imagen & Creando Moldería...' : 'Orquestando Geometría IA...';
+    }
     if (generateBtnSpinner) generateBtnSpinner.style.display = 'block';
 
     try {
