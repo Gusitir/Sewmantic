@@ -36,7 +36,7 @@ export class DirectApiProvider implements IAiProvider {
       config?.model ||
       process.env.FIREWORKS_MODEL ||
       process.env.AI_MODEL ||
-      "accounts/fireworks/models/deepseek-v4-pro-0813";
+      "accounts/fireworks/models/qwen3p7-plus";
 
     this.visionModel =
       process.env.FIREWORKS_VISION_MODEL ||
@@ -92,11 +92,13 @@ export class DirectApiProvider implements IAiProvider {
   private isNativeVisionModel(modelName: string): boolean {
     const lower = modelName.toLowerCase();
     return (
+      lower.includes("qwen") ||
       lower.includes("vision") ||
       lower.includes("-vl") ||
       lower.includes("vl2") ||
       lower.includes("gpt-4o") ||
-      lower.includes("gemini")
+      lower.includes("gemini") ||
+      lower.includes("claude")
     );
   }
 
@@ -194,7 +196,7 @@ export class DirectApiProvider implements IAiProvider {
     if (imagePath && imagePath.trim().length > 0) {
       imageDataUrl = this.resolveImageDataUrl(imagePath.trim());
 
-      // Si el modelo principal no es de visión, realizamos pre-análisis de visión
+      // Si el modelo principal no es de visión nativa, realizamos pre-análisis de visión
       if (!this.isNativeVisionModel(this.model)) {
         try {
           const visualAnalysis = await this.analyzeImageWithVision(
@@ -230,15 +232,16 @@ export class DirectApiProvider implements IAiProvider {
         requestBody = {
           model: this.model,
           temperature: 0.15,
-          max_tokens: 4096,
+          max_tokens: 4000,
           top_k: 40,
           presence_penalty: 0,
           frequency_penalty: 0,
           prompt: `System: ${systemPrompt}\n\nUser: ${userPrompt}\n\nAssistant (JSON only):`,
+          ...(imageDataUrl ? { images: [imageDataUrl] } : {}),
         };
       } else {
         let userMessageContent: any = userPrompt;
-        if (imageDataUrl && this.isNativeVisionModel(this.model)) {
+        if (imageDataUrl) {
           userMessageContent = [
             { type: "text", text: userPrompt },
             { type: "image_url", image_url: { url: imageDataUrl } },
@@ -248,11 +251,12 @@ export class DirectApiProvider implements IAiProvider {
         requestBody = {
           model: this.model,
           temperature: 0.15,
-          max_tokens: 4096,
+          max_tokens: 4000,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userMessageContent },
           ],
+          ...(imageDataUrl ? { images: [imageDataUrl] } : {}),
         };
       }
 
