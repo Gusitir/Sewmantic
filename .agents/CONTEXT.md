@@ -390,6 +390,23 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Active Task: `[T-21] Sloper Base Femenino con Pinzas de Busto y Falda`.
 - Note: Tarea de compactación `COMPACT` de `CONTEXT.md` registrada para ejecución al cierre de fase.
 
+## 2026-08-20T17:48:00-05:00 - TASK T-21 AUDIT: WOMENSWEAR BODICE & SKIRT SLOPERS (Arquitecto / Ingeniero)
+
+- Decision and reason: El Ingeniero implementó los slopers base femeninos de corpiño con pinzas de busto paramétricas (`womens_bodice.ts`) y falda (`skirt.ts`) con siluetas recta, evasé y plisada.
+- Features Implemented:
+  1. `src/engine/base_blocks/measurements.ts`: Cotas femeninas (`bust_span_mm`, `underbust_circumference_mm`, `waist_to_hip_mm`, `skirt_length_mm`) en tablas XS a 3XL.
+  2. `src/engine/base_blocks/womens_bodice.ts`: Corpiño anatómico con pinzas apuntando al apex de busto y coincidencia analítica de costura de costado ($\Delta \le 0.01\text{ mm}$).
+  3. `src/engine/base_blocks/skirt.ts`: Falda recta, evasé y tablas con entalle anatómico de cintura.
+  4. `src/engine/base_blocks/index.ts`: Integración en `generateBaseBlock`.
+  5. `tests/womenswear.test.ts`: 45 pruebas unitarias cubriendo todas las variantes y tallas.
+- Verification:
+  - 418/418 tests unitarios pasando al 100% en Vitest (14/14 suites).
+  - Compilación `tsc` limpia con 0 errores.
+- Verdict: **APTO**.
+- Evidence: Commit `[T-21] implement parametric womenswear bodice with bust darts and skirt sloper base blocks` (hash `b7b420a`).
+- Next: Despachar tarea `[T-22] Modificador de Vestidos, Kimonos Anime/Haori y Faldas en ADN`.
+
+
 
 
 

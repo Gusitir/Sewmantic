@@ -8,8 +8,8 @@ Assurance: Lean
 
 | Tarea | Descripción | Rol Principal | Rol Secundario | Puerta Determinista | Estado |
 |---|---|---|---|---|:---:|
-| **T-21** | Sloper Base Femenino con Pinzas de Busto y Falda (`womenswear_bodice`, `skirt`) | Ingeniero | Obrero | `npm test` | 🟡 READY |
-| **T-22** | Modificador de Vestidos, Kimonos Anime/Haori y Faldas en ADN | Ingeniero | Obrero | `npm test` | ⚪ QUEUED |
+| **T-21** | Sloper Base Femenino con Pinzas de Busto y Falda (`womenswear_bodice`, `skirt`) | Ingeniero | Obrero | `npm test` | ✅ DONE |
+| **T-22** | Modificador de Vestidos, Kimonos Anime/Haori y Faldas en ADN | Ingeniero | Obrero | `npm test` | 🟡 READY |
 | **T-23** | Puente Automatizado Blender Headless para Malla 3D y Exportación `.glb` | Ingeniero / Scripts | Obrero | `node scripts/test_blender_export.js` | ⚪ QUEUED |
 | **T-24** | Integración del Visor 3D WebGL en Web Studio y Empaquetado de Assets 3D | Obrero | Ingeniero | `npm test && node dist/index.js` | ⚪ QUEUED |
 
@@ -19,15 +19,15 @@ Assurance: Lean
 
 ### T-21 - Sloper Base Femenino con Pinzas de Busto y Falda (`womenswear_bodice`, `skirt`)
 
-- Status: ready
+- Status: done
 - Depends on: T-16, T-20
 - Scope: `src/engine/base_blocks/womens_bodice.ts`, `src/engine/base_blocks/skirt.ts`, `src/engine/base_blocks/measurements.ts`, `src/engine/base_blocks/index.ts`, `tests/womenswear.test.ts`
 - Rol: Ingeniero (Geometría con pinzas de busto y copa A-D).
 - Acceptance:
-  - [ ] Implementar `getWomensBodiceSloper` con pinza de costado/pecho paramétrica y curvatura anatómica de cintura.
-  - [ ] Implementar `getSkirtSloper` (recta, evase y tablas plisadas).
-  - [ ] Ampliar tabla de medidas antropométricas femeninas (`bust_span_mm`, `underbust_circumference_mm`, `high_bust_mm`).
-  - [ ] Tests en Vitest verificando geometría cerrada en tallas XS-3XL y ecualización de costuras de costado.
+  - [x] Implementar `getWomensBodiceSloper` con pinza de costado/pecho paramétrica y curvatura anatómica de cintura.
+  - [x] Implementar `getSkirtSloper` (recta, evase y tablas plisadas).
+  - [x] Ampliar tabla de medidas antropométricas femeninas (`bust_span_mm`, `underbust_circumference_mm`, `high_bust_mm`).
+  - [x] Tests en Vitest verificando geometría cerrada en tallas XS-3XL y ecualización de costuras de costado.
 - Gates: `npm test`
 - Human checks: none
 - Risk triggers: Pinzas de busto no cerrando el perímetro o desfase en sisa.
@@ -37,7 +37,7 @@ Assurance: Lean
 
 ### T-22 - Modificador de Vestidos, Kimonos Anime/Haori y Faldas en ADN
 
-- Status: queued
+- Status: ready
 - Depends on: T-21
 - Scope: `src/types/pattern.ts`, `src/schema/pattern_schema.ts`, `src/engine/modifier.ts`, `src/ai/mock_provider.ts`, `tests/dresses.test.ts`
 - Rol: Ingeniero (Modelado paramétrico de prendas enteras y batas).

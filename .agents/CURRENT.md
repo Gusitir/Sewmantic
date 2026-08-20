@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-20T17:43:00-05:00
-source_commit: [STATE] update control plane for Qwen 3.8 Max model upgrade
+updated_at: 2026-08-20T17:48:00-05:00
+source_commit: [T-21] implement parametric womenswear bodice with bust darts and skirt sloper base blocks
 assurance: Lean
 active_plan: PLAN_v0.5-womenswear-and-3d-blender.md
-active_task: T-21 (Sloper Base Femenino con Pinzas de Busto y Falda)
+active_task: T-22 (Modificador de Vestidos, Kimonos Anime/Haori y Faldas en ADN)
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,22 +18,23 @@ backup: local-only
 
 ## Next action
 
-1. **Despachar Tarea `T-21` al Ingeniero (Sloper Base Femenino con Pinzas de Busto y Falda):**
-   - Implementar `src/engine/base_blocks/womens_bodice.ts` (sloper con pinzas de busto paramétricas y curvatura anatómica) y `src/engine/base_blocks/skirt.ts` (falda recta, evase y plisada).
-   - Extender `BodyMeasurements` con medidas femeninas en `src/engine/base_blocks/measurements.ts`.
-   - Escribir suite de pruebas unitarias en `tests/womenswear.test.ts`.
-2. **Proceder con `T-22`:** Modificador de vestidos y batas anime (Kimonos/Haoris).
-3. **Proceder con `T-23` & `T-24`:** Puente headless de simulación 3D en Blender y visor 3D WebGL en Web Studio.
+1. **Despachar Tarea `T-22` al Ingeniero (Modificador de Vestidos, Kimonos Anime/Haori y Faldas en ADN):**
+   - Extender `PatternDna`, `ModificationTree` y esquemas Zod en `src/types/pattern.ts` y `src/schema/pattern_schema.ts` para soportar `garment_category: 'dress' | 'kimono' | 'haori'`.
+   - Implementar las modificaciones en `src/engine/modifier.ts` (combinación de bodice + falda, mangas kimono *furisode*, cuellos cruzados).
+   - Añadir presets de anime/cosplay en `src/ai/mock_provider.ts` y escribir tests en `tests/dresses.test.ts`.
+2. **Proceder con `T-23` & `T-24`:** Puente headless de simulación 3D en Blender y visor 3D WebGL en Web Studio.
 
 ## Blockers
 
-- Ninguno. 373/373 tests pasando al 100% en Vitest.
+- Ninguno. 418/418 tests pasando en Vitest (14/14 suites).
 
 ## Current facts
 
-- **Fases 1.0, 2.0, 3.0 y 4.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Fase 5.0 Iniciada:** Slopers femeninos, vestidos/faldas, presets cosplay y puente 3D Blender.
-- **Suite Determinista:** **13/13 suites passing (373/373 tests en verde)**.
+- **Tarea `T-21` Completada y Auditada con Veredicto APTO:**
+  - Slopers de corpiño femenino con pinzas de busto (`womenswear_bodice.ts`) y falda (`skirt.ts`) implementados con precisión sub-milimétrica en costuras laterales ($\Delta \le 0.01\text{ mm}$).
+  - 4 cotas antropométricas añadidas a `measurements.ts`.
+  - 45 nuevos tests unitarios en `tests/womenswear.test.ts`.
+- **Suite Determinista:** **14/14 suites passing (418/418 tests en verde)**.
 
 ## Open findings
 
