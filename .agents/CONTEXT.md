@@ -297,5 +297,22 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-17] implement Fireworks API diagnostic script and verify Qwen 3.7 Plus connectivity` (hash `ed85ce8`).
 - Next: Despachar tarea `[T-18] Servidor REST Logging Transparente y Reporte de Errores en /api/generate`.
 
+## 2026-08-20T17:26:00-05:00 - TASK T-18 AUDIT: REST SERVER OBSERVABILITY & STRUCTURED ERROR REPORTING (Arquitecto / Ingeniero)
+
+- Decision and reason: El Ingeniero implementó el sistema de observabilidad y logging estructurado para el servidor HTTP REST y la captura de errores en `/api/generate`.
+- Features Implemented:
+  1. `src/server/routes.ts`: Logging estructurado con timestamps (`[API INCOMING /generate]`, `[AI CALL]`, `[PIPELINE SUCCESS]`, `[API /generate ERROR]`).
+  2. Respuestas de error consistentes `{ success: false, error: '...', details: '...' }` con stack trace completo y traza en terminal del servidor.
+  3. `src/ai/direct_api_provider.ts`: Logs de conexión a Fireworks API y captura de respuestas de error de inferencia.
+  4. `src/server/public/app.js`: Formateo transparente de mensajes y detalles técnicos de error en el modal/alerta de la UI.
+  5. `tests/server.test.ts`: Test unitario cubriendo el contrato de respuesta de errores.
+- Verification:
+  - 371 tests unitarios pasando al 100% en Vitest (13/13 suites).
+  - Compilación `tsc` y auto-sincronización a `dist/server/public/` limpia.
+- Verdict: **APTO**.
+- Evidence: Commit `[T-18] implement transparent server REST logging and structured error details reporting` (hash `837bad4`).
+- Next: Despachar tarea `[T-19] Integración Multimodal de Imágenes en Web Studio & Pipeline DirectAPI`.
+
+
 
 

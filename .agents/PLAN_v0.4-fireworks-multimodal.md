@@ -9,8 +9,8 @@ Assurance: Lean
 | Tarea | Descripción | Rol Principal | Rol Secundario | Puerta Determinista | Estado |
 |---|---|---|---|---|:---:|
 | **T-17** | Diagnóstico y Aislamiento de Fireworks API con Qwen 3.7 Plus | Ingeniero | Obrero | `node scripts/test_fireworks_call.js` | ✅ DONE |
-| **T-18** | Servidor REST Logging Transparente y Reporte de Errores en `/api/generate` | Ingeniero | Obrero | `npm test` | 🟡 READY |
-| **T-19** | Integración Multimodal de Imágenes en Web Studio & Pipeline DirectAPI | Obrero | Ingeniero | `npm test` | ⚪ QUEUED |
+| **T-18** | Servidor REST Logging Transparente y Reporte de Errores en `/api/generate` | Ingeniero | Obrero | `npm test` | ✅ DONE |
+| **T-19** | Integración Multimodal de Imágenes en Web Studio & Pipeline DirectAPI | Obrero | Ingeniero | `npm test` | 🟡 READY |
 | **T-20** | Verificación End-to-End en Vivo de Generación por Imagen & Auditoría | Arquitecto | Ingeniero | `npm test && node dist/index.js` | ⚪ QUEUED |
 
 ---
@@ -36,14 +36,14 @@ Assurance: Lean
 
 ### T-18 - Servidor REST Logging Transparente y Reporte de Errores en `/api/generate`
 
-- Status: ready
+- Status: done
 - Depends on: T-17
 - Scope: `src/server/routes.ts`, `src/server/app.ts`, `src/ai/direct_api_provider.ts`
 - Rol: Ingeniero (Observabilidad y trazabilidad en servidor).
 - Acceptance:
-  - [ ] Logs explícitos en consola en cada petición `/api/generate` (`[API INCOMING]`, `[AI CALL]`, `[PIPELINE SUCCESS]`, `[ERROR DETAILS]`).
-  - [ ] Captura de errores con traza completa y envío de `error.details` estructurado en la respuesta JSON HTTP 400/500.
-  - [ ] Visualización en el frontend de la causa real del fallo en el modal/alerta (no texto genérico).
+  - [x] Logs explícitos en consola en cada petición `/api/generate` (`[API INCOMING]`, `[AI CALL]`, `[PIPELINE SUCCESS]`, `[ERROR DETAILS]`).
+  - [x] Captura de errores con traza completa y envío de `error.details` estructurado en la respuesta JSON HTTP 400/500.
+  - [x] Visualización en el frontend de la causa real del fallo en el modal/alerta (no texto genérico).
 - Gates: `npm test`
 - Human checks: none
 - Risk triggers: Logs verbosos con secretos de API (sanitizar `FIREWORKS_API_KEY` en logs).
@@ -53,7 +53,7 @@ Assurance: Lean
 
 ### T-19 - Integración Multimodal de Imágenes en Web Studio & Pipeline DirectAPI
 
-- Status: queued
+- Status: ready
 - Depends on: T-18
 - Scope: `src/server/public/app.js`, `src/server/public/index.html`, `src/ai/direct_api_provider.ts`, `src/pipeline.ts`
 - Rol: Obrero (Frontend & Drag and Drop) / Ingeniero (Pipeline Multimodal).
