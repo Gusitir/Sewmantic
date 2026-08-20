@@ -882,9 +882,11 @@ function initGenerateForm() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Falló la generación del patrón');
+      const data = await res.json().catch(() => ({ success: false, error: 'Respuesta no válida del servidor' }));
+      if (!res.ok || !data || !data.success) {
+        const errorMsg = data?.error || 'Error desconocido';
+        const details = data?.details ? '\n\nDetalles: ' + data.details : '';
+        throw new Error(errorMsg + details);
       }
 
       await loadLibraryPatterns();
@@ -892,7 +894,7 @@ function initGenerateForm() {
         await loadPatternIntoStudio(data.conceptSlug);
       }
     } catch (err) {
-      alert('Error en la generación: ' + err.message);
+      alert('Error en la generación:\n' + err.message);
     } finally {
       if (generateBtn) generateBtn.disabled = false;
       if (generateBtnText) generateBtnText.textContent = '⚡ Generar Patrón Paramétrico';

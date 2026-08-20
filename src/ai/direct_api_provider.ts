@@ -126,6 +126,10 @@ export class DirectApiProvider implements IAiProvider {
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
+      console.log(
+        `[Fireworks AI Vision] Conectando a ${endpoint} con modelo de visión ${this.visionModel}...`
+      );
+
       const res = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -160,9 +164,9 @@ export class DirectApiProvider implements IAiProvider {
       });
 
       if (!res.ok) {
-        const errorText = await res.text().catch(() => "");
+        const errorBody = await res.text().catch(() => "");
         throw new Error(
-          `Vision Pre-Analysis HTTP ${res.status} ${res.statusText}: ${errorText}`
+          `[Fireworks AI Vision HTTP ${res.status} ${res.statusText}]: ${errorBody}`
         );
       }
 
@@ -260,6 +264,10 @@ export class DirectApiProvider implements IAiProvider {
         };
       }
 
+      console.log(
+        `[Fireworks AI] Conectando a ${endpoint} con modelo ${this.model} (max_tokens: ${requestBody.max_tokens})...`
+      );
+
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -272,9 +280,9 @@ export class DirectApiProvider implements IAiProvider {
       });
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
+        const errorBody = await response.text().catch(() => "");
         throw new Error(
-          `HTTP ${response.status} ${response.statusText}: ${errorText}`
+          `[Fireworks AI HTTP ${response.status} ${response.statusText}]: ${errorBody}`
         );
       }
 

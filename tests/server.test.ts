@@ -264,7 +264,25 @@ describe('Servidor API REST Local y Endpoints del Motor (HTTP Native)', () => {
     });
     expect(res.status).toBe(400);
     const data = await res.json();
+    expect(data.success).toBe(false);
     expect(data.error).toContain('prompt');
+  });
+
+  it('Manejo de errores: 500 en POST /api/generate con proveedor inválido devuelve success: false y details', async () => {
+    const res = await fetch(`${baseUrl}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: 'Camiseta de prueba de fallo',
+        provider: 'proveedor_inexistente_xyz',
+      }),
+    });
+    expect(res.status).toBe(500);
+    const data = await res.json();
+    expect(data.success).toBe(false);
+    expect(data.error).toContain('proveedor_inexistente_xyz');
+    expect(data.details).toBeDefined();
+    expect(typeof data.details).toBe('string');
   });
 
   it('Manejo de errores: 400 en POST /api/bundle sin concept_name', async () => {
@@ -275,6 +293,7 @@ describe('Servidor API REST Local y Endpoints del Motor (HTTP Native)', () => {
     });
     expect(res.status).toBe(400);
     const data = await res.json();
+    expect(data.success).toBe(false);
     expect(data.error).toContain('concept_name');
   });
 
@@ -282,6 +301,7 @@ describe('Servidor API REST Local y Endpoints del Motor (HTTP Native)', () => {
     const res = await fetch(`${baseUrl}/api/ruta_no_existente`);
     expect(res.status).toBe(404);
     const data = await res.json();
+    expect(data.success).toBe(false);
     expect(data.error).toContain('Endpoint de API no encontrado');
   });
 

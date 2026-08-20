@@ -116,9 +116,10 @@ export function sendError(
   details?: unknown
 ): void {
   sendJson(res, statusCode, {
+    success: false,
     error: message,
     status: statusCode,
-    ...(details ? { details } : {}),
+    ...(details !== undefined ? { details } : {}),
   });
 }
 
@@ -870,10 +871,23 @@ export async function handlePostGenerate(
     }
   }
 
+  const hasAttachedImage = Boolean(imagePath || body.image || body.imageData);
+  const effectiveProvider =
+    provider || process.env.AI_PROVIDER || (process.env.FIREWORKS_API_KEY ? 'api' : 'mock');
+  const sizesDisplay =
+    requestedSizes && requestedSizes.length > 0
+      ? requestedSizes.join(', ')
+      : 'Todas (XS-3XL)';
+
+  const timestamp = new Date().toISOString();
+  console.log(
+    `[${timestamp}] [API INCOMING /generate] Prompt: ${effectivePrompt || (finalDirectDna ? '(directDna)' : '')} | Provider: ${effectiveProvider} | Imagen adjunta: ${hasAttachedImage ? 'SÍ' : 'NO'} | Tallas: ${sizesDisplay}`
+  );
+
   try {
     const pipelineReq: PipelineRequest = {
       prompt: effectivePrompt,
-      provider: provider || process.env.AI_PROVIDER || (process.env.FIREWORKS_API_KEY ? 'api' : 'mock'),
+      provider: effectiveProvider,
       outputDir: body.outputDir || ctx.outputDir,
       sizes: requestedSizes,
       customMeasurements: inputMeasurements,
@@ -884,7 +898,11 @@ export async function handlePostGenerate(
       directDna: finalDirectDna,
     };
 
+    console.log(`[AI CALL] Invocando proveedor ${pipelineReq.provider}...`);
     const result = await generatePatternPipeline(pipelineReq);
+    console.log(
+      `[PIPELINE SUCCESS] Concepto generado: ${result.conceptName} | Archivos generados: ${Object.keys(result.files).length}`
+    );
 
     sendJson(res, 200, {
       success: true,
@@ -899,12 +917,12 @@ export async function handlePostGenerate(
       techSheet: result.techSheet,
     });
   } catch (err) {
-    sendError(
-      res,
-      500,
-      'Falló la ejecución del pipeline de moldería',
-      err instanceof Error ? err.message : String(err)
-    );
+    console.error('[API /generate ERROR]', err);
+    sendJson(res, 500, {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+      details: err instanceof Error && err.stack ? err.stack : undefined,
+    });
   }
 }
 
