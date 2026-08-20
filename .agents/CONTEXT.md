@@ -313,6 +313,21 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-18] implement transparent server REST logging and structured error details reporting` (hash `837bad4`).
 - Next: Despachar tarea `[T-19] Integración Multimodal de Imágenes en Web Studio & Pipeline DirectAPI`.
 
+## 2026-08-20T17:28:00-05:00 - TASK T-19 AUDIT: MULTIMODAL IMAGE INTEGRATION & DIRECTAPI (Arquitecto / Ingeniero)
+
+- Decision and reason: El Ingeniero implementó y blindó el pipeline multimodal para procesamiento de imágenes (PNG, JPG, JPEG, WEBP) tanto en el frontend como en el backend.
+- Features Implemented:
+  1. `src/server/public/app.js`: Drag & Drop robusto con compresión en canvas virtual para imágenes $> 4\text{ MB}$, indicador de estado `"Analizando Imagen & Creando Moldería..."` y fallback de prompt automático.
+  2. `src/ai/direct_api_provider.ts`: Estructura multimodal estándar para Qwen 3.7 Plus (`image_url` en bloque `user` y array `images`), soporte para rutas locales de archivo y resolución binaria a Base64.
+  3. `tests/ai_provider.test.ts`: 3 pruebas unitarias para Data URLs, archivos locales y generación exclusiva por imagen.
+- Verification:
+  - 373 tests unitarios pasando al 100% en Vitest (13/13 suites).
+  - Compilación `tsc` y sincronización limpia.
+- Verdict: **APTO**.
+- Evidence: Commit `[T-19] implement robust multimodal image upload flow, canvas resizing and Qwen 3.7 Plus payload integration` (hash `41058f3`).
+- Next: Despachar tarea `[T-20] Verificación End-to-End en Vivo de Generación por Imagen & Auditoría`.
+
+
 
 
 

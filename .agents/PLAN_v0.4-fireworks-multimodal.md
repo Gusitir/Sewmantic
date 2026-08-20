@@ -10,8 +10,8 @@ Assurance: Lean
 |---|---|---|---|---|:---:|
 | **T-17** | Diagnóstico y Aislamiento de Fireworks API con Qwen 3.7 Plus | Ingeniero | Obrero | `node scripts/test_fireworks_call.js` | ✅ DONE |
 | **T-18** | Servidor REST Logging Transparente y Reporte de Errores en `/api/generate` | Ingeniero | Obrero | `npm test` | ✅ DONE |
-| **T-19** | Integración Multimodal de Imágenes en Web Studio & Pipeline DirectAPI | Obrero | Ingeniero | `npm test` | 🟡 READY |
-| **T-20** | Verificación End-to-End en Vivo de Generación por Imagen & Auditoría | Arquitecto | Ingeniero | `npm test && node dist/index.js` | ⚪ QUEUED |
+| **T-19** | Integración Multimodal de Imágenes en Web Studio & Pipeline DirectAPI | Obrero | Ingeniero | `npm test` | ✅ DONE |
+| **T-20** | Verificación End-to-End en Vivo de Generación por Imagen & Auditoría | Arquitecto | Ingeniero | `npm test && node dist/index.js` | 🟡 READY |
 
 ---
 
@@ -53,15 +53,15 @@ Assurance: Lean
 
 ### T-19 - Integración Multimodal de Imágenes en Web Studio & Pipeline DirectAPI
 
-- Status: ready
+- Status: done
 - Depends on: T-18
 - Scope: `src/server/public/app.js`, `src/server/public/index.html`, `src/ai/direct_api_provider.ts`, `src/pipeline.ts`
 - Rol: Obrero (Frontend & Drag and Drop) / Ingeniero (Pipeline Multimodal).
 - Acceptance:
-  - [ ] Procesamiento fluido de imágenes arrastradas o seleccionadas (PNG, JPG, WEBP).
-  - [ ] Admisión de generación solo con imagen (prompt opcional sin requerimiento forzado).
-  - [ ] Inyección de `images: [dataUrl]` y `image_url` en el payload de Fireworks.
-  - [ ] Desactivación de caché de navegador (`Cache-Control: no-cache`) garantizada en todos los assets estáticos.
+  - [x] Procesamiento fluido de imágenes arrastradas o seleccionadas (PNG, JPG, WEBP).
+  - [x] Admisión de generación solo con imagen (prompt opcional sin requerimiento forzado).
+  - [x] Inyección de `images: [dataUrl]` y `image_url` en el payload de Fireworks.
+  - [x] Desactivación de caché de navegador (`Cache-Control: no-cache`) garantizada en todos los assets estáticos.
 - Gates: `npm test`
 - Human checks: none
 - Risk triggers: Imágenes de gran tamaño superando límites de payload HTTP.
@@ -71,7 +71,7 @@ Assurance: Lean
 
 ### T-20 - Verificación End-to-End en Vivo de Generación por Imagen & Auditoría
 
-- Status: queued
+- Status: ready
 - Depends on: T-17, T-18, T-19
 - Scope: `output/`, `src/server/`, `start_web_studio.bat`
 - Rol: Arquitecto (Lead & Auditoría General).
