@@ -105,7 +105,7 @@ interface PatternDna {
 - **FreeSewing Core v3:** Motor de patronaje paramétrico basado en Node.js.
 - **Zod:** Validación de esquemas en runtime.
 - **PDFKit / svg-to-pdfkit:** Ensamblado y renderizado de archivos PDF vectoriales con capas y tiling.
-- **Fireworks AI API:** Proveedor de inferencia para modelos multimodales (`accounts/fireworks/models/qwen3p7-plus`).
+- **Fireworks AI API:** Proveedor de inferencia para modelos multimodales de alta gama (`accounts/fireworks/models/qwen3p8-max`).
 - **Etsy:** Canal de comercialización digital de patrones empaquetados en ZIP.
 
 Only verified, durable facts belong here. Changing state belongs in CURRENT.

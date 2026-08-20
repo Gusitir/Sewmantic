@@ -1,10 +1,10 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-20T17:32:00-05:00
-source_commit: [T-20] implement live multimodal E2E test script and verify 11 deliverables with Fireworks AI
+updated_at: 2026-08-20T17:35:00-05:00
+source_commit: [FEAT] Upgrade default Fireworks AI model to Qwen 3.8 Max with full multimodal support
 assurance: Lean
-active_plan: none (Phase 4.0 Completed)
+active_plan: none (Phase 4.0 Completed & Upgraded to Qwen 3.8 Max)
 active_task: none (Phase 4.0 Verified APTO)
 last_verdict: APTO
 backup: local-only
@@ -18,33 +18,22 @@ backup: local-only
 
 ## Next action
 
-1. **FASE 4.0 CONCLUIDA CON ÉXITO:** Tareas `T-17`, `T-18`, `T-19` y `T-20` completadas y auditadas con veredicto **APTO**.
-2. Proceder a la **inspección visual humana (`H-03`)** abriendo el Web Studio con `start_web_studio.bat` para probar en vivo la interfaz con cualquier imagen.
-3. Planificar la siguiente fase (Fase 5.0: Graduación Femenina, Presets Avanzados y Exportación 3D/glTF para Visor WebGL).
+1. **FASE 4.0 ACTUALIZADA CON ÉXITO A QWEN 3.8 MAX (`accounts/fireworks/models/qwen3p8-max`):**
+   - Inferencia multimodal en 1 solo paso verificada en vivo.
+   - Parámetros exactos aplicados (`top_k: 40`, `presence_penalty: 0`, `frequency_penalty: 0`, `Accept: application/json`).
+2. Proceder a la **inspección visual humana (`H-03`)** abriendo el Web Studio con `start_web_studio.bat`.
 
 ## Blockers
 
-- Ninguno. 373/373 tests deterministas en verde. Flujo de inferencia multimodal verificado con Fireworks AI en 3.2 segundos.
+- Ninguno. 373/373 tests deterministas en verde. Pipeline E2E validado empíricamente.
 
 ## Current facts
 
-- **Fase 4.0 Completada y Auditada con Veredicto APTO:**
-  - `T-17`: Diagnóstico de Fireworks API con Qwen 3.7 Plus aislado y validado (`scripts/test_fireworks_call.js`).
-  - `T-18`: Servidor HTTP REST con logging transparente estructurado y reporte de `details` con stack trace al frontend.
-  - `T-19`: Pipeline multimodal en Web Studio y backend con Drag & Drop, canvas resizing para imágenes >4MB y compatibilidad dual con `image_url` y Data URLs Base64.
-  - `T-20`: Verificación End-to-End real en vivo (`scripts/test_fireworks_e2e_image.js`) procesando `IMAGENES/luficosplai.png` y generando los 11 entregables en disco en 3.22 segundos.
-- **Entregables Verificados:**
-  1. SVG vectorial continuo multi-talla con capas.
-  2. PDF paginado A4 con Cuadro 10x10 cm en Página 1.
-  3. PDF paginado US Letter con Cuadro 10x10 cm en Página 1.
-  4. PDF continuo gran formato Plotter A0.
-  5. Ficha técnica industrial en PDF.
-  6. Ficha técnica completa en Markdown.
-  7. Ficha técnica estructurada en JSON (POM, BOM y consumos).
-  8. ADN Paramétrico validado con Zod.
-  9. Paquete Comercial ZIP para Etsy con subcarpetas 01-06 (75.24 KB).
-  10. Metadatos Comerciales SEO para Etsy (título optimizado y exactamente 13 tags).
-  11. Guía de impresión y calibración para clientes Etsy (`README_Etsy_Printing_Instructions.pdf`).
+- **Modelo Insignia Activo:** **Qwen 3.8 Max** (`accounts/fireworks/models/qwen3p8-max`).
+- **Verificación en Vivo con Qwen 3.8 Max:**
+  - Script de diagnóstico `scripts/test_fireworks_call.js`: Status 200 OK con respuesta estructurada completa.
+  - Script E2E `scripts/test_fireworks_e2e_image.js`: Generación de los 11 entregables comerciales en disco a partir de `IMAGENES/luficosplai.png`.
+- **Frontend Web Studio:** Selector actualizado con `api (Fireworks AI • Qwen 3.8 Max / Direct API)`.
 - **Suite Determinista:** **13/13 suites passing (373/373 tests en verde)**.
 
 ## Open findings

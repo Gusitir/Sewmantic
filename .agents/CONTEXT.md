@@ -364,6 +364,22 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commits `[T-17]` a `[T-20]`. Commit de control `[STATE] close phase 4.0`.
 - Next: Barrera de parada humana `H-03` (Inspección visual del usuario en el Web Studio 2D) y planificación de Fase 5.0.
 
+## 2026-08-20T17:35:00-05:00 - MODEL UPGRADE: QWEN 3.8 MAX INTEGRATION (Arquitecto / Ingeniero)
+
+- Decision and reason: Actualización del modelo principal multimodal por defecto a **Qwen 3.8 Max** (`accounts/fireworks/models/qwen3p8-max`) por indicación del usuario para maximizar la calidad y precisión de moldería comercial exportable.
+- Features Implemented:
+  1. `src/ai/direct_api_provider.ts`: Modelo por defecto `accounts/fireworks/models/qwen3p8-max` con parámetros exactos (`top_k: 40`, `presence_penalty: 0`, `frequency_penalty: 0`, `Accept: application/json`).
+  2. `src/server/public/index.html`: Selector de proveedor actualizado con etiqueta Qwen 3.8 Max.
+  3. `scripts/test_fireworks_call.js` y `scripts/test_fireworks_e2e_image.js`: Scripts de diagnóstico y E2E sincronizados con Qwen 3.8 Max.
+  4. `.env.example`: Actualizado con el modelo insignia.
+- Verification:
+  - Diagnóstico aislado en vivo verificado exitosamente (Status 200 OK, Finish Reason: stop).
+  - Pipeline E2E en vivo verificado exitosamente procesando imagen física y generando los 11 entregables en disco.
+  - 373/373 tests pasando al 100% en Vitest (13/13 suites).
+- Verdict: **APTO**.
+- Evidence: Commit `[FEAT] Upgrade default Fireworks AI model to Qwen 3.8 Max with full multimodal support` (hash `2942d9d`).
+
+
 
 
 
