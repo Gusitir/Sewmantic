@@ -381,7 +381,32 @@ export const TrouserPocketModSchema = z.object({
 /**
  * Esquema de categoría de prenda
  */
-export const GarmentCategorySchema = z.enum(["top", "bottom", "set"]);
+export const GarmentCategorySchema = z.enum([
+  "top",
+  "bottom",
+  "dress",
+  "set",
+  "kimono",
+  "haori",
+]);
+
+/**
+ * Esquema de detalles específicos de vestidos
+ */
+export const DressDetailsSchema = z.object({
+  silhouette: z.enum(["a_line", "straight", "pleated"]).optional(),
+  skirt_length_mm: z.number().min(100).max(2000).optional(),
+  waist_seam: z.boolean().optional(),
+});
+
+/**
+ * Esquema de detalles específicos de kimonos y haoris
+ */
+export const KimonoDetailsSchema = z.object({
+  sleeve_style: z.enum(["furisode_square", "standard", "cropped"]).optional(),
+  collar_width_mm: z.number().min(20).max(300).optional(),
+  obi_belt: z.boolean().optional(),
+});
 
 /**
  * Esquema de configuración de estilo y tipología de pantalón / bermuda
@@ -415,6 +440,8 @@ export const ModificationTreeSchema = z.object({
   trouser_legs: TrouserLegsModSchema.optional(),
   trouser_pockets: z.union([TrouserPocketModSchema, z.array(TrouserPocketModSchema)]).optional(),
   trouser: TrouserConfigSchema.optional(),
+  dress_details: DressDetailsSchema.optional(),
+  kimono_details: KimonoDetailsSchema.optional(),
   custom: z.record(z.unknown()).optional(),
 });
 
@@ -630,6 +657,8 @@ export const PatternDnaSchema: z.ZodType<any> = z.object({
     .min(2, "base_block is required"),
   ease: EaseSettingsSchema,
   modifications: ModificationTreeSchema.default({}),
+  dress_details: DressDetailsSchema.optional(),
+  kimono_details: KimonoDetailsSchema.optional(),
   sizing: SizingSettingsSchema.optional(),
   custom_measurements: CustomMeasurementsSchema.optional(),
   tech_specs: TechSpecsSchema.optional(),

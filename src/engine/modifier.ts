@@ -21,6 +21,8 @@ import {
   TrouserLegsMod,
   TrouserPocketMod,
   GarmentCategory,
+  DressDetails,
+  KimonoDetails,
 } from '../types/pattern.js';
 import {
   Point2D,
@@ -49,6 +51,9 @@ import {
   generatePocketBlock,
   generateHoodBlock,
   generateTrouserBlock,
+  generateWomensBodiceBlock,
+  generateSkirtBlock,
+  SkirtSilhouette,
   TrouserLengthType,
 } from './base_blocks/index.js';
 
@@ -366,6 +371,7 @@ export function modifySetPattern(
  * Determina si el ADN corresponde a una prenda inferior (pantalón, bermuda, shorts)
  */
 export function isBottomGarment(dna: PatternDna): boolean {
+  if (isSkirtGarment(dna)) return false;
   if (dna.garment_category === 'bottom') return true;
   const base = dna.base_block.toLowerCase().trim();
   return (
@@ -880,6 +886,1063 @@ export function modifyTrouserPattern(
 
   const allBounds = Object.values(parts).map((p) => p.bounds);
   const totalBounds = combineBounds(allBounds);
+  return {
+    concept_name: dna.concept_name,
+    size,
+    base_block: dna.base_block,
+    measurements,
+    parts,
+    bounds: totalBounds,
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: hemAllowance,
+    tech_specs: dna.tech_specs,
+  };
+}
+
+/**
+ * Determina si el ADN corresponde a una falda independiente (Skirt)
+ */
+export function isSkirtGarment(dna: PatternDna): boolean {
+  if (dna.garment_category === 'dress') return false;
+  const base = (dna.base_block || '').toLowerCase().trim();
+  const concept = (dna.concept_name || '').toLowerCase().trim();
+  if (
+    base === 'skirt_sloper' ||
+    base === 'skirt' ||
+    base === 'a_line_skirt' ||
+    base === 'pleated_skirt' ||
+    base === 'straight_skirt' ||
+    base.includes('skirt')
+  ) {
+    return true;
+  }
+  if (
+    dna.garment_category === 'bottom' &&
+    (base.includes('skirt') || concept.includes('skirt') || concept.includes('falda'))
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Modifica y genera las piezas de una falda independiente (front_skirt, back_skirt, waistband)
+ */
+export function modifySkirtPattern(
+  dna: PatternDna,
+  size: StandardSize,
+  measurements: BodyMeasurements,
+  seamAllowance: number,
+  hemAllowance: number
+): ModifiedPatternResult {
+  const parts: Record<string, PatternPart> = {};
+
+  const dressDetails = dna.modifications.dress_details ?? dna.dress_details;
+  const silhouette: SkirtSilhouette =
+    dressDetails?.silhouette ??
+    (dna.base_block.includes('a_line')
+      ? 'a_line'
+      : dna.base_block.includes('pleat')
+        ? 'pleated'
+        : 'straight');
+
+  const skirtLength =
+    dressDetails?.skirt_length_mm ??
+    (dna.modifications.hem?.drop_mm
+      ? measurements.skirt_length_mm + dna.modifications.hem.drop_mm
+      : measurements.skirt_length_mm);
+
+  const waistEase = dna.ease.waist_ease_mm ?? 20;
+  const hipEase = dna.ease.hip_ease_mm ?? 30;
+  const flareMm =
+    dna.modifications.hem?.type === 'flared'
+      ? 120
+      : silhouette === 'a_line'
+        ? 85
+        : 0;
+
+  // 1. Generar piezas base de falda
+  const skirtBlock = generateSkirtBlock(size, {
+    silhouette,
+    length_mm: skirtLength,
+    waist_ease_mm: waistEase,
+    hip_ease_mm: hipEase,
+    flare_mm: flareMm,
+    seam_allowance_mm: seamAllowance,
+    hem_allowance_mm: hemAllowance,
+    measurements,
+  });
+
+  parts.front_skirt = skirtBlock.front_skirt;
+  parts.back_skirt = skirtBlock.back_skirt;
+
+  // 2. Generar Pretina (Waistband)
+  const wbMod = dna.modifications.waistband;
+  const wbType = wbMod?.type ?? 'fitted';
+  const wbHeight = wbMod?.height_mm ?? 40;
+  const totalWaistCirc = measurements.waist_circumference_mm + waistEase;
+  const halfWaist = Math.round((totalWaistCirc / 2) * 10) / 10;
+  const pieceHeight = wbHeight * 2;
+
+  const wb_tl = createPoint(0, 0, 'top_left');
+  const wb_tr = createPoint(halfWaist, 0, 'top_right');
+  const wb_br = createPoint(halfWaist, pieceHeight, 'bottom_right');
+  const wb_bl = createPoint(0, pieceHeight, 'bottom_left');
+
+  const wb_outline = [wb_tl, wb_tr, wb_br, wb_bl];
+  const wb_pathD = `M 0 0 L ${halfWaist} 0 L ${halfWaist} ${pieceHeight} L 0 ${pieceHeight} Z`;
+  const wb_bounds = computeBounds(wb_outline);
+  const wb_area = computePolygonArea(wb_outline);
+
+  const wb_notches: TechnicalNotch[] = [
+    {
+      point: createPoint(0, 0),
+      type: 'single',
+      label: 'Piquete Centro Delantero Pretina',
+    },
+    {
+      point: createPoint(halfWaist / 2, 0),
+      type: 'single',
+      label: 'Piquete Costado Pretina',
+    },
+    {
+      point: createPoint(halfWaist, 0),
+      type: 'double',
+      label: 'Piquete Centro Espalda Pretina',
+    },
+  ];
+
+  parts.waistband = {
+    name: 'waistband',
+    label: `PRETINA ${wbType.toUpperCase()} / WAISTBAND ${wbType.toUpperCase()}`,
+    cutCount: 1,
+    onFold: true,
+    points: {
+      top_left: wb_tl,
+      top_right: wb_tr,
+      bottom_right: wb_br,
+      bottom_left: wb_bl,
+    },
+    pathD: wb_pathD,
+    outline: wb_outline,
+    bounds: wb_bounds,
+    width_mm: wb_bounds.width,
+    height_mm: wb_bounds.height,
+    area_mm2: wb_area,
+    grainline: {
+      start: createPoint(20, wbHeight),
+      end: createPoint(halfWaist - 20, wbHeight),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches: wb_notches,
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: 0,
+  };
+
+  // 3. Bolsillos si aplica
+  const pocketMod = dna.modifications.pocket;
+  if (pocketMod && pocketMod.type !== 'none') {
+    const pocketBlock = generatePocketBlock(size, {
+      type: 'patch',
+      width_mm: pocketMod.width_mm ?? 140,
+      height_mm: pocketMod.height_mm ?? 160,
+      hem_allowance_mm: hemAllowance,
+      measurements,
+    });
+    const pocketPart = pocketBlock.pocket;
+    pocketPart.seamAllowance_mm = seamAllowance;
+    pocketPart.hemAllowance_mm = hemAllowance;
+    parts.pocket = pocketPart;
+  }
+
+  // 4. Verificación de Grainlines y Márgenes
+  for (const [_, part] of Object.entries(parts)) {
+    if (!part.grainline || !part.grainline.label) {
+      part.grainline = {
+        start: createPoint(part.width_mm / 2, part.height_mm * 0.8),
+        end: createPoint(part.width_mm / 2, part.height_mm * 0.2),
+        label: 'GRAINLINE / HILO DE TELA',
+      };
+    }
+    if (part.seamAllowance_mm === undefined) {
+      part.seamAllowance_mm = seamAllowance;
+    }
+    if (part.hemAllowance_mm === undefined) {
+      part.hemAllowance_mm = hemAllowance;
+    }
+  }
+
+  const allBounds = Object.values(parts).map((p) => p.bounds);
+  const totalBounds = combineBounds(allBounds);
+
+  return {
+    concept_name: dna.concept_name,
+    size,
+    base_block: dna.base_block,
+    measurements,
+    parts,
+    bounds: totalBounds,
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: hemAllowance,
+    tech_specs: dna.tech_specs,
+  };
+}
+
+/**
+ * Determina si el ADN corresponde a un vestido (Dress)
+ */
+export function isDressGarment(dna: PatternDna): boolean {
+  if (dna.garment_category === 'dress') return true;
+  const base = (dna.base_block || '').toLowerCase().trim();
+  const concept = (dna.concept_name || '').toLowerCase().trim();
+  return (
+    base === 'dress_sloper' ||
+    base === 'dress' ||
+    base.includes('dress') ||
+    base.includes('vestido') ||
+    concept.includes('dress') ||
+    concept.includes('vestido')
+  );
+}
+
+/**
+ * Modifica y genera las piezas de un vestido (corpiño + falda coordinados o vestido entero continuo)
+ */
+export function modifyDressPattern(
+  dna: PatternDna,
+  size: StandardSize,
+  measurements: BodyMeasurements,
+  seamAllowance: number,
+  hemAllowance: number
+): ModifiedPatternResult {
+  const parts: Record<string, PatternPart> = {};
+
+  const dressDetails = dna.modifications.dress_details ?? dna.dress_details;
+  const hasWaistSeam = dressDetails?.waist_seam !== false;
+  const silhouette: SkirtSilhouette = dressDetails?.silhouette ?? 'a_line';
+  const skirtLength = dressDetails?.skirt_length_mm ?? 550;
+
+  const chestEase = dna.ease.chest_ease_mm ?? 30;
+  const waistEase = dna.ease.waist_ease_mm ?? 20;
+  const hipEase = dna.ease.hip_ease_mm ?? 40;
+  const shoulderEase = dna.ease.shoulder_ease_mm ?? 0;
+
+  const neckMod = dna.modifications.neckline ?? { type: 'crew' };
+  const neckDepthDelta = (neckMod.depth_mm ?? neckMod.drop_mm ?? 0) + (neckMod.type === 'v_neck' ? 25 : 0);
+  const neckWidthDelta = neckMod.width_mm ?? 0;
+
+  // 1. Generar Corpiño Femenino (Bodice)
+  const bodiceBlock = generateWomensBodiceBlock(size, {
+    chest_ease_mm: chestEase,
+    waist_ease_mm: waistEase,
+    shoulder_ease_mm: shoulderEase,
+    neckline_depth_delta_mm: neckDepthDelta,
+    neckline_width_delta_mm: neckWidthDelta,
+    seam_allowance_mm: seamAllowance,
+    measurements,
+  });
+
+  const frontBodice = bodiceBlock.front_bodice;
+  const backBodice = bodiceBlock.back_bodice;
+
+  // 2. Generar Falda (Skirt)
+  const flareMm =
+    dna.modifications.hem?.type === 'flared'
+      ? 120
+      : silhouette === 'a_line'
+        ? 85
+        : 0;
+
+  const skirtBlock = generateSkirtBlock(size, {
+    silhouette,
+    length_mm: skirtLength,
+    waist_ease_mm: waistEase,
+    hip_ease_mm: hipEase,
+    flare_mm: flareMm,
+    seam_allowance_mm: seamAllowance,
+    hem_allowance_mm: hemAllowance,
+    measurements,
+  });
+
+  const frontSkirt = skirtBlock.front_skirt;
+  const backSkirt = skirtBlock.back_skirt;
+
+  // 3. Coordinación de Piquetes de Cintura
+  frontBodice.notches.push(
+    {
+      point: frontBodice.points.center_hem,
+      type: 'single',
+      label: 'Piquete Centro Delantero Unión Cintura',
+    },
+    {
+      point: frontBodice.points.side_waist,
+      type: 'single',
+      label: 'Piquete Costado Delantero Unión Cintura',
+    }
+  );
+
+  frontSkirt.notches.push(
+    {
+      point: frontSkirt.points.center_waist,
+      type: 'single',
+      label: 'Piquete Centro Delantero Unión Cintura',
+    },
+    {
+      point: frontSkirt.points.side_waist,
+      type: 'single',
+      label: 'Piquete Costado Delantero Unión Cintura',
+    }
+  );
+
+  backBodice.notches.push(
+    {
+      point: backBodice.points.center_hem,
+      type: 'double',
+      label: 'Piquete Doble Centro Espalda Unión Cintura',
+    },
+    {
+      point: backBodice.points.side_waist,
+      type: 'double',
+      label: 'Piquete Doble Costado Espalda Unión Cintura',
+    }
+  );
+
+  backSkirt.notches.push(
+    {
+      point: backSkirt.points.center_waist,
+      type: 'double',
+      label: 'Piquete Doble Centro Espalda Unión Cintura',
+    },
+    {
+      point: backSkirt.points.side_waist,
+      type: 'double',
+      label: 'Piquete Doble Costado Espalda Unión Cintura',
+    }
+  );
+
+  // 4. Bolsillos si aplica
+  const pocketMod = dna.modifications.pocket ?? dna.modifications.pockets?.[0];
+  if (pocketMod && pocketMod.type !== 'none') {
+    const pType = pocketMod.type === 'kangaroo' ? 'kangaroo' : 'patch';
+    const pocketBlock = generatePocketBlock(size, {
+      type: pType,
+      width_mm: pocketMod.width_mm,
+      height_mm: pocketMod.height_mm,
+      hem_allowance_mm: hemAllowance,
+      measurements,
+    });
+    const pocketPart = pocketBlock.pocket;
+    pocketPart.seamAllowance_mm = seamAllowance;
+    pocketPart.hemAllowance_mm = hemAllowance;
+    parts.pocket = pocketPart;
+
+    if (pType === 'patch') {
+      const posX = pocketMod.placement_x_mm ?? (frontBodice.width_mm * 0.42);
+      const posY = pocketMod.placement_y_mm ?? (frontBodice.points.armhole_bottom.y + 35);
+      frontBodice.notches.push(
+        {
+          point: createPoint(posX, posY),
+          type: 'single',
+          label: 'Piquete Referencia Superior Izquierdo Bolsillo Parche',
+        },
+        {
+          point: createPoint(posX + pocketPart.width_mm, posY),
+          type: 'single',
+          label: 'Piquete Referencia Superior Derecho Bolsillo Parche',
+        }
+      );
+    }
+  }
+
+  if (hasWaistSeam) {
+    // 2 Piezas separadas unidas por costura de cintura
+    parts.front_bodice = frontBodice;
+    parts.back_bodice = backBodice;
+    parts.front_skirt = frontSkirt;
+    parts.back_skirt = backSkirt;
+    parts.front = frontBodice;
+    parts.back = backBodice;
+  } else {
+    // Vestido de 1 sola pieza continua (sin costura de cintura / vestido entero / princesa)
+    const bodiceH = measurements.front_length_mm;
+
+    // Delantero continuo
+    const frontDressOutline: Point2D[] = [
+      ...frontBodice.outline.filter((p) => p.name !== 'center_hem' && p.name !== 'side_waist'),
+      ...frontSkirt.outline.map((p) => createPoint(p.x, p.y + bodiceH, p.name)),
+    ];
+    const frontDressBounds = computeBounds(frontDressOutline);
+    const frontDressArea = computePolygonArea(frontDressOutline);
+
+    const frontDressPart: PatternPart = {
+      name: 'front_dress',
+      label: 'VESTIDO ENTERO DELANTERO / ONE-PIECE FRONT DRESS',
+      cutCount: 1,
+      onFold: true,
+      points: {
+        ...frontBodice.points,
+        center_hem: createPoint(frontSkirt.points.center_hem.x, frontSkirt.points.center_hem.y + bodiceH, 'center_hem'),
+        side_hem: createPoint(frontSkirt.points.side_hem.x, frontSkirt.points.side_hem.y + bodiceH, 'side_hem'),
+      },
+      pathD:
+        `M ${frontBodice.points.neck_center.x} ${frontBodice.points.neck_center.y} ` +
+        frontBodice.outline.map((p) => `L ${p.x} ${p.y}`).join(' ') +
+        ' ' +
+        frontSkirt.outline.map((p) => `L ${p.x} ${p.y + bodiceH}`).join(' ') +
+        ' Z',
+      outline: frontDressOutline,
+      bounds: frontDressBounds,
+      width_mm: frontDressBounds.width,
+      height_mm: frontDressBounds.height,
+      area_mm2: frontDressArea,
+      grainline: {
+        start: createPoint(35, 150),
+        end: createPoint(35, bodiceH + skirtLength - 80),
+        label: 'GRAINLINE / HILO DE TELA',
+      },
+      notches: frontBodice.notches,
+      seamAllowance_mm: seamAllowance,
+      hemAllowance_mm: hemAllowance,
+    };
+
+    // Espalda continua
+    const backBodiceH = measurements.back_length_mm;
+    const backDressOutline: Point2D[] = [
+      ...backBodice.outline.filter((p) => p.name !== 'center_hem' && p.name !== 'side_waist'),
+      ...backSkirt.outline.map((p) => createPoint(p.x, p.y + backBodiceH, p.name)),
+    ];
+    const backDressBounds = computeBounds(backDressOutline);
+    const backDressArea = computePolygonArea(backDressOutline);
+
+    const backDressPart: PatternPart = {
+      name: 'back_dress',
+      label: 'VESTIDO ENTERO ESPALDA / ONE-PIECE BACK DRESS',
+      cutCount: 2,
+      onFold: false,
+      points: {
+        ...backBodice.points,
+        center_hem: createPoint(backSkirt.points.center_hem.x, backSkirt.points.center_hem.y + backBodiceH, 'center_hem'),
+        side_hem: createPoint(backSkirt.points.side_hem.x, backSkirt.points.side_hem.y + backBodiceH, 'side_hem'),
+      },
+      pathD:
+        `M ${backBodice.points.neck_center.x} ${backBodice.points.neck_center.y} ` +
+        backBodice.outline.map((p) => `L ${p.x} ${p.y}`).join(' ') +
+        ' ' +
+        backSkirt.outline.map((p) => `L ${p.x} ${p.y + backBodiceH}`).join(' ') +
+        ' Z',
+      outline: backDressOutline,
+      bounds: backDressBounds,
+      width_mm: backDressBounds.width,
+      height_mm: backDressBounds.height,
+      area_mm2: backDressArea,
+      grainline: {
+        start: createPoint(35, 150),
+        end: createPoint(35, backBodiceH + skirtLength - 80),
+        label: 'GRAINLINE / HILO DE TELA',
+      },
+      notches: backBodice.notches,
+      seamAllowance_mm: seamAllowance,
+      hemAllowance_mm: hemAllowance,
+    };
+
+    parts.front_dress = frontDressPart;
+    parts.back_dress = backDressPart;
+  }
+
+  // 4. Manga si no es sin mangas
+  const sleeveMod = dna.modifications.sleeves;
+  const isSleeveless =
+    sleeveMod?.type === 'sleeveless' ||
+    sleeveMod?.length_type === 'sleeveless';
+
+  let harmonization: ArmholeHarmonization | undefined;
+
+  if (!isSleeveless && sleeveMod) {
+    const frontArmholeLen =
+      distance(frontBodice.points.shoulder_tip, frontBodice.points.armhole_pitch) +
+      distance(frontBodice.points.armhole_pitch, frontBodice.points.armhole_bottom);
+    const backArmholeLen =
+      distance(backBodice.points.shoulder_tip, backBodice.points.armhole_pitch) +
+      distance(backBodice.points.armhole_pitch, backBodice.points.armhole_bottom);
+    const totalArmhole = frontArmholeLen + backArmholeLen;
+
+    const bicepEase = dna.ease.bicep_ease_mm ?? 35;
+    const capHeight = Math.round((measurements.bicep_circumference_mm / 2 + bicepEase / 2) * 0.65);
+    const targetCapLength = totalArmhole * 1.005;
+
+    let lowW = targetCapLength * 0.15;
+    let highW = targetCapLength * 0.65;
+    let bestCap = computeSleeveCapCurveLength((lowW + highW) / 2, capHeight);
+
+    for (let iter = 0; iter < 24; iter++) {
+      const midW = (lowW + highW) / 2;
+      bestCap = computeSleeveCapCurveLength(midW, capHeight);
+      if (bestCap.totalCapLength < targetCapLength) {
+        lowW = midW;
+      } else {
+        highW = midW;
+      }
+    }
+
+    const delta_mm = Math.round(Math.abs(bestCap.totalCapLength - totalArmhole) * 100) / 100;
+    const easeRatio = Math.round((bestCap.totalCapLength / totalArmhole) * 1000) / 1000;
+    harmonization = {
+      frontArmholeLength_mm: frontArmholeLen,
+      backArmholeLength_mm: backArmholeLen,
+      totalArmholeLength_mm: totalArmhole,
+      frontSleeveCapLength_mm: bestCap.frontCapLength,
+      backSleeveCapLength_mm: bestCap.backCapLength,
+      totalSleeveCapLength_mm: bestCap.totalCapLength,
+      easeRatio,
+      delta_mm,
+      isHarmonized: delta_mm <= 3.0,
+    };
+
+    const sleeveLength =
+      sleeveMod.length_mm ??
+      (sleeveMod.length_type === 'short' ? 200 : measurements.sleeve_length_mm);
+    const wristHalf = measurements.wrist_circumference_mm / 2 + 15;
+    const wrist_front = createPoint(wristHalf, sleeveLength, 'wrist_front');
+    const wrist_back = createPoint(-wristHalf, sleeveLength, 'wrist_back');
+
+    const sleeveOutline = [
+      ...bestCap.backLowerSamples,
+      ...bestCap.backUpperSamples.slice(1),
+      ...bestCap.frontUpperSamples.slice(1),
+      ...bestCap.frontLowerSamples.slice(1),
+      wrist_front,
+      wrist_back,
+    ];
+
+    const sleevePathD = [
+      `M ${bestCap.points.underarm_back.x} ${bestCap.points.underarm_back.y}`,
+      `C ${bestCap.points.backCapLowerCp1.x} ${bestCap.points.backCapLowerCp1.y}, ${bestCap.points.backCapLowerCp2.x} ${bestCap.points.backCapLowerCp2.y}, ${bestCap.points.cap_back_notch.x} ${bestCap.points.cap_back_notch.y}`,
+      `C ${bestCap.points.backCapUpperCp1.x} ${bestCap.points.backCapUpperCp1.y}, ${bestCap.points.backCapUpperCp2.x} ${bestCap.points.backCapUpperCp2.y}, ${bestCap.points.cap_top.x} ${bestCap.points.cap_top.y}`,
+      `C ${bestCap.points.frontCapUpperCp1.x} ${bestCap.points.frontCapUpperCp1.y}, ${bestCap.points.frontCapUpperCp2.x} ${bestCap.points.frontCapUpperCp2.y}, ${bestCap.points.cap_front_notch.x} ${bestCap.points.cap_front_notch.y}`,
+      `C ${bestCap.points.frontCapLowerCp1.x} ${bestCap.points.frontCapLowerCp1.y}, ${bestCap.points.frontCapLowerCp2.x} ${bestCap.points.frontCapLowerCp2.y}, ${bestCap.points.underarm_front.x} ${bestCap.points.underarm_front.y}`,
+      `L ${wrist_front.x} ${wrist_front.y}`,
+      `L ${wrist_back.x} ${wrist_back.y}`,
+      `Z`,
+    ].join(' ');
+
+    const sleeveBounds = computeBounds(sleeveOutline);
+    const sleeveArea = computePolygonArea(sleeveOutline);
+
+    parts.sleeve = {
+      name: 'sleeve',
+      label: 'MANGA DE VESTIDO / DRESS SLEEVE',
+      cutCount: 2,
+      onFold: false,
+      points: {
+        cap_top: bestCap.points.cap_top,
+        cap_front_notch: bestCap.points.cap_front_notch,
+        cap_back_notch: bestCap.points.cap_back_notch,
+        underarm_front: bestCap.points.underarm_front,
+        underarm_back: bestCap.points.underarm_back,
+        wrist_front,
+        wrist_back,
+      },
+      pathD: sleevePathD,
+      outline: sleeveOutline,
+      bounds: sleeveBounds,
+      width_mm: sleeveBounds.width,
+      height_mm: sleeveBounds.height,
+      area_mm2: sleeveArea,
+      grainline: {
+        start: createPoint(0, capHeight + 30),
+        end: createPoint(0, sleeveLength - 40),
+        label: 'GRAINLINE / HILO DE TELA',
+      },
+      notches: [
+        { point: bestCap.points.cap_top, type: 'single', label: 'Piquete Coronilla Hombro' },
+        { point: bestCap.points.cap_front_notch, type: 'single', label: 'Piquete Delantero Sisa' },
+        { point: bestCap.points.cap_back_notch, type: 'double', label: 'Piquete Doble Espalda Sisa' },
+      ],
+      seamAllowance_mm: seamAllowance,
+      hemAllowance_mm: hemAllowance,
+    };
+  }
+
+  // 5. Verificación de Grainlines y Márgenes
+  for (const [_, part] of Object.entries(parts)) {
+    if (!part.grainline || !part.grainline.label) {
+      part.grainline = {
+        start: createPoint(part.width_mm / 2, part.height_mm * 0.8),
+        end: createPoint(part.width_mm / 2, part.height_mm * 0.2),
+        label: 'GRAINLINE / HILO DE TELA',
+      };
+    }
+    if (part.seamAllowance_mm === undefined) {
+      part.seamAllowance_mm = seamAllowance;
+    }
+    if (part.hemAllowance_mm === undefined) {
+      part.hemAllowance_mm = hemAllowance;
+    }
+  }
+
+  const allBounds = Object.values(parts).map((p) => p.bounds);
+  const totalBounds = combineBounds(allBounds);
+
+  return {
+    concept_name: dna.concept_name,
+    size,
+    base_block: dna.base_block,
+    measurements,
+    parts,
+    bounds: totalBounds,
+    harmonization,
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: hemAllowance,
+    tech_specs: dna.tech_specs,
+  };
+}
+
+/**
+ * Determina si el ADN corresponde a un Kimono o Haori tradicional / anime
+ */
+export function isKimonoGarment(dna: PatternDna): boolean {
+  if (dna.garment_category === 'kimono' || dna.garment_category === 'haori') return true;
+  const base = (dna.base_block || '').toLowerCase().trim();
+  const concept = (dna.concept_name || '').toLowerCase().trim();
+  return (
+    base === 'kimono_sloper' ||
+    base === 'haori_sloper' ||
+    base === 'kimono' ||
+    base === 'haori' ||
+    base.includes('kimono') ||
+    base.includes('haori') ||
+    concept.includes('kimono') ||
+    concept.includes('haori') ||
+    concept.includes('demon_slayer') ||
+    concept.includes('tanjiro')
+  );
+}
+
+/**
+ * Modifica y genera la moldería completa tradicional de Haori / Kimono de anime
+ * (Torso de caída recta, mangas japonesas cuadradas Furisode y cuello plano de banda)
+ */
+export function modifyKimonoPattern(
+  dna: PatternDna,
+  size: StandardSize,
+  measurements: BodyMeasurements,
+  seamAllowance: number,
+  hemAllowance: number
+): ModifiedPatternResult {
+  const parts: Record<string, PatternPart> = {};
+
+  const kimonoDetails = dna.modifications.kimono_details ?? dna.kimono_details;
+  const isHaori =
+    dna.garment_category === 'haori' ||
+    dna.base_block.includes('haori') ||
+    dna.concept_name.includes('haori');
+  const sleeveStyle = kimonoDetails?.sleeve_style ?? 'furisode_square';
+  const collarWidthMm = kimonoDetails?.collar_width_mm ?? 60;
+  const hasObiBelt = kimonoDetails?.obi_belt ?? true;
+
+  // Holguras tradicionales japonesas (Oversized con caída recta)
+  const chestEase = dna.ease.chest_ease_mm ?? (isHaori ? 160 : 120);
+  const quarterBodyWidth = Math.round(((measurements.chest_circumference_mm + chestEase) / 4 + 35) * 10) / 10;
+
+  // Longitud de torso: Haori llega a medio muslo (~880mm), Kimono cuerpo entero (~1300mm)
+  const baseLength = isHaori
+    ? 880 + (measurements.front_length_mm - 680) * 0.5
+    : 1300 + (measurements.front_length_mm - 680);
+  const garmentLength = dna.modifications.hem?.drop_mm ? baseLength + dna.modifications.hem.drop_mm : baseLength;
+
+  const neckWidth = measurements.neck_circumference_mm / 6 + 15;
+  const backNeckDepth = 25;
+  const frontNeckSlopeEndY = Math.min(420, garmentLength * 0.45);
+
+  const sleeveAttachLength = 260; // Sode-tsuke
+
+  // =========================================================================
+  // 1. ESPALDA DE KIMONO / HAORI (BACK PANEL)
+  // =========================================================================
+  const back_neck_center = createPoint(0, backNeckDepth, 'neck_center');
+  const back_neck_shoulder = createPoint(neckWidth, 0, 'neck_shoulder');
+  const back_shoulder_edge = createPoint(quarterBodyWidth, 0, 'shoulder_edge');
+  const back_armhole_notch = createPoint(quarterBodyWidth, sleeveAttachLength, 'armhole_notch');
+  const back_side_hem = createPoint(quarterBodyWidth, garmentLength, 'side_hem');
+  const back_center_hem = createPoint(0, garmentLength, 'center_hem');
+
+  const backNeckCp1 = createPoint(neckWidth * 0.5, backNeckDepth);
+  const backNeckCp2 = createPoint(neckWidth * 0.85, backNeckDepth * 0.3);
+  const backNeckSamples = sampleBezier(back_neck_center, backNeckCp1, backNeckCp2, back_neck_shoulder, 8);
+
+  const backOutline: Point2D[] = [
+    ...backNeckSamples,
+    back_shoulder_edge,
+    back_armhole_notch,
+    back_side_hem,
+    back_center_hem,
+  ];
+
+  const backPathD = [
+    `M ${back_neck_center.x} ${back_neck_center.y}`,
+    `C ${backNeckCp1.x} ${backNeckCp1.y}, ${backNeckCp2.x} ${backNeckCp2.y}, ${back_neck_shoulder.x} ${back_neck_shoulder.y}`,
+    `L ${back_shoulder_edge.x} ${back_shoulder_edge.y}`,
+    `L ${back_armhole_notch.x} ${back_armhole_notch.y}`,
+    `L ${back_side_hem.x} ${back_side_hem.y}`,
+    `L ${back_center_hem.x} ${back_center_hem.y}`,
+    `Z`,
+  ].join(' ');
+
+  const backBounds = computeBounds(backOutline);
+  const backArea = computePolygonArea(backOutline);
+
+  const backPart: PatternPart = {
+    name: 'back',
+    label: isHaori ? 'HAORI ESPALDA / HAORI BACK PANEL' : 'KIMONO ESPALDA / KIMONO BACK PANEL',
+    cutCount: 1,
+    onFold: true,
+    points: {
+      neck_center: back_neck_center,
+      neck_shoulder: back_neck_shoulder,
+      shoulder_edge: back_shoulder_edge,
+      armhole_notch: back_armhole_notch,
+      side_hem: back_side_hem,
+      center_hem: back_center_hem,
+    },
+    pathD: backPathD,
+    outline: backOutline,
+    bounds: backBounds,
+    width_mm: backBounds.width,
+    height_mm: backBounds.height,
+    area_mm2: backArea,
+    grainline: {
+      start: createPoint(quarterBodyWidth * 0.45, 100),
+      end: createPoint(quarterBodyWidth * 0.45, garmentLength - 80),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches: [
+      {
+        point: back_neck_shoulder,
+        type: 'single',
+        label: 'Piquete Hombro Unión Cuello',
+      },
+      {
+        point: back_armhole_notch,
+        type: 'double',
+        label: 'Piquete Doble Sisa Costura Manga Espalda (Sode-tsuke)',
+      },
+    ],
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: hemAllowance,
+  };
+
+  parts.back = backPart;
+  parts.back_panel = backPart;
+
+  // =========================================================================
+  // 2. DELANTERO DE KIMONO / HAORI (FRONT PANEL)
+  // =========================================================================
+  const front_neck_shoulder = createPoint(neckWidth, 0, 'neck_shoulder');
+  const front_shoulder_edge = createPoint(quarterBodyWidth, 0, 'shoulder_edge');
+  const front_armhole_notch = createPoint(quarterBodyWidth, sleeveAttachLength, 'armhole_notch');
+  const front_side_hem = createPoint(quarterBodyWidth, garmentLength, 'side_hem');
+  const front_center_hem = createPoint(0, garmentLength, 'center_hem');
+  const front_collar_cross = createPoint(0, frontNeckSlopeEndY, 'collar_cross');
+
+  const frontOutline: Point2D[] = [
+    front_neck_shoulder,
+    front_shoulder_edge,
+    front_armhole_notch,
+    front_side_hem,
+    front_center_hem,
+    front_collar_cross,
+  ];
+
+  const frontPathD = [
+    `M ${front_neck_shoulder.x} ${front_neck_shoulder.y}`,
+    `L ${front_shoulder_edge.x} ${front_shoulder_edge.y}`,
+    `L ${front_armhole_notch.x} ${front_armhole_notch.y}`,
+    `L ${front_side_hem.x} ${front_side_hem.y}`,
+    `L ${front_center_hem.x} ${front_center_hem.y}`,
+    `L ${front_collar_cross.x} ${front_collar_cross.y}`,
+    `Z`,
+  ].join(' ');
+
+  const frontBounds = computeBounds(frontOutline);
+  const frontArea = computePolygonArea(frontOutline);
+
+  const frontPart: PatternPart = {
+    name: 'front',
+    label: isHaori ? 'HAORI DELANTERO / HAORI FRONT PANEL' : 'KIMONO DELANTERO / KIMONO FRONT PANEL',
+    cutCount: 2,
+    onFold: false,
+    points: {
+      neck_shoulder: front_neck_shoulder,
+      shoulder_edge: front_shoulder_edge,
+      armhole_notch: front_armhole_notch,
+      side_hem: front_side_hem,
+      center_hem: front_center_hem,
+      collar_cross: front_collar_cross,
+    },
+    pathD: frontPathD,
+    outline: frontOutline,
+    bounds: frontBounds,
+    width_mm: frontBounds.width,
+    height_mm: frontBounds.height,
+    area_mm2: frontArea,
+    grainline: {
+      start: createPoint(quarterBodyWidth * 0.45, 100),
+      end: createPoint(quarterBodyWidth * 0.45, garmentLength - 80),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches: [
+      {
+        point: front_neck_shoulder,
+        type: 'single',
+        label: 'Piquete Hombro Unión Cuello',
+      },
+      {
+        point: front_collar_cross,
+        type: 'single',
+        label: 'Piquete Quiebre de Solapa / Cruce Cuello',
+      },
+      {
+        point: front_armhole_notch,
+        type: 'single',
+        label: 'Piquete Sisa Costura Manga Delantero (Sode-tsuke)',
+      },
+    ],
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: hemAllowance,
+  };
+
+  parts.front = frontPart;
+  parts.front_panel = frontPart;
+
+  // =========================================================================
+  // 3. MANGA JAPONESA CUADRADA FURISODE (FURISODE SLEEVE)
+  // =========================================================================
+  const sleeveWidth = sleeveStyle === 'cropped' ? 280 : 360;
+  const sleeveDrop = sleeveStyle === 'furisode_square' ? 520 : sleeveStyle === 'standard' ? 420 : 320;
+  const wristOpeningHeight = 200;
+  const cornerRadius = 45;
+
+  const s_top_inner = createPoint(0, 0, 'top_inner');
+  const s_top_outer = createPoint(sleeveWidth, 0, 'top_outer');
+  const s_wrist_notch = createPoint(sleeveWidth, wristOpeningHeight, 'wrist_notch');
+  const s_bottom_outer_corner = createPoint(sleeveWidth, sleeveDrop - cornerRadius, 'bottom_outer_corner');
+  const s_bottom_corner_arc = createPoint(sleeveWidth - cornerRadius, sleeveDrop, 'bottom_corner_arc');
+  const s_bottom_inner = createPoint(0, sleeveDrop, 'bottom_inner');
+  const s_attach_end = createPoint(0, sleeveAttachLength, 'attach_end');
+
+  const cornerCp = createPoint(sleeveWidth, sleeveDrop);
+  const cornerSamples = sampleBezier(s_bottom_outer_corner, cornerCp, cornerCp, s_bottom_corner_arc, 8);
+
+  const sleeveOutline: Point2D[] = [
+    s_top_inner,
+    s_top_outer,
+    s_wrist_notch,
+    s_bottom_outer_corner,
+    ...cornerSamples.slice(1),
+    s_bottom_inner,
+    s_attach_end,
+  ];
+
+  const sleevePathD = [
+    `M 0 0`,
+    `L ${sleeveWidth} 0`,
+    `L ${sleeveWidth} ${wristOpeningHeight}`,
+    `L ${sleeveWidth} ${sleeveDrop - cornerRadius}`,
+    `Q ${sleeveWidth} ${sleeveDrop} ${sleeveWidth - cornerRadius} ${sleeveDrop}`,
+    `L 0 ${sleeveDrop}`,
+    `L 0 ${sleeveAttachLength}`,
+    `Z`,
+  ].join(' ');
+
+  const sleeveBounds = computeBounds(sleeveOutline);
+  const sleeveArea = computePolygonArea(sleeveOutline);
+
+  const furisodeSleevePart: PatternPart = {
+    name: 'furisode_sleeve',
+    label: 'MANGA JAPONESA CUADRADA FURISODE / JAPANESE FURISODE SLEEVE',
+    cutCount: 2,
+    onFold: false,
+    points: {
+      top_inner: s_top_inner,
+      top_outer: s_top_outer,
+      wrist_notch: s_wrist_notch,
+      bottom_inner: s_bottom_inner,
+      attach_end: s_attach_end,
+    },
+    pathD: sleevePathD,
+    outline: sleeveOutline,
+    bounds: sleeveBounds,
+    width_mm: sleeveBounds.width,
+    height_mm: sleeveBounds.height,
+    area_mm2: sleeveArea,
+    grainline: {
+      start: createPoint(sleeveWidth / 2, 40),
+      end: createPoint(sleeveWidth / 2, sleeveDrop - 60),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches: [
+      {
+        point: s_top_inner,
+        type: 'single',
+        label: 'Piquete Superior Hombro (Sode-tsuke Start)',
+      },
+      {
+        point: s_attach_end,
+        type: 'single',
+        label: 'Piquete Fin Costura Sisa (Sode-tsuke End)',
+      },
+      {
+        point: s_wrist_notch,
+        type: 'single',
+        label: 'Piquete Abertura Muñeca (Sode-guchi)',
+      },
+    ],
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: hemAllowance,
+  };
+
+  parts.furisode_sleeve = furisodeSleevePart;
+  parts.sleeve = furisodeSleevePart;
+
+  // =========================================================================
+  // 4. CUELLO PLANO DE BANDA (COLLAR BAND / ERI)
+  // =========================================================================
+  const backNeckLen = bezierLength(back_neck_center, backNeckCp1, backNeckCp2, back_neck_shoulder);
+  const frontNeckLen = distance(front_neck_shoulder, front_collar_cross) + (garmentLength - frontNeckSlopeEndY);
+  const totalHalfCollarLen = Math.round((backNeckLen + frontNeckLen) * 10) / 10;
+  const collarPieceHeight = collarWidthMm * 2;
+
+  const c_tl = createPoint(0, 0, 'top_left');
+  const c_tr = createPoint(totalHalfCollarLen, 0, 'top_right');
+  const c_br = createPoint(totalHalfCollarLen, collarPieceHeight, 'bottom_right');
+  const c_bl = createPoint(0, collarPieceHeight, 'bottom_left');
+
+  const collarOutline = [c_tl, c_tr, c_br, c_bl];
+  const collarPathD = `M 0 0 L ${totalHalfCollarLen} 0 L ${totalHalfCollarLen} ${collarPieceHeight} L 0 ${collarPieceHeight} Z`;
+  const collarBounds = computeBounds(collarOutline);
+  const collarArea = computePolygonArea(collarOutline);
+
+  const collarNotches: TechnicalNotch[] = [
+    {
+      point: createPoint(0, 0),
+      type: 'double',
+      label: 'Piquete Doble Centro Espalda Cuello',
+    },
+    {
+      point: createPoint(backNeckLen, 0),
+      type: 'single',
+      label: 'Piquete Hombro Cuello',
+    },
+    {
+      point: createPoint(backNeckLen + distance(front_neck_shoulder, front_collar_cross), 0),
+      type: 'single',
+      label: 'Piquete Quiebre de Solapa Cuello',
+    },
+  ];
+
+  const collarBandPart: PatternPart = {
+    name: 'collar_band',
+    label: 'CUELLO EN BANDA JAPONÉS / JAPANESE COLLAR BAND (ERI)',
+    cutCount: 1,
+    onFold: true,
+    points: {
+      top_left: c_tl,
+      top_right: c_tr,
+      bottom_right: c_br,
+      bottom_left: c_bl,
+    },
+    pathD: collarPathD,
+    outline: collarOutline,
+    bounds: collarBounds,
+    width_mm: collarBounds.width,
+    height_mm: collarBounds.height,
+    area_mm2: collarArea,
+    grainline: {
+      start: createPoint(40, collarWidthMm),
+      end: createPoint(totalHalfCollarLen - 40, collarWidthMm),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches: collarNotches,
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: 0,
+  };
+
+  parts.collar_band = collarBandPart;
+  parts.collar = collarBandPart;
+
+  // =========================================================================
+  // 5. CINTURÓN OBI (OBI BELT / SASH) si aplica
+  // =========================================================================
+  if (hasObiBelt) {
+    const obiWidth = 140;
+    const obiHalfLength = Math.round(measurements.waist_circumference_mm * 0.95 * 10) / 10;
+    const obiHeight = obiWidth * 2;
+
+    const obi_tl = createPoint(0, 0, 'top_left');
+    const obi_tr = createPoint(obiHalfLength, 0, 'top_right');
+    const obi_br = createPoint(obiHalfLength, obiHeight, 'bottom_right');
+    const obi_bl = createPoint(0, obiHeight, 'bottom_left');
+
+    const obiOutline = [obi_tl, obi_tr, obi_br, obi_bl];
+    const obiPathD = `M 0 0 L ${obiHalfLength} 0 L ${obiHalfLength} ${obiHeight} L 0 ${obiHeight} Z`;
+    const obiBounds = computeBounds(obiOutline);
+    const obiArea = computePolygonArea(obiOutline);
+
+    const obiPart: PatternPart = {
+      name: 'obi_belt',
+      label: 'CINTURÓN OBI JAPONÉS / JAPANESE OBI SASH',
+      cutCount: 1,
+      onFold: true,
+      points: {
+        top_left: obi_tl,
+        top_right: obi_tr,
+        bottom_right: obi_br,
+        bottom_left: obi_bl,
+      },
+      pathD: obiPathD,
+      outline: obiOutline,
+      bounds: obiBounds,
+      width_mm: obiBounds.width,
+      height_mm: obiBounds.height,
+      area_mm2: obiArea,
+      grainline: {
+        start: createPoint(40, obiWidth),
+        end: createPoint(obiHalfLength - 40, obiWidth),
+        label: 'GRAINLINE / HILO DE TELA',
+      },
+      notches: [
+        {
+          point: createPoint(0, 0),
+          type: 'single',
+          label: 'Piquete Centro Delantero Cinturón Obi',
+        },
+      ],
+      seamAllowance_mm: seamAllowance,
+      hemAllowance_mm: 0,
+    };
+
+    parts.obi_belt = obiPart;
+  }
+
+  // 6. Verificación de Grainlines y Márgenes
+  for (const [_, part] of Object.entries(parts)) {
+    if (!part.grainline || !part.grainline.label) {
+      part.grainline = {
+        start: createPoint(part.width_mm / 2, part.height_mm * 0.8),
+        end: createPoint(part.width_mm / 2, part.height_mm * 0.2),
+        label: 'GRAINLINE / HILO DE TELA',
+      };
+    }
+    if (part.seamAllowance_mm === undefined) {
+      part.seamAllowance_mm = seamAllowance;
+    }
+    if (part.hemAllowance_mm === undefined) {
+      part.hemAllowance_mm = hemAllowance;
+    }
+  }
+
+  const allBounds = Object.values(parts).map((p) => p.bounds);
+  const totalBounds = combineBounds(allBounds);
 
   return {
     concept_name: dna.concept_name,
@@ -918,21 +1981,34 @@ export function modifyPattern(
     ...(isTargetSizeMatch && dna.sizing?.height_mm ? { front_length_mm: dna.sizing.height_mm * 0.42, back_length_mm: dna.sizing.height_mm * 0.40 } : {}),
   };
 
-
   const seamAllowance = dna.tech_specs?.seam_allowance_mm ?? 10;
   const hemAllowance =
     dna.tech_specs?.hem_allowance_mm ?? dna.modifications.hem?.allowance_mm ?? 25;
 
-  // Si la prenda es un conjunto de 2 piezas (Top + Bottom / Set), delegar a modifySetPattern
+  // 1. Si la prenda es un conjunto de 2 piezas (Top + Bottom / Set), delegar a modifySetPattern
   if (isSetGarment(dna)) {
     return modifySetPattern(dna, size, measurements, seamAllowance, hemAllowance);
   }
 
-  // Si la prenda es de tipo inferior (pantalón, bermuda, shorts), delegar a modifyTrouserPattern
+  // 2. Si la prenda es Kimono o Haori, delegar a modifyKimonoPattern
+  if (isKimonoGarment(dna)) {
+    return modifyKimonoPattern(dna, size, measurements, seamAllowance, hemAllowance);
+  }
+
+  // 3. Si la prenda es un Vestido (Dress), delegar a modifyDressPattern
+  if (isDressGarment(dna)) {
+    return modifyDressPattern(dna, size, measurements, seamAllowance, hemAllowance);
+  }
+
+  // 4. Si la prenda es una Falda independiente (Skirt), delegar a modifySkirtPattern
+  if (isSkirtGarment(dna)) {
+    return modifySkirtPattern(dna, size, measurements, seamAllowance, hemAllowance);
+  }
+
+  // 5. Si la prenda es de tipo inferior (pantalón, bermuda, shorts), delegar a modifyTrouserPattern
   if (isBottomGarment(dna)) {
     return modifyTrouserPattern(dna, size, measurements, seamAllowance, hemAllowance);
   }
-
 
   const parts: Record<string, PatternPart> = {};
 

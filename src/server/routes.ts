@@ -344,12 +344,15 @@ export async function handleGetStatus(
       'menswear_torso',
       'womenswear_torso_fitted',
       'womenswear_torso',
+      'womenswear_bodice',
       'unisex_torso',
       'tshirt_sloper',
       'hoodie_sloper',
       'dress_sloper',
       'pants_sloper',
       'skirt_sloper',
+      'kimono_sloper',
+      'haori_sloper',
     ],
     engine: 'FreeSewing v3 Parametric Slopers',
     outputDirectory: ctx.outputDir,
@@ -430,6 +433,8 @@ export async function handleGetPresets(
       if (key === 'pirate_vest') displayName = 'Straw Pirate Adventurer Vest';
       if (key === 'pirate_shorts') displayName = 'Straw Pirate Denim Shorts';
       if (key === 'straw_pirate_full_set') displayName = 'Straw Pirate Full Cosplay Set (Vest + Bermuda)';
+      if (key === 'anime_water_goddess_dress') displayName = 'Anime Water Goddess Dress (Aqua Cosplay)';
+      if (key === 'demon_slayer_haori_kimono') displayName = 'Demon Slayer Haori Kimono (Tanjiro)';
 
       return {
         id: key,

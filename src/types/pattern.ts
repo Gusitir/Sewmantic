@@ -240,7 +240,25 @@ export interface TrouserPocketMod {
 /**
  * Categoría principal de prenda
  */
-export type GarmentCategory = 'top' | 'bottom' | 'set';
+export type GarmentCategory = 'top' | 'bottom' | 'dress' | 'set' | 'kimono' | 'haori';
+
+/**
+ * Detalles específicos de vestidos
+ */
+export interface DressDetails {
+  silhouette?: 'a_line' | 'straight' | 'pleated';
+  skirt_length_mm?: number;
+  waist_seam?: boolean;
+}
+
+/**
+ * Detalles específicos de kimonos y haoris
+ */
+export interface KimonoDetails {
+  sleeve_style?: 'furisode_square' | 'standard' | 'cropped';
+  collar_width_mm?: number;
+  obi_belt?: boolean;
+}
 
 /**
  * Configuración de estilo y tipología de pantalón / bermuda
@@ -274,6 +292,8 @@ export interface ModificationTree {
   trouser_legs?: TrouserLegsMod;
   trouser_pockets?: TrouserPocketMod | TrouserPocketMod[];
   trouser?: TrouserConfig;
+  dress_details?: DressDetails;
+  kimono_details?: KimonoDetails;
   custom?: Record<string, unknown>;
 }
 
@@ -346,6 +366,8 @@ export interface PatternDna {
   base_block: string;
   ease: EaseSettings;
   modifications: ModificationTree;
+  dress_details?: DressDetails;
+  kimono_details?: KimonoDetails;
   sizing?: SizingSettings;
   custom_measurements?: Partial<Record<keyof BodyMeasurements, number>>;
   tech_specs?: TechSpecs;

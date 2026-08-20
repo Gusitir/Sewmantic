@@ -412,6 +412,124 @@ export const MOCK_PRESETS: Record<string, PatternDna> = {
     ],
     estimated_fabric_meters: 2.1,
   },
+  anime_water_goddess_dress: {
+    concept_name: "anime_water_goddess_dress",
+    description: "Vestido cosplay de Diosa del Agua (Aqua): Corpiño entallado con escote corazón, falda evasé y detalles de lazo",
+    garment_category: "dress",
+    base_block: "dress_sloper",
+    ease: {
+      chest_ease_mm: 30,
+      waist_ease_mm: 20,
+      hip_ease_mm: 50,
+      shoulder_ease_mm: 0,
+      bicep_ease_mm: 35,
+    },
+    dress_details: {
+      silhouette: "a_line",
+      skirt_length_mm: 550,
+      waist_seam: true,
+    },
+    modifications: {
+      neckline: {
+        type: "sweetheart",
+        depth_mm: 45,
+        width_mm: 25,
+      },
+      sleeves: {
+        type: "set_in",
+        length_type: "short",
+        length_mm: 200,
+      },
+      hem: {
+        type: "flared",
+        drop_mm: 0,
+      },
+      dress_details: {
+        silhouette: "a_line",
+        skirt_length_mm: 550,
+        waist_seam: true,
+      },
+    },
+    sizing: {
+      size: "M",
+      chest_circ_mm: 920,
+      waist_circ_mm: 700,
+      hip_circ_mm: 960,
+      target_layers: ["XS", "S", "M", "L", "XL", "2XL", "3XL"],
+    },
+    tech_specs: {
+      notions: [
+        "1x cremallera invisible 50cm azul",
+        "2m cinta de satén azul oscuro para lazada",
+        "hilo poliéster azul celeste",
+      ],
+      estimated_fabric_meters: 2.8,
+      seam_allowance_mm: 10,
+      hem_allowance_mm: 20,
+      fabric_type: "satin_crepe_blue",
+      fabric_width_mm: 1500,
+    },
+    notions: [
+      "1x cremallera invisible 50cm azul",
+      "2m cinta de satén azul oscuro para lazada",
+      "hilo poliéster azul celeste",
+    ],
+    estimated_fabric_meters: 2.8,
+  },
+
+  demon_slayer_haori_kimono: {
+    concept_name: "demon_slayer_haori_kimono",
+    description: "Haori / Kimono oversize tradicional con paneles rectos, mangas cuadradas Furisode y cuello en banda plana",
+    garment_category: "haori",
+    base_block: "haori_sloper",
+    ease: {
+      chest_ease_mm: 180,
+      waist_ease_mm: 160,
+      hip_ease_mm: 160,
+      shoulder_ease_mm: 60,
+    },
+    kimono_details: {
+      sleeve_style: "furisode_square",
+      collar_width_mm: 60,
+      obi_belt: true,
+    },
+    modifications: {
+      sleeves: {
+        type: "kimono",
+        length_type: "full",
+      },
+      kimono_details: {
+        sleeve_style: "furisode_square",
+        collar_width_mm: 60,
+        obi_belt: true,
+      },
+    },
+    sizing: {
+      size: "L",
+      chest_circ_mm: 1040,
+      waist_circ_mm: 880,
+      hip_circ_mm: 1020,
+      target_layers: ["XS", "S", "M", "L", "XL", "2XL", "3XL"],
+    },
+    tech_specs: {
+      notions: [
+        "1x cordón Haori-himo blanco",
+        "0.8m entretela ligera para cuello",
+        "hilo poliéster negro y verde",
+      ],
+      estimated_fabric_meters: 3.2,
+      seam_allowance_mm: 12,
+      hem_allowance_mm: 30,
+      fabric_type: "cotton_linen_check_canvas",
+      fabric_width_mm: 1500,
+    },
+    notions: [
+      "1x cordón Haori-himo blanco",
+      "0.8m entretela ligera para cuello",
+      "hilo poliéster negro y verde",
+    ],
+    estimated_fabric_meters: 3.2,
+  },
 };
 
 /**
@@ -428,6 +546,23 @@ export class MockAiProvider implements IAiProvider {
     let selectedPreset: PatternDna;
 
     if (
+      query.includes("demon_slayer") ||
+      query.includes("demon slayer") ||
+      query.includes("tanjiro") ||
+      query.includes("haori") ||
+      query.includes("furisode") ||
+      query.includes("demon_slayer_haori_kimono")
+    ) {
+      selectedPreset = MOCK_PRESETS.demon_slayer_haori_kimono;
+    } else if (
+      query.includes("water_goddess") ||
+      query.includes("water goddess") ||
+      query.includes("aqua") ||
+      query.includes("diosa del agua") ||
+      query.includes("anime_water_goddess_dress")
+    ) {
+      selectedPreset = MOCK_PRESETS.anime_water_goddess_dress;
+    } else if (
       query.includes("straw_pirate_full_set") ||
       query.includes("full set") ||
       query.includes("conjunto") ||
@@ -466,12 +601,13 @@ export class MockAiProvider implements IAiProvider {
     ) {
       selectedPreset = MOCK_PRESETS.tshirt;
     } else if (
+      query.includes("sacerdotisa") ||
+      query.includes("priestess") ||
       query.includes("dress") ||
       query.includes("vestido") ||
       query.includes("robe") ||
       query.includes("toga") ||
-      query.includes("kimono") ||
-      query.includes("priestess")
+      query.includes("kimono")
     ) {
       selectedPreset = MOCK_PRESETS.dress;
     } else {
