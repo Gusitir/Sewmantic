@@ -26,6 +26,11 @@ export interface BodyMeasurements {
   thigh_circumference_mm: number;
   knee_circumference_mm: number;
   ankle_circumference_mm: number;
+  // Medidas antropométricas femeninas (Sloper de corpiño con pinzas y falda)
+  bust_span_mm: number;
+  underbust_circumference_mm: number;
+  waist_to_hip_mm: number;
+  skirt_length_mm: number;
 }
 
 export const STANDARD_SIZES: StandardSize[] = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
@@ -53,6 +58,10 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     thigh_circumference_mm: 530,
     knee_circumference_mm: 360,
     ankle_circumference_mm: 220,
+    bust_span_mm: 175,
+    underbust_circumference_mm: 700,
+    waist_to_hip_mm: 185,
+    skirt_length_mm: 540,
   },
   S: {
     chest_circumference_mm: 920,
@@ -73,6 +82,10 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     thigh_circumference_mm: 560,
     knee_circumference_mm: 375,
     ankle_circumference_mm: 230,
+    bust_span_mm: 185,
+    underbust_circumference_mm: 750,
+    waist_to_hip_mm: 190,
+    skirt_length_mm: 560,
   },
   M: {
     chest_circumference_mm: 1000,
@@ -93,6 +106,10 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     thigh_circumference_mm: 600,
     knee_circumference_mm: 395,
     ankle_circumference_mm: 240,
+    bust_span_mm: 195,
+    underbust_circumference_mm: 810,
+    waist_to_hip_mm: 195,
+    skirt_length_mm: 580,
   },
   L: {
     chest_circumference_mm: 1080,
@@ -113,6 +130,10 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     thigh_circumference_mm: 640,
     knee_circumference_mm: 415,
     ankle_circumference_mm: 250,
+    bust_span_mm: 205,
+    underbust_circumference_mm: 870,
+    waist_to_hip_mm: 200,
+    skirt_length_mm: 600,
   },
   XL: {
     chest_circumference_mm: 1160,
@@ -133,6 +154,10 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     thigh_circumference_mm: 680,
     knee_circumference_mm: 435,
     ankle_circumference_mm: 260,
+    bust_span_mm: 215,
+    underbust_circumference_mm: 940,
+    waist_to_hip_mm: 205,
+    skirt_length_mm: 620,
   },
   '2XL': {
     chest_circumference_mm: 1240,
@@ -153,6 +178,10 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     thigh_circumference_mm: 720,
     knee_circumference_mm: 455,
     ankle_circumference_mm: 270,
+    bust_span_mm: 225,
+    underbust_circumference_mm: 1010,
+    waist_to_hip_mm: 210,
+    skirt_length_mm: 640,
   },
   '3XL': {
     chest_circumference_mm: 1320,
@@ -173,6 +202,10 @@ export const STANDARD_MEASUREMENTS: Record<StandardSize, BodyMeasurements> = {
     thigh_circumference_mm: 760,
     knee_circumference_mm: 475,
     ankle_circumference_mm: 280,
+    bust_span_mm: 235,
+    underbust_circumference_mm: 1080,
+    waist_to_hip_mm: 215,
+    skirt_length_mm: 650,
   },
 };
 
@@ -201,6 +234,10 @@ export const ANATOMICAL_LIMITS: Record<
   thigh_circumference_mm: { min: 350, max: 1100, label: 'Contorno de Muslo' },
   knee_circumference_mm: { min: 250, max: 700, label: 'Contorno de Rodilla' },
   ankle_circumference_mm: { min: 150, max: 450, label: 'Contorno de Tobillo' },
+  bust_span_mm: { min: 120, max: 320, label: 'Separación de Busto / Distancia entre Pezones' },
+  underbust_circumference_mm: { min: 500, max: 1800, label: 'Contorno Bajo Busto' },
+  waist_to_hip_mm: { min: 120, max: 300, label: 'Altura de Cadera' },
+  skirt_length_mm: { min: 200, max: 1200, label: 'Largo de Falda Estándar' },
 };
 
 /**
@@ -294,6 +331,10 @@ export function calculateCustomMeasurements(
     scaleVertical = explicit.inseam_mm / base.inseam_mm;
   } else if (explicit.sleeve_length_mm !== undefined) {
     scaleVertical = explicit.sleeve_length_mm / base.sleeve_length_mm;
+  } else if (explicit.waist_to_hip_mm !== undefined) {
+    scaleVertical = explicit.waist_to_hip_mm / base.waist_to_hip_mm;
+  } else if (explicit.skirt_length_mm !== undefined) {
+    scaleVertical = explicit.skirt_length_mm / base.skirt_length_mm;
   } else {
     // Si no se proporcionaron medidas verticales, escala suavemente con el contorno de pecho
     scaleVertical = 1.0 + (scaleChest - 1.0) * 0.35;
@@ -356,6 +397,16 @@ export function calculateCustomMeasurements(
     ankle_circumference_mm:
       explicit.ankle_circumference_mm ??
       Math.round(base.ankle_circumference_mm * (1.0 + (scaleHip - 1.0) * 0.45)),
+    bust_span_mm:
+      explicit.bust_span_mm ??
+      Math.round(base.bust_span_mm * (1.0 + (scaleChest - 1.0) * 0.5)),
+    underbust_circumference_mm:
+      explicit.underbust_circumference_mm ??
+      Math.round(base.underbust_circumference_mm * (1.0 + (scaleChest - 1.0) * 0.9)),
+    waist_to_hip_mm:
+      explicit.waist_to_hip_mm ?? Math.round(base.waist_to_hip_mm * scaleVertical),
+    skirt_length_mm:
+      explicit.skirt_length_mm ?? Math.round(base.skirt_length_mm * scaleVertical),
   };
 
   // 4. Clamping final de seguridad anatómica en todas las dimensiones

@@ -23,6 +23,19 @@ import {
   generateTrouserBlock,
   getTrouserSloper,
 } from './trousers.js';
+import {
+  WomensBodiceOptions,
+  WomensBodiceResult,
+  generateWomensBodiceBlock,
+  getWomensBodiceSloper,
+} from './womens_bodice.js';
+import {
+  SkirtSilhouette,
+  SkirtSloperOptions,
+  SkirtBlockResult,
+  generateSkirtBlock,
+  getSkirtSloper,
+} from './skirt.js';
 
 export * from './measurements.js';
 export * from './torso.js';
@@ -30,6 +43,8 @@ export * from './sleeve.js';
 export * from './hood.js';
 export * from './pocket.js';
 export * from './trousers.js';
+export * from './womens_bodice.js';
+export * from './skirt.js';
 
 export interface BaseBlockResult {
   blockType: string;
@@ -65,6 +80,15 @@ export interface GenerateBlockOptions {
   back_rise_mm?: number;
   seam_allowance_mm?: number;
   hem_allowance_mm?: number;
+  // Opciones de Corpiño Femenino
+  bust_dart_width_mm?: number;
+  waist_dart_width_mm?: number;
+  // Opciones de Falda
+  skirt_silhouette?: SkirtSilhouette;
+  skirt_length_mm?: number;
+  skirt_flare_mm?: number;
+  pleat_count?: number;
+  pleat_depth_mm?: number;
   measurements?: BodyMeasurements;
 }
 
@@ -186,7 +210,66 @@ export function generateBaseBlock(
     parts.front_leg = trouserRes.front_leg;
     parts.back_leg = trouserRes.back_leg;
   }
-  // 5. Bloques de Torso / Slopers completos
+  // 5. Bloques de Corpiño Femenino Anatómico con Pinzas
+  else if (
+    normalizedType === 'womenswear_bodice' ||
+    normalizedType === 'womens_bodice' ||
+    normalizedType === 'womens_bodice_sloper' ||
+    normalizedType === 'womenswear_bodice_sloper' ||
+    normalizedType === 'womenswear_torso_fitted' ||
+    normalizedType === 'bodice' ||
+    normalizedType === 'bodice_sloper'
+  ) {
+    const bodiceRes = generateWomensBodiceBlock(size, {
+      chest_ease_mm: options.chest_ease_mm ?? 30,
+      waist_ease_mm: options.waist_ease_mm ?? 20,
+      shoulder_ease_mm: options.shoulder_ease_mm ?? 0,
+      length_delta_mm: options.length_delta_mm,
+      neckline_depth_delta_mm: options.neckline_depth_delta_mm,
+      neckline_width_delta_mm: options.neckline_width_delta_mm,
+      bust_dart_width_mm: options.bust_dart_width_mm,
+      waist_dart_width_mm: options.waist_dart_width_mm,
+      seam_allowance_mm: options.seam_allowance_mm,
+      measurements,
+    });
+    parts.front_bodice = bodiceRes.front_bodice;
+    parts.back_bodice = bodiceRes.back_bodice;
+  }
+  // 6. Bloques de Falda (Recta, Evasé y Plisada)
+  else if (
+    normalizedType === 'skirt' ||
+    normalizedType === 'skirt_sloper' ||
+    normalizedType === 'a_line_skirt' ||
+    normalizedType === 'pleated_skirt' ||
+    normalizedType === 'straight_skirt' ||
+    normalizedType === 'skirt_straight' ||
+    normalizedType === 'skirt_a_line' ||
+    normalizedType === 'skirt_pleated'
+  ) {
+    const defaultSilhouette: SkirtSilhouette =
+      options.skirt_silhouette ??
+      (normalizedType.includes('a_line') || normalizedType.includes('evase')
+        ? 'a_line'
+        : normalizedType.includes('pleat') || normalizedType.includes('tabla')
+          ? 'pleated'
+          : 'straight');
+
+    const skirtRes = generateSkirtBlock(size, {
+      silhouette: defaultSilhouette,
+      length_mm: options.skirt_length_mm,
+      waist_ease_mm: options.waist_ease_mm,
+      hip_ease_mm: options.hip_ease_mm,
+      flare_mm: options.skirt_flare_mm,
+      pleat_count: options.pleat_count,
+      pleat_depth_mm: options.pleat_depth_mm,
+      seam_allowance_mm: options.seam_allowance_mm,
+      hem_allowance_mm: options.hem_allowance_mm,
+      measurements,
+    });
+    parts.front_skirt = skirtRes.front_skirt;
+    parts.back_skirt = skirtRes.back_skirt;
+  }
+  // 7. Bloques de Torso Unisex / Masculino / Slopers completos
   else {
     const torsoRes = generateTorsoBlock(size, {
       chest_ease_mm: options.chest_ease_mm ?? defaultChestEase,
