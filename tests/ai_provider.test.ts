@@ -347,6 +347,55 @@ Bloque base: menswear_torso_oversize.
       expect(result.modifications.hood?.type).toBe("crossover");
     });
 
+    it("debe realizar llamada directa multimodal de 1 solo paso con Qwen 3.7 Plus al detectar soporte nativo de visión", async () => {
+      const provider = new DirectApiProvider({
+        apiKey: "fw-test-secret-key",
+        baseUrl: "https://api.fireworks.ai/inference/v1",
+        model: "accounts/fireworks/models/qwen3p7-plus",
+      });
+
+      const mockResponseData = {
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                concept_name: "streetwear_boxy_crop",
+                base_block: "tshirt_sloper",
+                ease: { chest_ease_mm: 80 },
+                modifications: {
+                  neckline: { type: "crew" },
+                  hem: { type: "cropped" },
+                },
+              }),
+              reasoning_content: "Analizando imagen y deduciendo proporciones de crop top boxy...",
+            },
+          },
+        ],
+      };
+
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => mockResponseData,
+      } as Response);
+
+      const result = await provider.generatePatternDna(
+        "Crop top boxy streetwear",
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      );
+
+      expect(result.concept_name).toBe("streetwear_boxy_crop");
+      expect(result.modifications.hem?.type).toBe("cropped");
+      // Al ser modelo de visión nativo (Qwen), solo debe ejecutar 1 request directo
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+      const [url, options] = fetchSpy.mock.calls[0];
+      expect(url).toBe("https://api.fireworks.ai/inference/v1/chat/completions");
+      const requestBody = JSON.parse(options?.body as string);
+      expect(requestBody.model).toBe("accounts/fireworks/models/qwen3p7-plus");
+      expect(Array.isArray(requestBody.messages[1].content)).toBe(true);
+      expect(requestBody.messages[1].content[1].type).toBe("image_url");
+    });
+
     it("debe lanzar un error claro cuando la API responde con un código de error HTTP", async () => {
       const provider = new DirectApiProvider({
         apiKey: "fw-invalid-key",
