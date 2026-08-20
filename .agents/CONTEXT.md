@@ -327,6 +327,44 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-19] implement robust multimodal image upload flow, canvas resizing and Qwen 3.7 Plus payload integration` (hash `41058f3`).
 - Next: Despachar tarea `[T-20] Verificación End-to-End en Vivo de Generación por Imagen & Auditoría`.
 
+## 2026-08-20T17:32:00-05:00 - TASK T-20 AUDIT: LIVE MULTIMODAL E2E VERIFICATION (Arquitecto / Ingeniero)
+
+- Decision and reason: El Ingeniero implementó `scripts/test_fireworks_e2e_image.js` y ejecutó la verificación end-to-end real procesando una imagen física (`IMAGENES/luficosplai.png`) contra Fireworks AI (Qwen 3.7 Plus).
+- Verification:
+  - Generación completada con éxito en 3.22 segundos.
+  - 11/11 entregables físicos generados en disco en `output/e2e_fireworks_image_test/streetwear_tailored_vest/`:
+    1. `streetwear_tailored_vest_continuous.svg` (15.19 KB)
+    2. `streetwear_tailored_vest_tiled_a4.pdf` (25.25 KB con Cuadro 10x10 cm en Pág 1)
+    3. `streetwear_tailored_vest_tiled_letter.pdf` (24.49 KB con Cuadro 10x10 cm en Pág 1)
+    4. `streetwear_tailored_vest_plotter_a0.pdf` (6.52 KB)
+    5. `streetwear_tailored_vest_techpack.pdf` (10.19 KB)
+    6. `streetwear_tailored_vest_techpack.md` (12.51 KB)
+    7. `streetwear_tailored_vest_techpack.json` (16.09 KB)
+    8. `streetwear_tailored_vest_dna.json` (1.02 KB)
+    9. `streetwear_tailored_vest_etsy_bundle.zip` (75.24 KB con carpetas 01-06)
+    10. `streetwear_tailored_vest_etsy_listing_metadata.json` (4.48 KB con exactamente 13 tags SEO)
+    11. `README_Etsy_Printing_Instructions.pdf` (4.48 KB)
+  - 373/373 tests unitarios pasando al 100% en Vitest (13/13 suites).
+- Verdict: **APTO**.
+- Evidence: Commit `[T-20] implement live multimodal E2E test script and verify 11 deliverables with Fireworks AI` (hash `60f44ea`).
+
+## 2026-08-20T17:34:00-05:00 - CLOSE PHASE 4.0 (FIREWORKS AI MULTIMODAL & LIVE DIAGNOSTICS) (Arquitecto)
+
+- Decision and reason: Cierre formal del hito Fase 4 (`T-17` a `T-20`). Todas las tareas han sido completadas, probadas exhaustivamente y auditadas con veredicto **APTO**.
+- Deliverables & Features Added in Phase 4:
+  1. `scripts/test_fireworks_call.js`: Diagnóstico aislado de Fireworks API con Qwen 3.7 Plus.
+  2. `src/server/routes.ts`: Logging estructurado transparente en terminal y reporte de errores técnicos con `details` en el frontend.
+  3. `src/server/public/app.js`: Drag & Drop fluido con compresión en canvas virtual para imágenes $> 4\text{ MB}$ y generación multimodal sin prompt obligatorio.
+  4. `src/ai/direct_api_provider.ts`: Integración multimodal nativa de 1 solo paso con Qwen 3.7 Plus y soporte de magic bytes para formatos de imagen.
+  5. `scripts/test_fireworks_e2e_image.js`: Script de prueba E2E automatizada generando los 11 entregables comerciales en 3.2 segundos.
+- Verification:
+  - Suite completa de **373/373 tests pasando al 100%** en Vitest across 13 suites.
+  - Verificación en vivo contra Fireworks API con `accounts/fireworks/models/qwen3p7-plus`.
+- Verdict: **APTO (Fase 4.0 Cerrada con Éxito - 373/373 Tests PASS | 11/11 Entregables Verificados)**.
+- Evidence: Commits `[T-17]` a `[T-20]`. Commit de control `[STATE] close phase 4.0`.
+- Next: Barrera de parada humana `H-03` (Inspección visual del usuario en el Web Studio 2D) y planificación de Fase 5.0.
+
+
 
 
 
