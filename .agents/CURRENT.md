@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-20T17:59:00-05:00
-source_commit: [T-23] implement headless Blender bridge and native glTF 2.0 binary 3D garment mesh generator
+updated_at: 2026-08-20T18:05:00-05:00
+source_commit: [T-24] integrate interactive WebGL 3D garment viewer in Web Studio and bundle 3D models in Etsy ZIP
 assurance: Lean
-active_plan: PLAN_v0.5-womenswear-and-3d-blender.md
-active_task: T-24 (Integración del Visor 3D WebGL en Web Studio y Empaquetado de Assets 3D)
+active_plan: none (Phase 5.0 Completed & Verified)
+active_task: none (Phase 5.0 Verified APTO)
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,33 +18,34 @@ backup: local-only
 
 ## Next action
 
-1. **Despachar Tarea `T-24` (Integración del Visor 3D WebGL en Web Studio y Empaquetado de Assets 3D):**
-   - Integrar pestaña "Visor 3D" en el Web Studio con soporte interactivo Three.js / Canvas 3D para rotar, hacer zoom e inspeccionar el modelo `.glb` renderizado con materiales PBR.
-   - Conectar endpoint `/api/patterns/:concept/glb` para streaming de modelos 3D.
-   - Añadir la subcarpeta `07_3D_Interactive_Model/<concept>.glb` al paquete comercial ZIP de Etsy.
-   - Ejecutar la suite completa y preparar la auditoría de cierre de Fase 5.0.
+1. **FASE 5.0 CERRADA CON ÉXITO:** Tareas `T-21`, `T-22`, `T-23` y `T-24` completadas y auditadas con veredicto **APTO**.
+2. **Ejecutar Procedimiento `COMPACT` de `.agents/`:**
+   - Archivar snapshot histórico completo en `.agents/archive/CONTEXT_pre_compact_snapshot.md`.
+   - Reducir `.agents/CONTEXT.md` a un resumen de alta densidad (~5 KB) eliminando ruido y decisiones obsoletas.
+3. Servir el Web Studio con `start_web_studio.bat` para inspección visual 2D y 3D en vivo por parte del usuario (`H-03`).
 
 ## Blockers
 
-- Ninguno. 459/459 tests pasando al 100% en Vitest (16/16 suites).
+- Ninguno. 468/468 tests pasando al 100% en Vitest (17/17 suites).
 
 ## Current facts
 
-- **Tarea `T-23` Completada y Auditada con Veredicto APTO:**
-  - Puente Blender Headless y generador binario glTF 2.0 nativo (`blender_bridge.ts`, `export_glb_headless.py`).
-  - Modelos `.glb` ultra-optimizados (50 a 195 KB) validados con magic bytes y PBR materials.
-  - Subcomando CLI `pattern-ai-core export-3d`.
-  - 12 tests en `tests/blender.test.ts`.
-- **Tarea `T-22` & `T-21` Completadas y Auditadas con Veredicto APTO:** Vestidos, Kimonos Furisode, Bodice con pinzas de busto y faldas.
-- **Suite Determinista:** **16/16 suites passing (459/459 tests en verde)**.
+- **Fases 1.0, 2.0, 3.0, 4.0 y 5.0 Completadas y Selladas con Veredicto APTO:**
+  - **Fase 1.0 (MVP Geometría y Tiling):** Slopers base FreeSewing v3, Tiling A4/Letter con Cuadro 10x10 cm en Pág 1, Ficha técnica industrial.
+  - **Fase 2.0 (Pantalones y Etsy ZIP):** Slopers de pantalón/bermuda con aplomo y entrepierna igualada, interpolación continua de medidas exactas, ZIP Etsy en 6 carpetas.
+  - **Fase 3.0 (Web Studio 2D & Conjuntos):** Servidor HTTP REST, Visor 2D vectorial interactivo con zoom centrado y capas, generador de conjuntos de 2 piezas (Luffy Pirate Set).
+  - **Fase 4.0 (Fireworks AI Multimodal Qwen 3.8 Max):** Inferencia multimodal nativa en 1 solo paso con Qwen 3.8 Max, diagnóstico en vivo (`scripts/test_fireworks_call.js`), logging transparente en servidor y generación a partir de imágenes de referencia.
+  - **Fase 5.0 (Womenswear, Cosplay & Visor 3D WebGL):** Slopers de corpiño femenino con pinzas de busto y falda, modificador de vestidos y kimonos/haoris Furisode, puente headless de Blender y generador binario nativo glTF 2.0 (`.glb`), Visor 3D WebGL interactivo en Web Studio y paquete Etsy ampliado a 7 carpetas comerciales con modelos 3D.
+- **Suite Determinista:** **17/17 suites passing (468/468 tests en verde)**.
 
 ## Open findings
 
-- [PENDIENTE POST-FASE 5] Tarea de compactación `COMPACT` para `CONTEXT.md` (reducir histórico a ~5-7 KB).
+- Ninguno.
 
 ## Human actions
 
 - [x] Validación de ensamble y continuidad de líneas con PDFStitcher (`H-02`). [VERIFICADO OK]
 - [x] Verificación de escala 1:1 y cuadro de calibración 10x10 cm (`H-01`). [VERIFICADO OK]
+- [ ] Inspección visual de patrones 2D y modelos 3D en el Web Studio (`H-03`). [LISTO PARA PROBAR]
 
 Keep this concise. History belongs in CONTEXT and Git.
