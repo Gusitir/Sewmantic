@@ -8,6 +8,9 @@ import http, { IncomingMessage, ServerResponse, Server } from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
+
+dotenv.config();
 import {
   RouteContext,
   setCorsHeaders,

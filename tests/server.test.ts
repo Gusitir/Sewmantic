@@ -56,7 +56,7 @@ describe('Servidor API REST Local y Endpoints del Motor (HTTP Native)', () => {
     expect(data.status).toBe('ok');
     expect(data.version).toBe('0.1.0');
     expect(data.supportedProviders).toContain('mock');
-    expect(data.supportedProviders).toContain('agy');
+    expect(data.supportedProviders).toContain('api');
     expect(data.standardSizes).toEqual(['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL']);
     expect(data.supportedBlocks).toContain('menswear_torso_oversize');
     expect(data.engine).toContain('FreeSewing v3');

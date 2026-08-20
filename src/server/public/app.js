@@ -852,7 +852,7 @@ function initGenerateForm() {
     const prompt = promptInput?.value?.trim();
     if (!prompt && !state.uploadedImageData) return;
 
-    const provider = providerSelect?.value || 'mock';
+    const provider = providerSelect?.value || 'api';
     const sizes = state.selectedSizes;
     const customMeasurements = state.customMeasurements;
     const imagePath = state.uploadedImageData;

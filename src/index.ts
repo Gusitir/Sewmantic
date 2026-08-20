@@ -116,7 +116,7 @@ export function initCli(): Command {
     .option("-i, --image <path>", "Ruta a boceto o imagen de referencia")
     .option("-f, --format <format>", "Formato de papel ('a4', 'letter', 'a0', 'all')", "all")
     .option("-s, --sizes <sizes>", "Tallas a graduar separadas por coma (ej: 'S,M,L' o 'XS,S,M,L,XL,2XL,3XL')")
-    .option("-p, --provider <provider>", "Proveedor de IA ('mock', 'agy', 'opencode', 'api')", process.env.AI_PROVIDER || "agy")
+    .option("-p, --provider <provider>", "Proveedor de IA ('api' / 'fireworks', 'mock' / 'offline')", process.env.AI_PROVIDER || (process.env.FIREWORKS_API_KEY || process.env.AI_API_KEY ? "api" : "mock"))
     .option("-o, --output <dir>", "Directorio base de salida", "output")
     .option("-w, --waste <number>", "Factor de merma textil (mínimo 0.10, default 0.15)", "0.15")
     .option("-m, --measurements <path_or_json>", "Medidas personalizadas exactas en JSON o ruta a archivo .json (ej: '{\"chest_circumference_mm\":1040}')")

@@ -333,8 +333,10 @@ export async function handleGetStatus(
     version: ctx.version,
     nodeVersion: process.version,
     platform: `${process.platform} ${process.arch}`,
-    activeProvider: process.env.AI_PROVIDER || 'agy',
-    supportedProviders: ['agy', 'opencode', 'api', 'mock'],
+    activeProvider:
+      process.env.AI_PROVIDER ||
+      (process.env.FIREWORKS_API_KEY || process.env.AI_API_KEY ? 'api' : 'mock'),
+    supportedProviders: ['api', 'mock'],
     standardSizes: STANDARD_SIZES,
     supportedBlocks: [
       'menswear_torso_oversize',

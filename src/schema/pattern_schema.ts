@@ -667,6 +667,9 @@ export function extractJsonFromText(rawOutput: string): string {
 
   let text = rawOutput.trim();
 
+  // 0. Eliminar etiquetas de razonamiento / pensamiento (<think>...</think>) de DeepSeek R1 / Reasoning models
+  text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
   // 1. Extraer contenido de bloques de código markdown si existen
   const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/gi;
   const codeBlockMatches = Array.from(text.matchAll(codeBlockRegex));

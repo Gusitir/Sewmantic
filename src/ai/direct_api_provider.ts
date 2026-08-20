@@ -1,9 +1,11 @@
 /**
  * src/ai/direct_api_provider.ts
- * Proveedor de Inteligencia Artificial mediante HTTP / REST API Directa (OpenAI / Anthropic compatible)
+ * Proveedor de Inteligencia Artificial mediante Direct API (Fireworks AI / DeepSeek / OpenAI compatible)
  * pattern-ai-core
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import type { IAiProvider, AiProviderConfig } from "./base_provider.js";
 import type { PatternDna } from "../types/pattern.js";
 import { PromptBuilder } from "./prompt_builder.js";
@@ -13,40 +15,203 @@ export class DirectApiProvider implements IAiProvider {
   public readonly apiKey: string;
   public readonly baseUrl: string;
   public readonly model: string;
+  public readonly visionModel: string;
   public readonly timeoutMs: number;
 
   constructor(config?: AiProviderConfig) {
     this.apiKey =
       config?.apiKey ||
+      process.env.FIREWORKS_API_KEY ||
       process.env.AI_API_KEY ||
       process.env.OPENAI_API_KEY ||
       "";
+
     this.baseUrl =
       config?.baseUrl ||
+      process.env.FIREWORKS_BASE_URL ||
       process.env.AI_API_BASE_URL ||
-      "https://api.openai.com/v1";
-    this.model = config?.model || process.env.AI_MODEL || "gpt-4o";
+      "https://api.fireworks.ai/inference/v1";
+
+    this.model =
+      config?.model ||
+      process.env.FIREWORKS_MODEL ||
+      process.env.AI_MODEL ||
+      "accounts/fireworks/models/deepseek-v3";
+
+    this.visionModel =
+      process.env.FIREWORKS_VISION_MODEL ||
+      "accounts/fireworks/models/llama-v3p2-11b-vision-instruct";
+
     this.timeoutMs =
       config?.timeoutMs ||
-      (process.env.AI_TIMEOUT_MS ? Number(process.env.AI_TIMEOUT_MS) : 60000);
+      (process.env.AI_TIMEOUT_MS ? Number(process.env.AI_TIMEOUT_MS) : 90000);
   }
 
   public getProviderName(): string {
-    return "direct_api";
+    return "api";
   }
 
   /**
-   * Realiza una petición HTTP POST a un endpoint compatible con OpenAI Chat Completions
+   * Convierte una ruta de imagen local o un buffer a un Data URL Base64
    */
-  public async generatePatternDna(prompt: string, imagePath?: string): Promise<PatternDna> {
+  private resolveImageDataUrl(imagePath: string): string {
+    if (imagePath.startsWith("data:image/")) {
+      return imagePath;
+    }
+
+    try {
+      const resolvedPath = path.resolve(imagePath);
+      if (!fs.existsSync(resolvedPath)) {
+        throw new Error(`Image file not found: ${resolvedPath}`);
+      }
+
+      const fileBuffer = fs.readFileSync(resolvedPath);
+      const ext = path.extname(resolvedPath).toLowerCase().replace(".", "");
+      const mimeType =
+        ext === "png"
+          ? "image/png"
+          : ext === "jpg" || ext === "jpeg"
+          ? "image/jpeg"
+          : ext === "webp"
+          ? "image/webp"
+          : "image/png";
+
+      return `data:${mimeType};base64,${fileBuffer.toString("base64")}`;
+    } catch (err) {
+      throw new Error(
+        `Failed to read image file '${imagePath}': ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
+    }
+  }
+
+  /**
+   * Determina si el modelo configurado es de visión nativa
+   */
+  private isNativeVisionModel(modelName: string): boolean {
+    const lower = modelName.toLowerCase();
+    return (
+      lower.includes("vision") ||
+      lower.includes("-vl") ||
+      lower.includes("vl2") ||
+      lower.includes("gpt-4o") ||
+      lower.includes("gemini")
+    );
+  }
+
+  /**
+   * Analiza una imagen de prenda con el modelo de visión de Fireworks para extraer especificaciones técnicas
+   */
+  private async analyzeImageWithVision(
+    imageDataUrl: string,
+    userPrompt: string
+  ): Promise<string> {
+    const endpoint = `${this.baseUrl.replace(/\/+$/, "")}/chat/completions`;
+
+    const visionSystemPrompt =
+      "You are an expert technical fashion designer and master pattern maker. " +
+      "Analyze this garment image/sketch and provide a precise, structured breakdown of: " +
+      "1. Garment category (top, bottom, dress, vest, or coordinated 2-piece set). " +
+      "2. Neckline depth and silhouette (v-neck, crew, scoop, hoodie). " +
+      "3. Shoulder and armhole fit (set-in, drop-shoulder, raglan, sleeveless). " +
+      "4. Torso/leg ease (fitted, regular, oversized, baggy). " +
+      "5. Hem finishing (straight, curved tail, double triangular points, cuff). " +
+      "6. Pockets, plackets, closures (buttons count, zipper, waistband). " +
+      "7. Fabric texture, drape and colors.";
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.visionModel,
+          temperature: 0.1,
+          max_tokens: 1000,
+          messages: [
+            { role: "system", content: visionSystemPrompt },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: userPrompt
+                    ? `Context from user: "${userPrompt}". Analyze the design details of this garment for pattern making:`
+                    : "Analyze the design details of this garment for pattern making:",
+                },
+                {
+                  type: "image_url",
+                  image_url: { url: imageDataUrl },
+                },
+              ],
+            },
+          ],
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => "");
+        throw new Error(
+          `Vision Pre-Analysis HTTP ${res.status} ${res.statusText}: ${errorText}`
+        );
+      }
+
+      const data = (await res.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      return data.choices?.[0]?.message?.content?.trim() || "";
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /**
+   * Genera el ADN Paramétrico a partir de un prompt descriptivo y una imagen opcional
+   */
+  public async generatePatternDna(
+    prompt: string,
+    imagePath?: string
+  ): Promise<PatternDna> {
     if (!this.apiKey || this.apiKey.trim().length === 0) {
       throw new Error(
-        "[DirectApiProvider] AI_API_KEY or OPENAI_API_KEY is required for DirectApiProvider."
+        "[DirectApiProvider] No se encontró FIREWORKS_API_KEY ni AI_API_KEY configurada. " +
+          "Por favor añade FIREWORKS_API_KEY=tu_clave en el archivo .env o usa el proveedor 'mock'."
       );
     }
 
+    let effectivePrompt = prompt;
+    let imageDataUrl: string | undefined;
+
+    if (imagePath && imagePath.trim().length > 0) {
+      imageDataUrl = this.resolveImageDataUrl(imagePath.trim());
+
+      // Si el modelo principal no es de visión (ej. DeepSeek-V3 / DeepSeek-R1), realizamos pre-análisis de visión
+      if (!this.isNativeVisionModel(this.model)) {
+        try {
+          const visualAnalysis = await this.analyzeImageWithVision(
+            imageDataUrl,
+            prompt
+          );
+          if (visualAnalysis) {
+            effectivePrompt = `${prompt}\n\n[ANÁLISIS TÉCNICO DE IMAGEN DE REFERENCIA]:\n${visualAnalysis}`;
+          }
+        } catch (visionErr) {
+          console.warn(
+            `[DirectApiProvider] Advertencia: El análisis de visión falló (${visionErr}). Continuando con prompt de texto.`
+          );
+        }
+      }
+    }
+
     const systemPrompt = PromptBuilder.buildSystemPrompt();
-    const userPrompt = PromptBuilder.buildUserPrompt(prompt, imagePath);
+    const userPrompt = PromptBuilder.buildUserPrompt(effectivePrompt, undefined);
 
     const endpoint = `${this.baseUrl.replace(/\/+$/, "")}/chat/completions`;
 
@@ -54,6 +219,15 @@ export class DirectApiProvider implements IAiProvider {
     const timeoutHandle = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
+      // Si el modelo principal soporta visión nativa y hay imagen, enviar la imagen directamente en el payload
+      let userMessageContent: any = userPrompt;
+      if (imageDataUrl && this.isNativeVisionModel(this.model)) {
+        userMessageContent = [
+          { type: "text", text: userPrompt },
+          { type: "image_url", image_url: { url: imageDataUrl } },
+        ];
+      }
+
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -62,10 +236,11 @@ export class DirectApiProvider implements IAiProvider {
         },
         body: JSON.stringify({
           model: this.model,
-          temperature: 0.2,
+          temperature: 0.15,
+          max_tokens: 4096,
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
+            { role: "user", content: userMessageContent },
           ],
         }),
         signal: controller.signal,

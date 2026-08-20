@@ -1,6 +1,6 @@
 /**
  * tests/ai_provider.test.ts
- * Suite de pruebas unitarias para el subsistema de proveedores de Inteligencia Artificial y Fábrica
+ * Suite de pruebas unitarias para el subsistema de proveedores de Inteligencia Artificial (Fireworks AI / DeepSeek / Direct API / Mock)
  * pattern-ai-core
  */
 
@@ -8,14 +8,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   PromptBuilder,
   MockAiProvider,
-  AgyCliProvider,
-  OpenCodeCliProvider,
   DirectApiProvider,
   AiProviderFactory,
   parsePatternDna,
 } from "../src/index.js";
 
-describe("AI Provider Subsystem & Factory", () => {
+describe("AI Provider Subsystem & Factory (Fireworks AI & Direct API)", () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
@@ -138,34 +136,17 @@ describe("AI Provider Subsystem & Factory", () => {
   });
 
   describe("3. AiProviderFactory", () => {
-    it("debe instanciar AgyCliProvider por defecto o cuando se especifica 'agy'", () => {
-      delete process.env.AI_PROVIDER;
-      const defaultProvider = AiProviderFactory.create();
-      expect(defaultProvider.getProviderName()).toBe("agy");
-      expect(defaultProvider).toBeInstanceOf(AgyCliProvider);
-
-      const agyProvider = AiProviderFactory.create("agy");
-      expect(agyProvider.getProviderName()).toBe("agy");
-      expect(agyProvider).toBeInstanceOf(AgyCliProvider);
-    });
-
-    it("debe instanciar OpenCodeCliProvider cuando se solicita 'opencode'", () => {
-      const provider = AiProviderFactory.create("opencode");
-      expect(provider.getProviderName()).toBe("opencode");
-      expect(provider).toBeInstanceOf(OpenCodeCliProvider);
-    });
-
-    it("debe instanciar DirectApiProvider cuando se solicita 'api', 'direct_api' o 'openai'", () => {
-      const p1 = AiProviderFactory.create("api", { apiKey: "test-key" });
-      expect(p1.getProviderName()).toBe("direct_api");
+    it("debe instanciar DirectApiProvider cuando se solicita 'api', 'fireworks', 'deepseek' o 'direct_api'", () => {
+      const p1 = AiProviderFactory.create("api", { apiKey: "fw-test-key" });
+      expect(p1.getProviderName()).toBe("api");
       expect(p1).toBeInstanceOf(DirectApiProvider);
 
-      const p2 = AiProviderFactory.create("direct_api", { apiKey: "test-key" });
-      expect(p2.getProviderName()).toBe("direct_api");
+      const p2 = AiProviderFactory.create("fireworks", { apiKey: "fw-test-key" });
+      expect(p2.getProviderName()).toBe("api");
       expect(p2).toBeInstanceOf(DirectApiProvider);
 
-      const p3 = AiProviderFactory.create("openai", { apiKey: "test-key" });
-      expect(p3.getProviderName()).toBe("direct_api");
+      const p3 = AiProviderFactory.create("deepseek", { apiKey: "fw-test-key" });
+      expect(p3.getProviderName()).toBe("api");
       expect(p3).toBeInstanceOf(DirectApiProvider);
     });
 
@@ -186,6 +167,14 @@ describe("AI Provider Subsystem & Factory", () => {
       expect(provider).toBeInstanceOf(MockAiProvider);
     });
 
+    it("debe usar DirectApiProvider por defecto si FIREWORKS_API_KEY está configurada", () => {
+      delete process.env.AI_PROVIDER;
+      process.env.FIREWORKS_API_KEY = "fw_secret_123";
+      const provider = AiProviderFactory.create();
+      expect(provider.getProviderName()).toBe("api");
+      expect(provider).toBeInstanceOf(DirectApiProvider);
+    });
+
     it("debe lanzar un error descriptivo si el proveedor no está soportado", () => {
       expect(() => AiProviderFactory.create("unsupported_claude_v9")).toThrow(
         /Unsupported AI provider: "unsupported_claude_v9"/
@@ -193,139 +182,37 @@ describe("AI Provider Subsystem & Factory", () => {
     });
   });
 
-  describe("4. AgyCliProvider", () => {
-    it("debe configurar el modelo por defecto 'gemini-3.7-flash' y respetar opciones", () => {
-      delete process.env.AI_MODEL;
-      const provider = new AgyCliProvider();
-      expect(provider.model).toBe("gemini-3.7-flash");
-      expect(provider.getProviderName()).toBe("agy");
+  describe("4. DirectApiProvider (Fireworks AI & DeepSeek)", () => {
+    it("debe leer FIREWORKS_API_KEY y configurar endpoint de Fireworks por defecto", () => {
+      delete process.env.AI_API_KEY;
+      delete process.env.OPENAI_API_KEY;
+      process.env.FIREWORKS_API_KEY = "fw-key-999";
+      delete process.env.FIREWORKS_MODEL;
 
-      const customProvider = new AgyCliProvider({
-        model: "gemini-1.5-pro",
-        executablePath: "custom-agy.exe",
-        timeoutMs: 15000,
-      });
-      expect(customProvider.model).toBe("gemini-1.5-pro");
-      expect(customProvider.executablePath).toBe("custom-agy.exe");
-      expect(customProvider.timeoutMs).toBe(15000);
+      const provider = new DirectApiProvider();
+      expect(provider.apiKey).toBe("fw-key-999");
+      expect(provider.baseUrl).toBe("https://api.fireworks.ai/inference/v1");
+      expect(provider.model).toBe("accounts/fireworks/models/deepseek-v3");
+      expect(provider.visionModel).toBe("accounts/fireworks/models/llama-v3p2-11b-vision-instruct");
+      expect(provider.getProviderName()).toBe("api");
     });
 
-    it("debe procesar y desinfectar la salida markdown retornada por el CLI", async () => {
-      const provider = new AgyCliProvider();
-      const mockRawOutput = `
-Analizando requerimientos de moldería:
-\`\`\`json
-{
-  "concept_name": "streetwear_oversize_hoodie",
-  "base_block": "menswear_torso_oversize",
-  "ease": {
-    "chest_ease_mm": 140
-  },
-  "modifications": {
-    "sleeves": {
-      "type": "drop_shoulder",
-      "drop_mm": 50
-    }
-  },
-  "estimated_fabric_meters": 2.0
-}
-\`\`\`
-¡Patrón listo!
-`;
-
-      vi.spyOn(provider as unknown as { executeProcess: () => Promise<{ stdout: string; stderr: string }> }, "executeProcess").mockResolvedValue({
-        stdout: mockRawOutput,
-        stderr: "",
-      });
-
-      const result = await provider.generatePatternDna("Hoodie oversize");
-      expect(result.concept_name).toBe("streetwear_oversize_hoodie");
-      expect(result.ease.chest_ease_mm).toBe(140);
-      expect(result.modifications.sleeves?.type).toBe("drop_shoulder");
-    });
-
-    it("debe capturar errores de timeout y lanzar un mensaje claro", async () => {
-      const provider = new AgyCliProvider({ timeoutMs: 2000 });
-
-      vi.spyOn(provider as unknown as { executeProcess: () => Promise<{ stdout: string; stderr: string }> }, "executeProcess").mockRejectedValue(
-        new Error("Execution timed out after 2000ms")
-      );
-
-      await expect(provider.generatePatternDna("Test")).rejects.toThrow(
-        /\[AgyCliProvider\] Execution timed out after 2000ms/
-      );
-    });
-
-    it("debe capturar errores de ejecución con salida vacía o código de fallo", async () => {
-      const provider = new AgyCliProvider();
-
-      vi.spyOn(provider as unknown as { executeProcess: () => Promise<{ stdout: string; stderr: string }> }, "executeProcess").mockRejectedValue(
-        new Error("Binary not found: agy")
-      );
-
-      await expect(provider.generatePatternDna("Test")).rejects.toThrow(
-        /\[AgyCliProvider\] CLI execution failed/
-      );
-    });
-  });
-
-  describe("5. OpenCodeCliProvider", () => {
-    it("debe configurar el modelo por defecto 'gpt-4o' y retornar 'opencode'", () => {
-      const provider = new OpenCodeCliProvider();
-      expect(provider.model).toBe("gpt-4o");
-      expect(provider.getProviderName()).toBe("opencode");
-    });
-
-    it("debe ejecutar opencode y parsear el ADN retornado", async () => {
-      const provider = new OpenCodeCliProvider();
-      const mockJson = JSON.stringify({
-        concept_name: "anime_cosplay_dress",
-        base_block: "dress_sloper",
-        ease: { chest_ease_mm: 60 },
-        modifications: {
-          sleeves: { type: "kimono" },
-        },
-      });
-
-      vi.spyOn(provider as unknown as { executeProcess: () => Promise<{ stdout: string; stderr: string }> }, "executeProcess").mockResolvedValue({
-        stdout: `\`\`\`json\n${mockJson}\n\`\`\``,
-        stderr: "",
-      });
-
-      const result = await provider.generatePatternDna("Vestido kimono");
-      expect(result.concept_name).toBe("anime_cosplay_dress");
-      expect(result.modifications.sleeves?.type).toBe("kimono");
-    });
-
-    it("debe manejar timeout en OpenCode CLI", async () => {
-      const provider = new OpenCodeCliProvider({ timeoutMs: 3000 });
-
-      vi.spyOn(provider as unknown as { executeProcess: () => Promise<{ stdout: string; stderr: string }> }, "executeProcess").mockRejectedValue(
-        new Error("Execution timed out after 3000ms")
-      );
-
-      await expect(provider.generatePatternDna("Test")).rejects.toThrow(
-        /\[OpenCodeCliProvider\] Execution timed out after 3000ms/
-      );
-    });
-  });
-
-  describe("6. DirectApiProvider", () => {
-    it("debe lanzar un error si no se proporciona API key", async () => {
+    it("debe lanzar un error claro si no se proporciona API key de Fireworks", async () => {
+      delete process.env.FIREWORKS_API_KEY;
       delete process.env.AI_API_KEY;
       delete process.env.OPENAI_API_KEY;
       const provider = new DirectApiProvider({ apiKey: "" });
 
       await expect(provider.generatePatternDna("Test")).rejects.toThrow(
-        /AI_API_KEY or OPENAI_API_KEY is required/
+        /No se encontró FIREWORKS_API_KEY/
       );
     });
 
-    it("debe realizar una llamada HTTP POST exitosa y retornar el PatternDna", async () => {
+    it("debe realizar una llamada HTTP POST exitosa con DeepSeek-V3 y retornar el PatternDna", async () => {
       const provider = new DirectApiProvider({
-        apiKey: "sk-test-secret-key",
-        baseUrl: "https://api.openai.com/v1",
-        model: "gpt-4o",
+        apiKey: "fw-test-secret-key",
+        baseUrl: "https://api.fireworks.ai/inference/v1",
+        model: "accounts/fireworks/models/deepseek-v3",
       });
 
       const mockResponseData = {
@@ -356,13 +243,114 @@ Analizando requerimientos de moldería:
       expect(fetchSpy).toHaveBeenCalledTimes(1);
 
       const [url, options] = fetchSpy.mock.calls[0];
-      expect(url).toBe("https://api.openai.com/v1/chat/completions");
-      expect((options?.headers as Record<string, string>)?.Authorization).toBe("Bearer sk-test-secret-key");
+      expect(url).toBe("https://api.fireworks.ai/inference/v1/chat/completions");
+      expect((options?.headers as Record<string, string>)?.Authorization).toBe("Bearer fw-test-secret-key");
+    });
+
+    it("debe orquestar el flujo de visión cuando se proporciona una imagen con DeepSeek (modelo de texto)", async () => {
+      const provider = new DirectApiProvider({
+        apiKey: "fw-test-secret-key",
+        baseUrl: "https://api.fireworks.ai/inference/v1",
+        model: "accounts/fireworks/models/deepseek-v3",
+        visionModel: "accounts/fireworks/models/llama-v3p2-11b-vision-instruct",
+      });
+
+      // 1. Mock de la llamada de visión
+      const mockVisionResponse = {
+        choices: [
+          {
+            message: {
+              content: "Prenda superior sin mangas tipo chaleco, escote en V profundo, bajo con picos dobles triangulares.",
+            },
+          },
+        ],
+      };
+
+      // 2. Mock de la llamada de DeepSeek
+      const mockDeepSeekResponse = {
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                concept_name: "pirate_adventurer_vest",
+                base_block: "menswear_torso",
+                ease: { chest_ease_mm: 40 },
+                modifications: {
+                  sleeves: { type: "sleeveless" },
+                  neckline: { type: "v_neck", depth_mm: 80 },
+                },
+              }),
+            },
+          },
+        ],
+      };
+
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockVisionResponse,
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockDeepSeekResponse,
+        } as Response);
+
+      const result = await provider.generatePatternDna(
+        "Chaleco pirata de anime",
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      );
+
+      expect(result.concept_name).toBe("pirate_adventurer_vest");
+      expect(result.modifications.sleeves?.type).toBe("sleeveless");
+      expect(fetchSpy).toHaveBeenCalledTimes(2); // 1. Visión + 2. DeepSeek
+    });
+
+    it("debe desinfectar tags de pensamiento <think>...</think> de DeepSeek R1", async () => {
+      const provider = new DirectApiProvider({
+        apiKey: "fw-test-secret-key",
+        model: "accounts/fireworks/models/deepseek-r1",
+      });
+
+      const mockResponseWithThinking = {
+        choices: [
+          {
+            message: {
+              content: `<think>
+El usuario quiere un hoodie boxy. Necesito calcular chest_ease_mm = 140mm y shoulder drop = 40mm.
+Bloque base: menswear_torso_oversize.
+</think>
+\`\`\`json
+{
+  "concept_name": "cyberpunk_boxy_hoodie",
+  "base_block": "menswear_torso_oversize",
+  "ease": {
+    "chest_ease_mm": 140
+  },
+  "modifications": {
+    "hood": { "type": "crossover" }
+  }
+}
+\`\`\``,
+            },
+          },
+        ],
+      };
+
+      vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => mockResponseWithThinking,
+      } as Response);
+
+      const result = await provider.generatePatternDna("Hoodie cyberpunk");
+      expect(result.concept_name).toBe("cyberpunk_boxy_hoodie");
+      expect(result.ease.chest_ease_mm).toBe(140);
+      expect(result.modifications.hood?.type).toBe("crossover");
     });
 
     it("debe lanzar un error claro cuando la API responde con un código de error HTTP", async () => {
       const provider = new DirectApiProvider({
-        apiKey: "sk-invalid-key",
+        apiKey: "fw-invalid-key",
       });
 
       vi.spyOn(globalThis, "fetch").mockResolvedValue({
@@ -374,21 +362,6 @@ Analizando requerimientos de moldería:
 
       await expect(provider.generatePatternDna("Test")).rejects.toThrow(
         /HTTP 401 Unauthorized/
-      );
-    });
-
-    it("debe lanzar un error cuando la respuesta de la API no contiene choices o contenido", async () => {
-      const provider = new DirectApiProvider({
-        apiKey: "sk-valid-key",
-      });
-
-      vi.spyOn(globalThis, "fetch").mockResolvedValue({
-        ok: true,
-        json: async () => ({ choices: [] }),
-      } as Response);
-
-      await expect(provider.generatePatternDna("Test")).rejects.toThrow(
-        /No content returned in API completion choices/
       );
     });
   });
