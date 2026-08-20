@@ -528,6 +528,9 @@ function initTabs() {
       if (viewer3dInstance) {
         setTimeout(() => {
           viewer3dInstance.handleResize();
+          if (state.activeConceptSlug && (!viewer3dInstance.currentModelUrl || !viewer3dInstance.currentModelUrl.includes(state.activeConceptSlug))) {
+            viewer3dInstance.loadModel(`/api/patterns/${state.activeConceptSlug}/glb`);
+          }
         }, 50);
       }
     } else if (tabKey === 'techpack') {

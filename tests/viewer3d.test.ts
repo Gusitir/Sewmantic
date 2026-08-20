@@ -225,4 +225,51 @@ describe('Visor 3D WebGL, Streaming .GLB y Empaquetado Comercial 3D (T-24)', () 
       expect(meta.description).toContain('3D interactive model');
     });
   });
+
+  // =========================================================================
+  // 5. Motor WebGL Nativo Autónomo & Shaders PBR
+  // =========================================================================
+  describe('5. Motor WebGL Nativo Autónomo y Parseo de Malla 3D Directo', () => {
+    it('viewer3d.js contiene la implementación completa de shaders PBR y matemáticas matriciales nativas', async () => {
+      const res = await fetch(`${baseUrl}/viewer3d.js`);
+      const jsText = await res.text();
+
+      // Shaders PBR y matrices 4x4
+      expect(jsText).toContain('VERTEX_SHADER');
+      expect(jsText).toContain('FRAGMENT_SHADER');
+      expect(jsText).toContain('uKeyLightDir');
+      expect(jsText).toContain('uFillLightDir');
+      expect(jsText).toContain('uRimLightDir');
+      expect(jsText).toContain('uBaseColor');
+      expect(jsText).toContain('uRoughness');
+      expect(jsText).toContain('uMetallic');
+      expect(jsText).toContain('mat4');
+      expect(jsText).toContain('NativeWebGlEngine');
+    });
+
+    it('parseGlbBuffer extrae posiciones, normales, límites y conteos de un archivo .glb real', async () => {
+      const conceptSlug = 'streetwear_oversize_hoodie';
+      const res = await fetch(`${baseUrl}/api/patterns/${conceptSlug}/glb`);
+      const arrayBuf = await res.arrayBuffer();
+
+      // Importar módulo viewer3d.js local
+      const { parseGlbBuffer: parseFn } = await import('../src/server/public/viewer3d.js');
+
+      const parsed = await parseFn(arrayBuf);
+      expect(parsed).toBeDefined();
+      expect(parsed.positions).toBeDefined();
+      expect(parsed.positions.length).toBeGreaterThan(0);
+      expect(parsed.normals).toBeDefined();
+      expect(parsed.normals.length).toBe(parsed.positions.length);
+      expect(parsed.vertexCount).toBeGreaterThan(0);
+      expect(parsed.triangleCount).toBeGreaterThan(0);
+      expect(parsed.bounds).toBeDefined();
+      expect(parsed.bounds.minX).toBeLessThan(parsed.bounds.maxX);
+      expect(parsed.center).toHaveLength(3);
+      expect(parsed.radius).toBeGreaterThan(0);
+      expect(parsed.material).toBeDefined();
+      expect(parsed.material.baseColor).toHaveLength(3);
+    });
+  });
 });
+

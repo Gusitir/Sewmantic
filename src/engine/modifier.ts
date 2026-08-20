@@ -2033,28 +2033,10 @@ export function modifyPattern(
   const neckWidthDelta = neckMod.width_mm ?? 0;
 
   const baseNeckWidth = measurements.neck_circumference_mm / 6 + 10;
-  const neckWidth =
+  const rawNeckWidth =
     baseNeckWidth +
     neckWidthDelta +
     (neckMod.type === 'crossover_hood' && neckWidthDelta === 0 ? 15 : 0);
-
-  let frontNeckDepth: number;
-  if (neckMod.type === 'v_neck') {
-    frontNeckDepth = measurements.neck_circumference_mm / 6 + 45 + neckDepthDelta;
-  } else if (neckMod.type === 'crossover_hood') {
-    frontNeckDepth =
-      measurements.neck_circumference_mm / 6 + 35 + (neckDepthDelta > 0 ? neckDepthDelta : 15);
-  } else if (neckMod.type === 'scoop') {
-    frontNeckDepth = measurements.neck_circumference_mm / 6 + 50 + neckDepthDelta;
-  } else {
-    // crew, hood, etc.
-    frontNeckDepth = measurements.neck_circumference_mm / 6 + 20 + neckDepthDelta;
-  }
-
-  const backNeckDepth =
-    25 +
-    (neckDepthDelta > 0 ? neckDepthDelta * 0.25 : 0) +
-    (neckMod.type === 'crossover_hood' ? 10 : 0);
 
   // =========================================================================
   // 3. TRANSFORMACIONES DE HOMBRO Y SISAS (SHOULDER & SLEEVE MODIFICATIONS)
@@ -2069,10 +2051,22 @@ export function modifyPattern(
   const halfShoulder =
     measurements.shoulder_to_shoulder_mm / 2 + shoulderEase / 2 + shoulderDropMm;
 
+  // Invariante Anatómico de Hombro:
+  const minShoulderStrap = 40;
+  const maxNeckWidth = halfShoulder - minShoulderStrap;
+  const neckWidth = Math.max(
+    measurements.neck_circumference_mm / 6 + 5,
+    Math.min(rawNeckWidth, maxNeckWidth)
+  );
+
+  // Caída de Hombro Positiva Garantizada:
   const shoulderSlopeRad = (measurements.shoulder_slope_deg * Math.PI) / 180;
-  const baseShoulderSlopeDrop = (halfShoulder - neckWidth) * Math.tan(shoulderSlopeRad);
-  const shoulderDrop =
-    baseShoulderSlopeDrop + (isDropShoulder ? shoulderDropMm * 0.18 : 0);
+  const shoulderSpan = Math.max(minShoulderStrap, halfShoulder - neckWidth);
+  const baseShoulderSlopeDrop = Math.max(18, shoulderSpan * Math.tan(shoulderSlopeRad));
+  const shoulderDrop = Math.max(
+    18,
+    baseShoulderSlopeDrop + (isDropShoulder ? shoulderDropMm * 0.18 : 0)
+  );
 
   // Profundidad de sisa adaptada a la caída de hombro y holgura de pecho
   const armholeDepth =
@@ -2104,6 +2098,30 @@ export function modifyPattern(
   const hemFrontDrop = isCurvedTail ? (hemMod.drop_mm ?? 35) : 0;
   const hemBackDrop = isCurvedTail ? (hemMod.back_drop_mm ?? (hemMod.drop_mm ? hemMod.drop_mm + 15 : 50)) : 0;
 
+  // Límites de Escote V y Profundidades de Escote
+  let frontNeckDepth: number;
+  if (neckMod.type === 'v_neck') {
+    frontNeckDepth = measurements.neck_circumference_mm / 6 + 45 + neckDepthDelta;
+  } else if (neckMod.type === 'crossover_hood') {
+    frontNeckDepth =
+      measurements.neck_circumference_mm / 6 + 35 + (neckDepthDelta > 0 ? neckDepthDelta : 15);
+  } else if (neckMod.type === 'scoop') {
+    frontNeckDepth = measurements.neck_circumference_mm / 6 + 50 + neckDepthDelta;
+  } else {
+    // crew, hood, etc.
+    frontNeckDepth = measurements.neck_circumference_mm / 6 + 20 + neckDepthDelta;
+  }
+
+  const maxFrontNeckDepth = Math.min(armholeDepth + 40, frontLength * 0.55);
+  frontNeckDepth = Math.min(frontNeckDepth, maxFrontNeckDepth);
+
+  const rawBackNeckDepth =
+    25 +
+    (neckDepthDelta > 0 ? neckDepthDelta * 0.25 : 0) +
+    (neckMod.type === 'crossover_hood' ? 10 : 0);
+  const maxBackNeckDepth = Math.min(armholeDepth * 0.5, backLength * 0.35);
+  const backNeckDepth = Math.min(rawBackNeckDepth, maxBackNeckDepth);
+
   // =========================================================================
   // 5. CONSTRUCCIÓN GEOMÉTRICA DE TORSO DELANTERO (FRONT TORSO)
   // =========================================================================
@@ -2123,8 +2141,8 @@ export function modifyPattern(
   let frontNeckCp1: Point2D;
   let frontNeckCp2: Point2D;
   if (neckMod.type === 'v_neck') {
-    frontNeckCp1 = createPoint(neckWidth * 0.35, frontNeckDepth * 0.85);
-    frontNeckCp2 = createPoint(neckWidth * 0.75, frontNeckDepth * 0.35);
+    frontNeckCp1 = createPoint(neckWidth * 0.30, frontNeckDepth * 0.75);
+    frontNeckCp2 = createPoint(neckWidth * 0.70, frontNeckDepth * 0.30);
   } else {
     frontNeckCp1 = createPoint(neckWidth * 0.45, frontNeckDepth);
     frontNeckCp2 = createPoint(neckWidth, frontNeckDepth * 0.45);
@@ -2260,7 +2278,7 @@ export function modifyPattern(
   const back_neck_shoulder = createPoint(neckWidth, 0, 'neck_shoulder');
   const back_shoulder_tip = createPoint(
     halfShoulder + 4,
-    shoulderDrop - 4,
+    Math.max(14, shoulderDrop - 4),
     'shoulder_tip'
   );
   const back_armhole_pitch = createPoint(

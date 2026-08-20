@@ -794,3 +794,83 @@ describe('Multi-Size Trouser Graduation (modifyPatternMultiSize)', () => {
     expect(xxxlFront.width_mm).toBeGreaterThan(mFront.width_mm);
   });
 });
+
+describe('Anatomic Shoulder & V-Neck Geometrical Invariants', () => {
+  const deepVNeckDna: PatternDna = {
+    concept_name: 'deep_v_neck_tshirt',
+    base_block: 'menswear_torso_fitted',
+    ease: {
+      chest_ease_mm: 40,
+      waist_ease_mm: 30,
+      shoulder_ease_mm: 10,
+    },
+    modifications: {
+      neckline: {
+        type: 'v_neck',
+        depth_mm: 120,
+        width_mm: 80,
+      },
+      sleeves: {
+        type: 'set_in',
+      },
+    },
+  };
+
+  it('guarantees minShoulderStrap >= 40mm and positive shoulder drop >= 18mm on deep/wide V-neck', () => {
+    const result = modifyPattern(deepVNeckDna, 'M');
+    const front = result.parts.front;
+    const back = result.parts.back;
+
+    expect(front).toBeDefined();
+    expect(back).toBeDefined();
+
+    // 1. Invariante de hombro útil (halfShoulder - neckWidth >= 40mm)
+    const frontShoulderSpan = front.points.shoulder_tip.x - front.points.neck_shoulder.x;
+    expect(frontShoulderSpan).toBeGreaterThanOrEqual(40);
+
+    // 2. Caída positiva de hombro delantero (shoulderDrop >= 18mm)
+    expect(front.points.shoulder_tip.y).toBeGreaterThanOrEqual(18);
+    expect(front.points.shoulder_tip.y).toBeGreaterThan(front.points.neck_shoulder.y);
+
+    // 3. Caída positiva de hombro de espalda (shoulderDrop >= 14mm)
+    expect(back.points.shoulder_tip.y).toBeGreaterThanOrEqual(14);
+    expect(back.points.shoulder_tip.y).toBeGreaterThan(back.points.neck_shoulder.y);
+
+    // 4. Límite de profundidad de escote V (no sobrepasa sisa + 40mm ni 55% de frontLength)
+    const armholeDepth = front.points.armhole_bottom.y;
+    expect(front.points.neck_center.y).toBeLessThanOrEqual(armholeDepth + 40);
+  });
+
+  it('guarantees positive anatomic invariants across all 7 standard sizes (XS - 3XL) with extreme V-neck', () => {
+    const extremeVNeckDna: PatternDna = {
+      concept_name: 'extreme_v_neck',
+      base_block: 'menswear_torso_fitted',
+      ease: { chest_ease_mm: 20, shoulder_ease_mm: 0 },
+      modifications: {
+        neckline: {
+          type: 'v_neck',
+          depth_mm: 250,
+          width_mm: 150,
+        },
+      },
+    };
+
+    for (const size of STANDARD_SIZES) {
+      const res = modifyPattern(extremeVNeckDna, size);
+      const front = res.parts.front;
+      const back = res.parts.back;
+
+      // Ancho de tirante / hombro mínimo garantizado
+      const frontStrap = front.points.shoulder_tip.x - front.points.neck_shoulder.x;
+      expect(frontStrap).toBeGreaterThanOrEqual(40);
+
+      // Caída positiva (hacia abajo, sin picos / cuernos invertidos)
+      expect(front.points.shoulder_tip.y).toBeGreaterThanOrEqual(18);
+      expect(back.points.shoulder_tip.y).toBeGreaterThanOrEqual(14);
+
+      // Profundidad de escote limitada anatómicamente
+      expect(front.points.neck_center.y).toBeLessThanOrEqual(front.points.armhole_bottom.y + 40);
+    }
+  });
+});
+
