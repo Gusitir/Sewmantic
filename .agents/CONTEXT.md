@@ -421,6 +421,23 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
 - Evidence: Commit `[T-22] implement dress, anime haori kimono and skirt parametric pattern modifiers and presets` (hash `a0c2ed4`).
 - Next: Despachar tarea `[T-23] Puente Automatizado Blender Headless para Malla 3D y Exportación .glb`.
 
+## 2026-08-20T17:59:00-05:00 - TASK T-23 AUDIT: BLENDER HEADLESS BRIDGE & GLTF 2.0 3D MESH GENERATOR (Arquitecto / Ingeniero)
+
+- Decision and reason: El Ingeniero implementó el motor de generación 3D paramétrica anatómica y exportador binario estándar glTF 2.0 (`.glb`) con materiales PBR textiles y soporte de Blender CLI headless.
+- Features Implemented:
+  1. `src/engine/blender_bridge.ts`: Construcción de mallas 3D anatómicas convexas para tops, pantalones, vestidos y kimonos; cálculo de normales suaves y mapeo UV; ensamblador binario glTF 2.0 (`magic: 0x46546C67`, version 2, JSON PBR chunk y BIN geometric buffer chunk); presets textiles PBR (Lino, Denim, Algodón, Seda, Cuero, Lana); detección automática de Blender.
+  2. `scripts/export_glb_headless.py`: Script de automatización en Python para Blender (`bpy`) con flags CLI.
+  3. `scripts/test_blender_export.js`: Script determinista verificando generación de `.glb` (50 a 195 KB) con magic bytes y validación completa de buffers.
+  4. `src/index.ts`: Subcomando `pattern-ai-core export-3d <dna.json>`.
+  5. `tests/blender.test.ts`: 12 pruebas unitarias cubriendo parseo de colores, chunks binarios glTF 2.0 y materiales PBR.
+- Verification:
+  - 459/459 tests unitarios pasando al 100% en Vitest (16/16 suites).
+  - Compilación `tsc` limpia sin errores.
+- Verdict: **APTO**.
+- Evidence: Commit `[T-23] implement headless Blender bridge and native glTF 2.0 binary 3D garment mesh generator` (hash `176f724`).
+- Next: Despachar tarea `[T-24] Integración del Visor 3D WebGL en Web Studio y Empaquetado de Assets 3D`.
+
+
 
 
 

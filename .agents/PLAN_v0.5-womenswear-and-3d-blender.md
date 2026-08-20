@@ -10,8 +10,8 @@ Assurance: Lean
 |---|---|---|---|---|:---:|
 | **T-21** | Sloper Base Femenino con Pinzas de Busto y Falda (`womenswear_bodice`, `skirt`) | Ingeniero | Obrero | `npm test` | ✅ DONE |
 | **T-22** | Modificador de Vestidos, Kimonos Anime/Haori y Faldas en ADN | Ingeniero | Obrero | `npm test` | ✅ DONE |
-| **T-23** | Puente Automatizado Blender Headless para Malla 3D y Exportación `.glb` | Ingeniero / Scripts | Obrero | `node scripts/test_blender_export.js` | 🟡 READY |
-| **T-24** | Integración del Visor 3D WebGL en Web Studio y Empaquetado de Assets 3D | Obrero | Ingeniero | `npm test && node dist/index.js` | ⚪ QUEUED |
+| **T-23** | Puente Automatizado Blender Headless para Malla 3D y Exportación `.glb` | Ingeniero / Scripts | Obrero | `node scripts/test_blender_export.js` | ✅ DONE |
+| **T-24** | Integración del Visor 3D WebGL en Web Studio y Empaquetado de Assets 3D | Obrero | Ingeniero | `npm test && node dist/index.js` | 🟡 READY |
 
 ---
 
@@ -51,6 +51,20 @@ Assurance: Lean
 ---
 
 ### T-23 - Puente Automatizado Blender Headless para Malla 3D y Exportación `.glb`
+
+- Status: done
+- Depends on: T-22
+- Scope: `scripts/build_vest_blender.py`, `scripts/export_glb_headless.py`, `src/engine/blender_bridge.ts`
+- Rol: Ingeniero / Scripts (Pipeline de simulación 3D headless).
+- Acceptance:
+  - [x] Script de Python/Blender ejecutable en modo headless (`blender -b -P ...`) y generador binario glTF 2.0 que exporta `.glb` ultra-optimizado (< 200 KB).
+  - [x] Presets de materiales PBR (Lino, Denim, Seda, Algodón).
+- Gates: `node scripts/test_blender_export.js`
+- Human checks: none
+
+---
+
+### T-24 - Integración del Visor 3D WebGL en Web Studio y Empaquetado de Assets 3D
 
 - Status: ready
 - Depends on: T-22
