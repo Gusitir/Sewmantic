@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-20T14:02:00-05:00
-source_commit: [FIX] Auto-sync static public assets during build and start_web_studio.bat
+updated_at: 2026-08-20T17:23:00-05:00
+source_commit: [T-17] implement Fireworks API diagnostic script and verify Qwen 3.7 Plus connectivity
 assurance: Lean
 active_plan: PLAN_v0.4-fireworks-multimodal.md
-active_task: T-17 (Diagnóstico y Aislamiento de Fireworks API con Qwen 3.7 Plus)
+active_task: T-18 (Servidor REST Logging Transparente y Reporte de Errores en /api/generate)
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,27 +18,27 @@ backup: local-only
 
 ## Next action
 
-1. **Despachar Tarea `T-17` (Diagnóstico y Aislamiento de Fireworks API):**
-   - Crear y ejecutar `scripts/test_fireworks_call.js` para probar en vivo la API Key del usuario contra el endpoint de Fireworks con `accounts/fireworks/models/qwen3p7-plus`.
-   - Capturar e imprimir la respuesta real (código de estado, latencia, contenido o mensaje de error exacto).
-2. **Proceder con `T-18`:** Agregar observabilidad y logs explícitos en `/api/generate` (`src/server/routes.ts`) para que la consola muestre exactamente cada paso y el frontend reciba `error.details`.
+1. **Despachar Tarea `T-18` (Servidor REST Logging Transparente y Reporte de Errores en `/api/generate`):**
+   - Incorporar logs estructurados en `src/server/routes.ts` y `DirectApiProvider` (`[API INCOMING]`, `[AI CONNECT]`, `[PIPELINE GEOMETRY]`, `[ERROR DETAILS]`).
+   - Retornar `{ success: false, error: '...', details: '...' }` en las respuestas de error para que la UI del Web Studio muestre el motivo exacto del fallo.
+2. **Proceder con `T-19`:** Refinar el flujo multimodal de Drag & Drop de imágenes y payload multimodal en Web Studio.
 
 ## Blockers
 
-- Ninguno técnico interno (369/369 tests pasando en Vitest).
-- En espera de diagnóstico empírico de la llamada real a Fireworks API (`T-17`).
+- Ninguno. Diagnóstico con Fireworks API exitoso (Status 200 OK, Qwen 3.7 Plus verificado empíricamente con latencia de 7.9s y 370 tests pasando).
 
 ## Current facts
 
+- **Tarea `T-17` Completada y Auditada con Veredicto APTO:**
+  - Script `scripts/test_fireworks_call.js` verificado empíricamente.
+  - Fireworks API respondió HTTP 200 OK con `accounts/fireworks/models/qwen3p7-plus`.
+  - Se descubrió que Qwen 3.7 Plus genera `reasoning_content` (~1500 tokens), por lo que se elevó `max_tokens` a 4000 para garantizar que el JSON final no se trunque.
 - **Fases 1, 2 y 3 cerradas y archivadas** en `.agents/archive/` con veredicto APTO.
-- **Arquitectura de IA simplificada:** Se eliminaron las implementaciones legacy de CLI por bash (`agy`, `opencode`) y se consolidaron **Direct API** (`api` con Fireworks AI) y **Mock Offline** (`mock`).
-- **Modelo por defecto:** `accounts/fireworks/models/qwen3p7-plus` (Visión Multimodal Nativa).
-- **Frontend Web Studio:** Sincronización automática de archivos estáticos en `dist/server/public/`, soporte Drag & Drop de imágenes (PNG/JPG/WEBP), visualización de Ficha Técnica, Metadatos Etsy, capas por talla (XS-3XL) y descarga directa de paquetes ZIP.
-- **Suite Determinista:** **13/13 suites passing (369/369 tests en verde)**.
+- **Suite Determinista:** **13/13 suites passing (370/370 tests en verde)**.
 
 ## Open findings
 
-- En pruebas de usuario en vivo, el endpoint `/api/generate` capturó un fallo interno devolviendo el mensaje genérico *"Falló la ejecución del pipeline de moldería"* sin traza en terminal. Esto motivó la activación del Plan v0.4 (`T-17` a `T-20`) para aislar la API y dotar al servidor de trazabilidad absoluta.
+- Ninguno.
 
 ## Human actions
 

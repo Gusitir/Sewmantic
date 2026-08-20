@@ -284,4 +284,18 @@ decisions, unresolved risks, task/commit references, and an archive pointer.
      - `T-20`: Verificación End-to-End en Vivo de Generación por Imagen & Auditoría.
 - Status: Fase 4.0 activa. Próxima acción: Despachar `T-17` al Ingeniero.
 
+## 2026-08-20T17:23:00-05:00 - TASK T-17 AUDIT: FIREWORKS API & QWEN 3.7 PLUS DIAGNOSTICS (Arquitecto / Ingeniero)
+
+- Decision and reason: El Ingeniero implementó `scripts/test_fireworks_call.js` y ejecutó el diagnóstico aislado de conectividad con Fireworks AI.
+- Verification:
+  - `node scripts/test_fireworks_call.js` ejecutado empíricamente con status HTTP 200 OK.
+  - Modelo confirmado: `accounts/fireworks/models/qwen3p7-plus`.
+  - Latencia registrada: 7994 ms. Consumo: 70 prompt + 2032 completion = 2102 tokens.
+  - Se identificó la fase de razonamiento interno de Qwen (`reasoning_content`) y se blindó `max_tokens: 4000` para garantizar que el JSON final no sea truncado.
+  - Suite de 370 tests unitarios pasando al 100% en Vitest (13/13 suites).
+- Verdict: **APTO**.
+- Evidence: Commit `[T-17] implement Fireworks API diagnostic script and verify Qwen 3.7 Plus connectivity` (hash `ed85ce8`).
+- Next: Despachar tarea `[T-18] Servidor REST Logging Transparente y Reporte de Errores en /api/generate`.
+
+
 

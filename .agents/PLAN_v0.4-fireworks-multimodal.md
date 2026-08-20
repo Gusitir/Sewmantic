@@ -8,8 +8,8 @@ Assurance: Lean
 
 | Tarea | Descripción | Rol Principal | Rol Secundario | Puerta Determinista | Estado |
 |---|---|---|---|---|:---:|
-| **T-17** | Diagnóstico y Aislamiento de Fireworks API con Qwen 3.7 Plus | Ingeniero | Obrero | `node scripts/test_fireworks_call.js` | 🟡 READY |
-| **T-18** | Servidor REST Logging Transparente y Reporte de Errores en `/api/generate` | Ingeniero | Obrero | `npm test` | ⚪ QUEUED |
+| **T-17** | Diagnóstico y Aislamiento de Fireworks API con Qwen 3.7 Plus | Ingeniero | Obrero | `node scripts/test_fireworks_call.js` | ✅ DONE |
+| **T-18** | Servidor REST Logging Transparente y Reporte de Errores en `/api/generate` | Ingeniero | Obrero | `npm test` | 🟡 READY |
 | **T-19** | Integración Multimodal de Imágenes en Web Studio & Pipeline DirectAPI | Obrero | Ingeniero | `npm test` | ⚪ QUEUED |
 | **T-20** | Verificación End-to-End en Vivo de Generación por Imagen & Auditoría | Arquitecto | Ingeniero | `npm test && node dist/index.js` | ⚪ QUEUED |
 
@@ -19,14 +19,14 @@ Assurance: Lean
 
 ### T-17 - Diagnóstico y Aislamiento de Fireworks API con Qwen 3.7 Plus
 
-- Status: ready
+- Status: done
 - Depends on: none
 - Scope: `scripts/test_fireworks_call.js`, `.env`
 - Rol: Ingeniero (Diagnóstico empírico y verificación de conectividad).
 - Acceptance:
-  - [ ] Script aislado `scripts/test_fireworks_call.js` que lea `.env` con `dotenv`.
-  - [ ] Realice una llamada de prueba a `https://api.fireworks.ai/inference/v1/chat/completions` con `accounts/fireworks/models/qwen3p7-plus`.
-  - [ ] Imprima en terminal: estado HTTP, latencia, modelo activo y respuesta JSON sanitizada o mensaje de error exacto (401, 400, 429).
+  - [x] Script aislado `scripts/test_fireworks_call.js` que lea `.env` con `dotenv`.
+  - [x] Realice una llamada de prueba a `https://api.fireworks.ai/inference/v1/chat/completions` con `accounts/fireworks/models/qwen3p7-plus`.
+  - [x] Imprima en terminal: estado HTTP, latencia, modelo activo y respuesta JSON sanitizada o mensaje de error exacto (401, 400, 429).
 - Gates: `node scripts/test_fireworks_call.js`
 - Human checks: none
 - Risk triggers: Clave inválida, falta de créditos en Fireworks o nombre de modelo incorrecto.
@@ -36,7 +36,7 @@ Assurance: Lean
 
 ### T-18 - Servidor REST Logging Transparente y Reporte de Errores en `/api/generate`
 
-- Status: queued
+- Status: ready
 - Depends on: T-17
 - Scope: `src/server/routes.ts`, `src/server/app.ts`, `src/ai/direct_api_provider.ts`
 - Rol: Ingeniero (Observabilidad y trazabilidad en servidor).
