@@ -56,7 +56,8 @@ suites_passing: 17/17 (468/468 tests PASS)
 
 ### 📌 Fase 7.0: Bloques Ancla FreeSewing, Moldería Industrial y Guía Visual 3D (`T-29` a `T-32`)
 - **Objetivo:** Transformación del flujo para seleccionar un Bloque Base Ancla (Wahid, Simon, Brian, Bella, Paco, Sandy, Shin), inyección estructural al LLM para actuar como modificador puro, generación de moldería industrial confeccionable (cruces de botonadura +20mm, marcas de ojales/botones, vistas interiores y piquetes emparejados) y Guía Visual de Ensamble y Doblado 3D Despiezada con slider de armado en WebGL.
-- **Estado:** Activo (`PLAN_v0.7-industrial-blueprints-and-3d-assembly.md`). Tarea activa: `T-29`.
+- `T-29` (Commit `87ea073`): Moldería industrial implementada (cruce de botonadura $+20\text{ mm}$, marcas vectoriales de botones/ojales, vistas interiores `front_facing`, `armhole_facing`, `back_neck_facing` con entretela y piquetes pareados en hombros/costados). 14 tests unitarios. Veredicto **APTO**.
+- **Estado:** Activo (`PLAN_v0.7-industrial-blueprints-and-3d-assembly.md`). Tarea activa: `T-30`.
 
 ---
 
@@ -67,6 +68,7 @@ suites_passing: 17/17 (468/468 tests PASS)
 | **H-01** | Impresión física de Página 1 a escala 100%. | Medición con regla: exactamente $10.0\text{ cm} \times 10.0\text{ cm}$. | ✅ [VERIFICADO OK] |
 | **H-02** | Continuidad de ensamble de hojas A4/Letter. | Líneas de corte continuas con PDFStitcher sin saltos ni escalones. | ✅ [VERIFICADO OK] |
 | **H-03** | Verificación visual de patrones 2D y 3D en Web Studio. | Inspección interactiva del visor 2D y rotación 360° del visor 3D WebGL. | 🟡 [LISTO PARA PROBAR POR EL USUARIO] |
+
 
 
 

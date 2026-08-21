@@ -8,8 +8,8 @@ Assurance: Lean
 
 | Tarea | Descripción | Rol Principal | Rol Secundario | Puerta Determinista | Estado |
 |---|---|---|---|---|:---:|
-| **T-29** | Moldería Industrial: Cruces de Botones, Ojales, Vistas Interiores y Piquetes | Ingeniero | Obrero | `npm test` | 🟡 READY |
-| **T-30** | Selector de Bloques Base FreeSewing & Inyección Estructural al LLM | Ingeniero | Obrero | `node scripts/test_fireworks_call.js && npm test` | ⚪ QUEUED |
+| **T-29** | Moldería Industrial: Cruces de Botones, Ojales, Vistas Interiores y Piquetes | Ingeniero | Obrero | `npm test` | ✅ DONE |
+| **T-30** | Selector de Bloques Base FreeSewing & Inyección Estructural al LLM | Ingeniero | Obrero | `node scripts/test_fireworks_call.js && npm test` | 🟡 READY |
 | **T-31** | Guía Visual de Ensamble 3D Despiezada (*Exploded Assembly View*) con Slider | Ingeniero | Obrero | `node scripts/test_blender_export.js && npm test` | ⚪ QUEUED |
 | **T-32** | Ficha Técnica de Confección Paso a Paso & Auditoría de Fase 7.0 | Arquitecto | Ingeniero | `npm test && node dist/index.js` | ⚪ QUEUED |
 
@@ -19,30 +19,32 @@ Assurance: Lean
 
 ### T-29 - Moldería Industrial: Cruces de Botones, Ojales, Vistas Interiores y Piquetes Coincidentes
 
-- Status: ready
+- Status: done
 - Depends on: T-28
 - Scope: `src/types/pattern.ts`, `src/schema/pattern_schema.ts`, `src/engine/modifier.ts`, `src/engine/base_blocks/`, `tests/industrial_patterns.test.ts`
 - Rol: Ingeniero (Patronaje industrial computacional y geometría de confección).
 - Acceptance:
-  - [ ] **Cruces de Botonadura (*Button Overlap / Placket*):**
+  - [x] **Cruces de Botonadura (*Button Overlap / Placket*):**
     - En prendas con botonadura frontal (`closure.type === 'buttons'`), extender el borde del centro delantero en $+15\text{ mm}$ a $+25\text{ mm}$ para solape.
-  - [ ] **Marcado Vectorial de Botones y Ojales:**
+  - [x] **Marcado Vectorial de Botones y Ojales:**
     - Calcular y dibujar marcas de ojal (líneas de 12-16 mm) y centros de botón (cruces $\times$) distribuidos uniformemente según `button_count` y largo del pecho.
-  - [ ] **Vistas Interiores (*Facings*):**
+  - [x] **Vistas Interiores (*Facings*):**
     - Generar piezas de corte complementarias para remate de bordes limpios:
       - `front_facing` (Vista delantera para botonadura y escote).
       - `armhole_facing` / `back_neck_facing` (Vistas de sisa y cuello en prendas sin mangas).
-  - [ ] **Piquetes de Unión Emparejados (*Seam Notches*):**
+  - [x] **Piquetes de Unión Emparejados (*Seam Notches*):**
     - Piquetes con cotas de correspondencia exacta entre costuras de hombro (delantero $\leftrightarrow$ espalda) y costados (sisa a bajo).
-  - [ ] Suite completa de pruebas en `tests/industrial_patterns.test.ts`.
+  - [x] Suite completa de pruebas en `tests/industrial_patterns.test.ts`.
 - Gates: `npm test`
 - Human checks: none
+- Risk triggers: Extensión de solape que altere la coincidencia de escotes.
+- STOP when: Los piquetes de hombro difieran en $> 1\text{ mm}$ entre delantero y espalda.
 
 ---
 
 ### T-30 - Selector de Bloques Base FreeSewing & Inyección Estructural al LLM
 
-- Status: queued
+- Status: ready
 - Depends on: T-29
 - Scope: `src/server/public/index.html`, `src/server/public/app.js`, `src/ai/prompt_builder.ts`, `src/ai/direct_api_provider.ts`, `src/pipeline.ts`, `tests/ai_provider.test.ts`
 - Rol: Ingeniero / Obrero (Integración Frontend y Pipeline Multimodal).

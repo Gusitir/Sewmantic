@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-20T21:40:00-05:00
-source_commit: [STATE] plan Phase 7.0 (FreeSewing Base Blueprints & Exploded 3D Assembly Guide)
+updated_at: 2026-08-20T21:48:00-05:00
+source_commit: [T-29] implement industrial pattern closures, buttonholes, facings and matched seam notches
 assurance: Lean
 active_plan: PLAN_v0.7-industrial-blueprints-and-3d-assembly.md
-active_task: T-29 (Moldería Industrial: Cruces de Botones, Ojales, Vistas Interiores y Piquetes)
+active_task: T-30 (Selector de Bloques Base FreeSewing & Inyección Estructural al LLM)
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,21 +18,22 @@ backup: local-only
 
 ## Next action
 
-1. **FASE 7.0 PLANIFICADA E INICIADA:**
-   - **`T-29` (READY):** Implementar cruces de botonadura (+20 mm), marcas vectoriales de botones/ojales, vistas interiores (`front_facing`, `armhole_facing`) y piquetes en `src/engine/modifier.ts` y slopers.
-   - **`T-30` (QUEUED):** Selector de 7 Bloques Base FreeSewing en Frontend (`index.html`, `app.js`) e inyección estructural al LLM (`prompt_builder.ts`).
-   - **`T-31` (QUEUED):** Guía Visual de Ensamble 3D Despiezada (*Exploded Assembly View*) con slider interactivo en el WebGL Viewer.
-   - **`T-32` (QUEUED):** Ficha Técnica Industrial de Confección & Auditoría E2E de Fase 7.0.
+1. **Despachar Tarea `T-30` al Ingeniero / Obrero (Selector de Bloques Base FreeSewing & Inyección Estructural al LLM):**
+   - Incorporar en el panel izquierdo del Web Studio el selector de los 7 bloques base de FreeSewing (`Wahid`, `Simon`, `Brian`, `Bella`, `Paco`, `Sandy`, `Shin`).
+   - Inyectar en el `PromptBuilder` de Qwen 3.8 Max la anatomía, piezas base y parámetros modificables específicos del bloque base seleccionado.
+   - Probar con `scripts/test_fireworks_call.js` y tests en `tests/ai_provider.test.ts`.
+2. **Proceder con `T-31` & `T-32`:** Guía Visual de Ensamble 3D Despiezada con slider y Ficha Técnica de Confección.
 
 ## Blockers
 
-- Ninguno. 513/513 tests pasando al 100% en Vitest (18/18 suites).
+- Ninguno. 527/527 tests pasando al 100% en Vitest (19/19 suites).
 
 ## Current facts
 
-- **Fases 1.0 a 6.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Fase 7.0 Activa:** Moldería Industrial Confeccionable y Guía Visual de Ensamble 3D.
-- **Suite Determinista:** **18/18 suites passing (513/513 tests en verde)**.
+- **Tarea `T-29` Completada y Auditada con Veredicto APTO:**
+  - Cruces de botonadura frontal (+20 mm), marcas vectoriales de botones/ojales, piezas de vistas interiores con entretela (`front_facing`, `armhole_facing`, `back_neck_facing`) y piquetes pareados.
+  - 14 tests unitarios en `tests/industrial_patterns.test.ts`.
+- **Suite Determinista:** **19/19 suites passing (527/527 tests en verde)**.
 
 ## Open findings
 
