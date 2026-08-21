@@ -294,7 +294,32 @@ export interface ModificationTree {
   trouser?: TrouserConfig;
   dress_details?: DressDetails;
   kimono_details?: KimonoDetails;
+  closure?: ClosureMod;
   custom?: Record<string, unknown>;
+}
+
+/**
+ * Tipos de cierre de prenda (botonadura, cremallera, broches, lazadas)
+ */
+export type ClosureType =
+  | 'buttons'
+  | 'zipper'
+  | 'snaps'
+  | 'ties'
+  | 'none'
+  | 'custom';
+
+/**
+ * Modificaciones geométricas de cierre, botonadura y cruces industriales
+ */
+export interface ClosureMod {
+  type: ClosureType;
+  overlap_mm?: number;
+  button_count?: number;
+  button_diameter_mm?: number;
+  buttonhole_orientation?: 'vertical' | 'horizontal';
+  placement_y_mm?: number;
+  zip_length_mm?: number;
 }
 
 
@@ -388,3 +413,11 @@ export interface PatternDna {
   };
 }
 
+export type {
+  Point2D,
+  BoundingBox,
+  TechnicalNotch,
+  TechnicalGrainline,
+  TechnicalMarking,
+  PatternPart,
+} from '../engine/geometry.js';

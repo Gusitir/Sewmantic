@@ -38,6 +38,14 @@ export interface TechnicalGrainline {
   label: string;
 }
 
+export interface TechnicalMarking {
+  type: 'button' | 'buttonhole' | 'crosshair' | 'fold_line';
+  point: Point2D;
+  length_mm?: number;
+  angle_deg?: number;
+  label?: string;
+}
+
 export interface PatternPart {
   name: string;
   label: string;
@@ -54,6 +62,10 @@ export interface PatternPart {
   notches: TechnicalNotch[];
   seamAllowance_mm?: number;
   hemAllowance_mm?: number;
+  facings?: Array<'front' | 'back_neck' | 'armhole'>;
+  isFacing?: boolean;
+  requiresInterfacing?: boolean;
+  markings?: TechnicalMarking[];
 }
 
 export function createPoint(x: number, y: number, name?: string): Point2D {

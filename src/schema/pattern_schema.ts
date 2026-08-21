@@ -426,6 +426,44 @@ export const TrouserConfigSchema = z.object({
 });
 
 /**
+ * Esquema de tipos de cierre
+ */
+export const ClosureTypeSchema = z.enum(
+  ["buttons", "zipper", "snaps", "ties", "none", "custom"],
+  {
+    errorMap: () => ({
+      message: "Invalid closure type",
+    }),
+  }
+);
+
+/**
+ * Esquema de modificaciones de cierre, botonadura y cruces
+ */
+export const ClosureModSchema = z.object({
+  type: ClosureTypeSchema,
+  overlap_mm: z
+    .number()
+    .min(0, "Closure overlap cannot be negative")
+    .max(200, "Closure overlap exceeds maximum limit (200mm)")
+    .optional(),
+  button_count: z
+    .number()
+    .int("Button count must be an integer")
+    .min(0, "Button count cannot be negative")
+    .max(50, "Button count exceeds maximum limit (50)")
+    .optional(),
+  button_diameter_mm: z
+    .number()
+    .min(5, "Button diameter must be at least 5mm")
+    .max(100, "Button diameter exceeds maximum limit (100mm)")
+    .optional(),
+  buttonhole_orientation: z.enum(["vertical", "horizontal"]).optional(),
+  placement_y_mm: z.number().min(0).max(2000).optional(),
+  zip_length_mm: z.number().min(0).max(2000).optional(),
+});
+
+/**
  * Esquema de árbol de modificaciones
  */
 export const ModificationTreeSchema = z.object({
@@ -442,6 +480,7 @@ export const ModificationTreeSchema = z.object({
   trouser: TrouserConfigSchema.optional(),
   dress_details: DressDetailsSchema.optional(),
   kimono_details: KimonoDetailsSchema.optional(),
+  closure: ClosureModSchema.optional(),
   custom: z.record(z.unknown()).optional(),
 });
 

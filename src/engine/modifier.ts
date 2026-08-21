@@ -20,6 +20,7 @@ import {
   TrouserHemMod,
   TrouserLegsMod,
   TrouserPocketMod,
+  ClosureMod,
   GarmentCategory,
   DressDetails,
   KimonoDetails,
@@ -29,6 +30,7 @@ import {
   BoundingBox,
   TechnicalNotch,
   TechnicalGrainline,
+  TechnicalMarking,
   PatternPart,
   createPoint,
   distance,
@@ -172,6 +174,392 @@ function computeSleeveCapCurveLength(
 }
 
 /**
+ * Genera marcas vectoriales de ojales, botones y líneas de centro delantero
+ */
+export function generateButtonMarkings(options: {
+  placketStart: number;
+  placketEnd: number;
+  buttonCount: number;
+  buttonDiameter?: number;
+  buttonholeOrientation?: 'vertical' | 'horizontal';
+  cfX?: number;
+}): TechnicalMarking[] {
+  const {
+    placketStart,
+    placketEnd,
+    buttonCount,
+    buttonDiameter = 20,
+    buttonholeOrientation = 'vertical',
+    cfX = 0,
+  } = options;
+
+  const markings: TechnicalMarking[] = [];
+  const placketLength = placketEnd - placketStart;
+
+  // 1. Línea de centro delantero (CF) / doblez de cruce
+  markings.push({
+    type: 'fold_line',
+    point: createPoint(cfX, placketStart),
+    length_mm: placketLength,
+    angle_deg: 90,
+    label: 'LÍNEA CENTRO DELANTERO (CF)',
+  });
+
+  if (buttonCount <= 0) return markings;
+
+  const topMargin = Math.min(25, placketLength * 0.15);
+  const bottomMargin = Math.min(35, placketLength * 0.2);
+  const firstBtnY = placketStart + topMargin;
+  const lastBtnY = placketEnd - bottomMargin;
+  const btnSpacing = buttonCount > 1 ? (lastBtnY - firstBtnY) / (buttonCount - 1) : 0;
+
+  for (let i = 0; i < buttonCount; i++) {
+    const btnY =
+      Math.round(
+        (buttonCount === 1 ? placketStart + placketLength / 2 : firstBtnY + i * btnSpacing) * 100
+      ) / 100;
+
+    markings.push({
+      type: 'buttonhole',
+      point: createPoint(cfX, btnY),
+      length_mm: buttonDiameter + 4,
+      angle_deg: buttonholeOrientation === 'horizontal' ? 0 : 90,
+      label: `Ojal ${i + 1} (${buttonDiameter + 4}mm)`,
+    });
+    markings.push({
+      type: 'button',
+      point: createPoint(cfX, btnY),
+      length_mm: buttonDiameter,
+      angle_deg: 0,
+      label: `Botón ${i + 1} (Ø${buttonDiameter}mm)`,
+    });
+  }
+
+  return markings;
+}
+
+/**
+ * Genera la pieza de vista interior delantera (front_facing) con entretela
+ */
+export function generateFrontFacing(options: {
+  overlap_neck: Point2D;
+  front_neck_center: Point2D;
+  front_neck_shoulder: Point2D;
+  front_shoulder_tip: Point2D;
+  frontNeckCp1: Point2D;
+  frontNeckCp2: Point2D;
+  frontNeckSamples: Point2D[];
+  front_center_hem: Point2D;
+  overlap_hem: Point2D;
+  armholeDepth: number;
+  facingWidth?: number;
+  facingShoulderWidth?: number;
+  seamAllowance?: number;
+}): PatternPart {
+  const {
+    overlap_neck,
+    front_neck_center,
+    front_neck_shoulder,
+    front_shoulder_tip,
+    frontNeckCp1,
+    frontNeckCp2,
+    frontNeckSamples,
+    front_center_hem,
+    overlap_hem,
+    armholeDepth,
+    facingWidth = 45,
+    facingShoulderWidth = 40,
+    seamAllowance = 10,
+  } = options;
+
+  const shoulderLen = distance(front_neck_shoulder, front_shoulder_tip);
+  const tShFacing = Math.min(0.5, facingShoulderWidth / Math.max(30, shoulderLen));
+  const facing_shoulder = createPoint(
+    front_neck_shoulder.x + tShFacing * (front_shoulder_tip.x - front_neck_shoulder.x),
+    front_neck_shoulder.y + tShFacing * (front_shoulder_tip.y - front_neck_shoulder.y),
+    'facing_shoulder'
+  );
+  const facing_inner_mid = createPoint(facingWidth, armholeDepth + 20, 'facing_inner_mid');
+  const facing_inner_hem = createPoint(facingWidth, front_center_hem.y, 'facing_inner_hem');
+
+  const frontFacingOutline: Point2D[] = [
+    overlap_neck,
+    ...frontNeckSamples,
+    facing_shoulder,
+    facing_inner_mid,
+    facing_inner_hem,
+    front_center_hem,
+    overlap_hem,
+  ];
+
+  const frontFacingBounds = computeBounds(frontFacingOutline);
+  const frontFacingArea = computePolygonArea(frontFacingOutline);
+
+  const frontFacingPathD = [
+    `M ${overlap_neck.x} ${overlap_neck.y}`,
+    `L ${front_neck_center.x} ${front_neck_center.y}`,
+    `C ${frontNeckCp1.x} ${frontNeckCp1.y}, ${frontNeckCp2.x} ${frontNeckCp2.y}, ${front_neck_shoulder.x} ${front_neck_shoulder.y}`,
+    `L ${facing_shoulder.x} ${facing_shoulder.y}`,
+    `Q ${facing_inner_mid.x} ${facing_inner_mid.y} ${facing_inner_hem.x} ${facing_inner_hem.y}`,
+    `L ${front_center_hem.x} ${front_center_hem.y}`,
+    `L ${overlap_hem.x} ${overlap_hem.y}`,
+    `Z`,
+  ].join(' ');
+
+  return {
+    name: 'front_facing',
+    label: 'VISTA DELANTERA CON ENTRETELA / FRONT INTERFACED FACING',
+    cutCount: 2,
+    onFold: false,
+    isFacing: true,
+    requiresInterfacing: true,
+    points: {
+      overlap_neck,
+      neck_center: front_neck_center,
+      neck_shoulder: front_neck_shoulder,
+      facing_shoulder,
+      facing_inner_mid,
+      facing_inner_hem,
+      center_hem: front_center_hem,
+      overlap_hem,
+    },
+    pathD: frontFacingPathD,
+    outline: frontFacingOutline,
+    bounds: frontFacingBounds,
+    width_mm: frontFacingBounds.width,
+    height_mm: frontFacingBounds.height,
+    area_mm2: frontFacingArea,
+    grainline: {
+      start: createPoint(0, overlap_neck.y + 40),
+      end: createPoint(0, overlap_hem.y - 40),
+      label: 'GRAINLINE / HILO DE TELA (VISTA)',
+    },
+    notches: [
+      {
+        point: createPoint(0, front_neck_center.y),
+        type: 'single',
+        label: 'Piquete Centro Delantero Escote',
+      },
+      {
+        point: createPoint(0, front_center_hem.y),
+        type: 'single',
+        label: 'Piquete Centro Delantero Bajo',
+      },
+    ],
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: 0,
+  };
+}
+
+/**
+ * Genera la vista de cuello espalda en media luna (back_neck_facing) con entretela
+ */
+export function generateBackNeckFacing(options: {
+  back_neck_center: Point2D;
+  back_neck_shoulder: Point2D;
+  back_shoulder_tip: Point2D;
+  backNeckCp1: Point2D;
+  backNeckCp2: Point2D;
+  backNeckSamples: Point2D[];
+  backNeckDepth: number;
+  neckWidth: number;
+  backFacingWidth?: number;
+  seamAllowance?: number;
+}): PatternPart {
+  const {
+    back_neck_center,
+    back_neck_shoulder,
+    back_shoulder_tip,
+    backNeckCp1,
+    backNeckCp2,
+    backNeckSamples,
+    backNeckDepth,
+    neckWidth,
+    backFacingWidth = 40,
+    seamAllowance = 10,
+  } = options;
+
+  const backShoulderLen = distance(back_neck_shoulder, back_shoulder_tip);
+  const tShBack = Math.min(0.5, backFacingWidth / Math.max(30, backShoulderLen));
+  const back_facing_shoulder = createPoint(
+    back_neck_shoulder.x + tShBack * (back_shoulder_tip.x - back_neck_shoulder.x),
+    back_neck_shoulder.y + tShBack * (back_shoulder_tip.y - back_neck_shoulder.y),
+    'facing_shoulder'
+  );
+  const back_facing_cb_inner = createPoint(0, backNeckDepth + backFacingWidth, 'cb_inner');
+
+  const backInnerCp1 = createPoint(neckWidth * 0.6, backNeckDepth + backFacingWidth);
+  const backInnerCp2 = createPoint(neckWidth * 0.2, backNeckDepth + backFacingWidth);
+  const backInnerSamples = sampleBezier(
+    back_facing_shoulder,
+    backInnerCp1,
+    backInnerCp2,
+    back_facing_cb_inner
+  );
+
+  const backFacingOutline: Point2D[] = [
+    back_neck_center,
+    ...backNeckSamples,
+    back_facing_shoulder,
+    ...backInnerSamples.slice(1),
+  ];
+
+  const backFacingBounds = computeBounds(backFacingOutline);
+  const backFacingArea = computePolygonArea(backFacingOutline);
+
+  const backFacingPathD = [
+    `M ${back_neck_center.x} ${back_neck_center.y}`,
+    `C ${backNeckCp1.x} ${backNeckCp1.y}, ${backNeckCp2.x} ${backNeckCp2.y}, ${back_neck_shoulder.x} ${back_neck_shoulder.y}`,
+    `L ${back_facing_shoulder.x} ${back_facing_shoulder.y}`,
+    `C ${backInnerCp1.x} ${backInnerCp1.y}, ${backInnerCp2.x} ${backInnerCp2.y}, ${back_facing_cb_inner.x} ${back_facing_cb_inner.y}`,
+    `Z`,
+  ].join(' ');
+
+  return {
+    name: 'back_neck_facing',
+    label: 'VISTA CUELLO ESPALDA (MEDIA LUNA) / BACK NECK FACING',
+    cutCount: 1,
+    onFold: true,
+    isFacing: true,
+    requiresInterfacing: true,
+    points: {
+      neck_center: back_neck_center,
+      neck_shoulder: back_neck_shoulder,
+      facing_shoulder: back_facing_shoulder,
+      cb_inner: back_facing_cb_inner,
+    },
+    pathD: backFacingPathD,
+    outline: backFacingOutline,
+    bounds: backFacingBounds,
+    width_mm: backFacingBounds.width,
+    height_mm: backFacingBounds.height,
+    area_mm2: backFacingArea,
+    grainline: {
+      start: createPoint(15, backNeckDepth + 5),
+      end: createPoint(15, backNeckDepth + backFacingWidth - 5),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches: [
+      {
+        point: back_neck_center,
+        type: 'single',
+        label: 'Piquete Centro Espalda Al Lomo',
+      },
+    ],
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: 0,
+  };
+}
+
+/**
+ * Genera la vista de sisa curva (armhole_facing) con entretela para prendas sin mangas
+ */
+export function generateArmholeFacing(options: {
+  front_shoulder_tip: Point2D;
+  front_armhole_pitch: Point2D;
+  front_armhole_bottom: Point2D;
+  frontArmholeUpperSamples: Point2D[];
+  frontArmholeLowerSamples: Point2D[];
+  armholeFacingWidth?: number;
+  seamAllowance?: number;
+}): PatternPart {
+  const {
+    front_shoulder_tip,
+    front_armhole_pitch,
+    front_armhole_bottom,
+    frontArmholeUpperSamples,
+    frontArmholeLowerSamples,
+    armholeFacingWidth = 35,
+    seamAllowance = 10,
+  } = options;
+
+  const armholeOuterSamples: Point2D[] = [
+    front_shoulder_tip,
+    ...frontArmholeUpperSamples.slice(1),
+    ...frontArmholeLowerSamples.slice(1),
+  ];
+
+  const armholeInnerSamples = armholeOuterSamples
+    .map((p, idx) => {
+      if (idx === 0) {
+        return createPoint(
+          Math.max(10, p.x - armholeFacingWidth * 0.9),
+          Math.max(0, p.y - armholeFacingWidth * 0.2),
+          'facing_shoulder_in'
+        );
+      }
+      if (idx === armholeOuterSamples.length - 1) {
+        return createPoint(
+          Math.max(10, p.x - armholeFacingWidth),
+          p.y + 10,
+          'facing_underarm_in'
+        );
+      }
+      return createPoint(
+        Math.max(10, p.x - armholeFacingWidth),
+        p.y,
+        `facing_inner_${idx}`
+      );
+    })
+    .reverse();
+
+  const armholeFacingOutline: Point2D[] = [
+    ...armholeOuterSamples,
+    ...armholeInnerSamples,
+  ];
+
+  const armholeFacingBounds = computeBounds(armholeFacingOutline);
+  const armholeFacingArea = computePolygonArea(armholeFacingOutline);
+
+  const armholeFacingPathD =
+    `M ${front_shoulder_tip.x} ${front_shoulder_tip.y} ` +
+    armholeOuterSamples.slice(1).map((p) => `L ${p.x} ${p.y}`).join(' ') +
+    ' ' +
+    armholeInnerSamples.map((p) => `L ${p.x} ${p.y}`).join(' ') +
+    ' Z';
+
+  return {
+    name: 'armhole_facing',
+    label: 'VISTA DE SISA CURVA / CURVED ARMHOLE FACING',
+    cutCount: 2,
+    onFold: false,
+    isFacing: true,
+    requiresInterfacing: true,
+    points: {
+      shoulder_tip: front_shoulder_tip,
+      armhole_pitch: front_armhole_pitch,
+      armhole_bottom: front_armhole_bottom,
+    },
+    pathD: armholeFacingPathD,
+    outline: armholeFacingOutline,
+    bounds: armholeFacingBounds,
+    width_mm: armholeFacingBounds.width,
+    height_mm: armholeFacingBounds.height,
+    area_mm2: armholeFacingArea,
+    grainline: {
+      start: createPoint(
+        armholeFacingBounds.minX + armholeFacingBounds.width / 2,
+        armholeFacingBounds.minY + 20
+      ),
+      end: createPoint(
+        armholeFacingBounds.minX + armholeFacingBounds.width / 2,
+        armholeFacingBounds.maxY - 20
+      ),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches: [
+      {
+        point: front_armhole_pitch,
+        type: 'single',
+        label: 'Piquete Sisa Delantero',
+      },
+    ],
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: 0,
+  };
+}
+
+/**
  * Determina si el ADN corresponde a un conjunto completo de 2 piezas (Top + Bottom / Set)
  */
 export function isSetGarment(dna: PatternDna): boolean {
@@ -225,6 +613,7 @@ export function modifySetPattern(
       hem: dna.modifications.hem,
       pocket: dna.modifications.pocket,
       hood: dna.modifications.hood,
+      closure: dna.modifications.closure,
     },
     sizing: dna.sizing,
     custom_measurements: dna.custom_measurements,
@@ -314,6 +703,15 @@ export function modifySetPattern(
     const topPocket = { ...topResult.parts.pocket };
     topPocket.name = 'pocket';
     parts.pocket = topPocket;
+  }
+  if (topResult.parts.front_facing) {
+    parts.front_facing = topResult.parts.front_facing;
+  }
+  if (topResult.parts.back_neck_facing) {
+    parts.back_neck_facing = topResult.parts.back_neck_facing;
+  }
+  if (topResult.parts.armhole_facing) {
+    parts.armhole_facing = topResult.parts.armhole_facing;
   }
 
   // Piezas de pierna (Bottom)
@@ -1220,6 +1618,51 @@ export function modifyDressPattern(
     }
   );
 
+  // Piquetes pareados de hombro y costado en corpiño
+  const frontBodiceShoulderNotch = createPoint(
+    (frontBodice.points.neck_shoulder.x + frontBodice.points.shoulder_tip.x) / 2,
+    (frontBodice.points.neck_shoulder.y + frontBodice.points.shoulder_tip.y) / 2,
+    'shoulder_notch'
+  );
+  frontBodice.notches.push({
+    point: frontBodiceShoulderNotch,
+    type: 'single',
+    label: 'Piquete Hombro Delantero Corpiño',
+  });
+
+  const backBodiceShoulderNotch = createPoint(
+    (backBodice.points.neck_shoulder.x + backBodice.points.shoulder_tip.x) / 2,
+    (backBodice.points.neck_shoulder.y + backBodice.points.shoulder_tip.y) / 2,
+    'shoulder_notch'
+  );
+  backBodice.notches.push({
+    point: backBodiceShoulderNotch,
+    type: 'single',
+    label: 'Piquete Hombro Espalda Corpiño',
+  });
+
+  const frontBodiceSideNotch = createPoint(
+    frontBodice.points.armhole_bottom.x,
+    (frontBodice.points.armhole_bottom.y + frontBodice.points.side_waist.y) / 2,
+    'side_notch'
+  );
+  frontBodice.notches.push({
+    point: frontBodiceSideNotch,
+    type: 'single',
+    label: 'Piquete Costado Delantero Corpiño',
+  });
+
+  const backBodiceSideNotch = createPoint(
+    backBodice.points.armhole_bottom.x,
+    (backBodice.points.armhole_bottom.y + backBodice.points.side_waist.y) / 2,
+    'side_notch'
+  );
+  backBodice.notches.push({
+    point: backBodiceSideNotch,
+    type: 'double',
+    label: 'Piquete Doble Costado Espalda Corpiño',
+  });
+
   // 4. Bolsillos si aplica
   const pocketMod = dna.modifications.pocket ?? dna.modifications.pockets?.[0];
   if (pocketMod && pocketMod.type !== 'none') {
@@ -1461,6 +1904,37 @@ export function modifyDressPattern(
       seamAllowance_mm: seamAllowance,
       hemAllowance_mm: hemAllowance,
     };
+  }
+
+  // Generación de Vistas Interiores para Vestidos sin Mangas
+  if (isSleeveless) {
+    const backNeckFacing = generateBackNeckFacing({
+      back_neck_center: backBodice.points.neck_center,
+      back_neck_shoulder: backBodice.points.neck_shoulder,
+      back_shoulder_tip: backBodice.points.shoulder_tip,
+      backNeckCp1: createPoint(neckWidthDelta * 0.5 + 40, backBodice.points.neck_center.y),
+      backNeckCp2: createPoint(backBodice.points.neck_shoulder.x, backBodice.points.neck_center.y * 0.3),
+      backNeckSamples: [backBodice.points.neck_center, backBodice.points.neck_shoulder],
+      backNeckDepth: backBodice.points.neck_center.y,
+      neckWidth: backBodice.points.neck_shoulder.x,
+      backFacingWidth: 40,
+      seamAllowance,
+    });
+    parts.back_neck_facing = backNeckFacing;
+
+    const armholeFacing = generateArmholeFacing({
+      front_shoulder_tip: frontBodice.points.shoulder_tip,
+      front_armhole_pitch: frontBodice.points.armhole_pitch,
+      front_armhole_bottom: frontBodice.points.armhole_bottom,
+      frontArmholeUpperSamples: [frontBodice.points.shoulder_tip, frontBodice.points.armhole_pitch],
+      frontArmholeLowerSamples: [frontBodice.points.armhole_pitch, frontBodice.points.armhole_bottom],
+      armholeFacingWidth: 35,
+      seamAllowance,
+    });
+    parts.armhole_facing = armholeFacing;
+
+    frontBodice.facings = ['armhole'];
+    backBodice.facings = ['back_neck', 'armhole'];
   }
 
   // 5. Verificación de Grainlines y Márgenes
@@ -2125,6 +2599,29 @@ export function modifyPattern(
   // =========================================================================
   // 5. CONSTRUCCIÓN GEOMÉTRICA DE TORSO DELANTERO (FRONT TORSO)
   // =========================================================================
+  const closureMod: ClosureMod | undefined =
+    dna.modifications.closure ??
+    (dna.concept_name.includes('pirate_vest')
+      ? {
+          type: 'buttons',
+          button_count: 3,
+          overlap_mm: 20,
+          button_diameter_mm: 20,
+          buttonhole_orientation: 'vertical',
+        }
+      : undefined);
+
+  const hasButtonClosure =
+    closureMod?.type === 'buttons' || ((closureMod?.button_count ?? 0) > 0);
+  const overlap_mm = hasButtonClosure ? (closureMod?.overlap_mm ?? 20) : 0;
+  const buttonCount = closureMod?.button_count ?? (hasButtonClosure ? 3 : 0);
+  const buttonDiameter = closureMod?.button_diameter_mm ?? 20;
+  const buttonholeOrientation = closureMod?.buttonhole_orientation ?? 'vertical';
+  const isSleeveless =
+    sleeveMod.length_type === 'sleeveless' || sleeveMod.type === 'sleeveless';
+
+  const overlap_neck = createPoint(-overlap_mm, frontNeckDepth, 'overlap_neck');
+  const overlap_hem = createPoint(-overlap_mm, frontLength + hemFrontDrop, 'overlap_hem');
   const front_neck_center = createPoint(0, frontNeckDepth, 'neck_center');
   const front_neck_shoulder = createPoint(neckWidth, 0, 'neck_shoulder');
   const front_shoulder_tip = createPoint(halfShoulder, shoulderDrop, 'shoulder_tip');
@@ -2194,33 +2691,70 @@ export function modifyPattern(
     frontHemSamples = [front_side_hem, front_center_hem];
   }
 
-  const frontOutline: Point2D[] = [
-    ...frontNeckSamples,
-    front_shoulder_tip,
-    ...frontArmholeUpperSamples.slice(1),
-    ...frontArmholeLowerSamples.slice(1),
-    ...frontHemSamples,
-  ];
+  const frontOutline: Point2D[] = hasButtonClosure
+    ? [
+        overlap_neck,
+        ...frontNeckSamples,
+        front_shoulder_tip,
+        ...frontArmholeUpperSamples.slice(1),
+        ...frontArmholeLowerSamples.slice(1),
+        ...frontHemSamples,
+        overlap_hem,
+      ]
+    : [
+        ...frontNeckSamples,
+        front_shoulder_tip,
+        ...frontArmholeUpperSamples.slice(1),
+        ...frontArmholeLowerSamples.slice(1),
+        ...frontHemSamples,
+      ];
 
-  let frontPathD = [
-    `M ${front_neck_center.x} ${front_neck_center.y}`,
-    `C ${frontNeckCp1.x} ${frontNeckCp1.y}, ${frontNeckCp2.x} ${frontNeckCp2.y}, ${front_neck_shoulder.x} ${front_neck_shoulder.y}`,
-    `L ${front_shoulder_tip.x} ${front_shoulder_tip.y}`,
-    `C ${frontArmholeCp1.x} ${frontArmholeCp1.y}, ${frontArmholeCp2.x} ${frontArmholeCp2.y}, ${front_armhole_pitch.x} ${front_armhole_pitch.y}`,
-    `C ${frontArmholeLowerCp1.x} ${frontArmholeLowerCp1.y}, ${frontArmholeLowerCp2.x} ${frontArmholeLowerCp2.y}, ${front_armhole_bottom.x} ${front_armhole_bottom.y}`,
-    `L ${front_side_hem.x} ${front_side_hem.y}`,
-  ];
-  if (isCurvedTail && frontHemCp1 && frontHemCp2) {
-    frontPathD.push(
-      `C ${frontHemCp1.x} ${frontHemCp1.y}, ${frontHemCp2.x} ${frontHemCp2.y}, ${front_center_hem.x} ${front_center_hem.y}`
-    );
-  } else {
-    frontPathD.push(`L ${front_center_hem.x} ${front_center_hem.y}`);
-  }
-  frontPathD.push(`Z`);
+  const frontPathSegments: string[] = hasButtonClosure
+    ? [
+        `M ${overlap_neck.x} ${overlap_neck.y}`,
+        `L ${front_neck_center.x} ${front_neck_center.y}`,
+        `C ${frontNeckCp1.x} ${frontNeckCp1.y}, ${frontNeckCp2.x} ${frontNeckCp2.y}, ${front_neck_shoulder.x} ${front_neck_shoulder.y}`,
+        `L ${front_shoulder_tip.x} ${front_shoulder_tip.y}`,
+        `C ${frontArmholeCp1.x} ${frontArmholeCp1.y}, ${frontArmholeCp2.x} ${frontArmholeCp2.y}, ${front_armhole_pitch.x} ${front_armhole_pitch.y}`,
+        `C ${frontArmholeLowerCp1.x} ${frontArmholeLowerCp1.y}, ${frontArmholeLowerCp2.x} ${frontArmholeLowerCp2.y}, ${front_armhole_bottom.x} ${front_armhole_bottom.y}`,
+        `L ${front_side_hem.x} ${front_side_hem.y}`,
+        isCurvedTail && frontHemCp1 && frontHemCp2
+          ? `C ${frontHemCp1.x} ${frontHemCp1.y}, ${frontHemCp2.x} ${frontHemCp2.y}, ${front_center_hem.x} ${front_center_hem.y}`
+          : `L ${front_center_hem.x} ${front_center_hem.y}`,
+        `L ${overlap_hem.x} ${overlap_hem.y}`,
+        `Z`,
+      ]
+    : [
+        `M ${front_neck_center.x} ${front_neck_center.y}`,
+        `C ${frontNeckCp1.x} ${frontNeckCp1.y}, ${frontNeckCp2.x} ${frontNeckCp2.y}, ${front_neck_shoulder.x} ${front_neck_shoulder.y}`,
+        `L ${front_shoulder_tip.x} ${front_shoulder_tip.y}`,
+        `C ${frontArmholeCp1.x} ${frontArmholeCp1.y}, ${frontArmholeCp2.x} ${frontArmholeCp2.y}, ${front_armhole_pitch.x} ${front_armhole_pitch.y}`,
+        `C ${frontArmholeLowerCp1.x} ${frontArmholeLowerCp1.y}, ${frontArmholeLowerCp2.x} ${frontArmholeLowerCp2.y}, ${front_armhole_bottom.x} ${front_armhole_bottom.y}`,
+        `L ${front_side_hem.x} ${front_side_hem.y}`,
+        isCurvedTail && frontHemCp1 && frontHemCp2
+          ? `C ${frontHemCp1.x} ${frontHemCp1.y}, ${frontHemCp2.x} ${frontHemCp2.y}, ${front_center_hem.x} ${front_center_hem.y}`
+          : `L ${front_center_hem.x} ${front_center_hem.y}`,
+        `Z`,
+      ];
 
   const frontBounds = computeBounds(frontOutline);
   const frontArea = computePolygonArea(frontOutline);
+
+  // Piquetes pareados de correspondencia en hombro y costado
+  const front_shoulder_notch = createPoint(
+    (front_neck_shoulder.x + front_shoulder_tip.x) / 2,
+    (front_neck_shoulder.y + front_shoulder_tip.y) / 2,
+    'shoulder_notch'
+  );
+  const minSideLength = Math.min(frontLength, backLength) - armholeDepth;
+  const sideNotchDist = Math.round(minSideLength * 0.5);
+  const matchedSideNotchY = armholeDepth + sideNotchDist;
+
+  const front_side_notch = createPoint(
+    quarterChest,
+    matchedSideNotchY,
+    'side_notch'
+  );
 
   const frontNotches: TechnicalNotch[] = [
     {
@@ -2228,7 +2762,32 @@ export function modifyPattern(
       type: 'single',
       label: 'Piquete Delantero Sisa',
     },
+    {
+      point: front_shoulder_notch,
+      type: 'single',
+      label: 'Piquete Hombro Delantero / Front Shoulder Notch',
+    },
+    {
+      point: front_side_notch,
+      type: 'single',
+      label: 'Piquete Costado Delantero / Front Side Notch',
+    },
   ];
+
+  if (hasButtonClosure) {
+    frontNotches.push(
+      {
+        point: front_neck_center,
+        type: 'single',
+        label: 'Piquete Centro Delantero Escote',
+      },
+      {
+        point: front_center_hem,
+        type: 'single',
+        label: 'Piquete Centro Delantero Bajo',
+      }
+    );
+  }
 
   // Piquete de split de bajo si corresponde
   if (hemMod.type === 'split' && (hemMod.split_height_mm ?? 60) > 0) {
@@ -2240,21 +2799,41 @@ export function modifyPattern(
     });
   }
 
+  const frontFacingsList: Array<'front' | 'back_neck' | 'armhole'> = [];
+  if (hasButtonClosure) frontFacingsList.push('front');
+  if (isSleeveless) frontFacingsList.push('armhole');
+
+  const frontMarkings = hasButtonClosure
+    ? generateButtonMarkings({
+        placketStart: frontNeckDepth,
+        placketEnd: frontLength + hemFrontDrop,
+        buttonCount,
+        buttonDiameter,
+        buttonholeOrientation,
+        cfX: 0,
+      })
+    : undefined;
+
   const frontPart: PatternPart = {
     name: 'front',
-    label: 'TORSO DELANTERO / FRONT TORSO',
-    cutCount: 1,
-    onFold: true,
+    label: hasButtonClosure
+      ? 'TORSO DELANTERO (BOTONADURA) / FRONT TORSO (BUTTON CLOSURE)'
+      : 'TORSO DELANTERO / FRONT TORSO',
+    cutCount: hasButtonClosure ? 2 : 1,
+    onFold: !hasButtonClosure,
     points: {
+      ...(hasButtonClosure ? { overlap_neck, overlap_hem } : {}),
       neck_center: front_neck_center,
       neck_shoulder: front_neck_shoulder,
       shoulder_tip: front_shoulder_tip,
+      shoulder_notch: front_shoulder_notch,
       armhole_pitch: front_armhole_pitch,
       armhole_bottom: front_armhole_bottom,
+      side_notch: front_side_notch,
       side_hem: front_side_hem,
       center_hem: front_center_hem,
     },
-    pathD: frontPathD.join(' '),
+    pathD: frontPathSegments.join(' '),
     outline: frontOutline,
     bounds: frontBounds,
     width_mm: frontBounds.width,
@@ -2268,6 +2847,8 @@ export function modifyPattern(
     notches: frontNotches,
     seamAllowance_mm: seamAllowance,
     hemAllowance_mm: hemAllowance,
+    ...(frontFacingsList.length > 0 ? { facings: frontFacingsList } : {}),
+    ...(frontMarkings && frontMarkings.length > 0 ? { markings: frontMarkings } : {}),
   };
   parts.front = frontPart;
 
@@ -2367,11 +2948,32 @@ export function modifyPattern(
   const backBounds = computeBounds(backOutline);
   const backArea = computePolygonArea(backOutline);
 
+  const back_shoulder_notch = createPoint(
+    (back_neck_shoulder.x + back_shoulder_tip.x) / 2,
+    (back_neck_shoulder.y + back_shoulder_tip.y) / 2,
+    'shoulder_notch'
+  );
+  const back_side_notch = createPoint(
+    quarterChest,
+    matchedSideNotchY,
+    'side_notch'
+  );
+
   const backNotches: TechnicalNotch[] = [
     {
       point: back_armhole_pitch,
       type: 'double',
       label: 'Piquete Doble Espalda Sisa',
+    },
+    {
+      point: back_shoulder_notch,
+      type: 'single',
+      label: 'Piquete Hombro Espalda / Back Shoulder Notch',
+    },
+    {
+      point: back_side_notch,
+      type: 'double',
+      label: 'Piquete Doble Costado Espalda / Back Side Notch',
     },
   ];
 
@@ -2384,6 +2986,12 @@ export function modifyPattern(
     });
   }
 
+  const backFacingsList: Array<'front' | 'back_neck' | 'armhole'> = [];
+  if (isSleeveless) {
+    backFacingsList.push('back_neck');
+    backFacingsList.push('armhole');
+  }
+
   const backPart: PatternPart = {
     name: 'back',
     label: 'TORSO ESPALDA / BACK TORSO',
@@ -2393,8 +3001,10 @@ export function modifyPattern(
       neck_center: back_neck_center,
       neck_shoulder: back_neck_shoulder,
       shoulder_tip: back_shoulder_tip,
+      shoulder_notch: back_shoulder_notch,
       armhole_pitch: back_armhole_pitch,
       armhole_bottom: back_armhole_bottom,
+      side_notch: back_side_notch,
       side_hem: back_side_hem,
       center_hem: back_center_hem,
     },
@@ -2412,8 +3022,56 @@ export function modifyPattern(
     notches: backNotches,
     seamAllowance_mm: seamAllowance,
     hemAllowance_mm: hemAllowance,
+    ...(backFacingsList.length > 0 ? { facings: backFacingsList } : {}),
   };
   parts.back = backPart;
+
+  // Generación de Vistas Interiores (Facings)
+  if (hasButtonClosure) {
+    const frontFacing = generateFrontFacing({
+      overlap_neck,
+      front_neck_center,
+      front_neck_shoulder,
+      front_shoulder_tip,
+      frontNeckCp1,
+      frontNeckCp2,
+      frontNeckSamples,
+      front_center_hem,
+      overlap_hem,
+      armholeDepth,
+      facingWidth: 45,
+      facingShoulderWidth: 40,
+      seamAllowance,
+    });
+    parts.front_facing = frontFacing;
+  }
+
+  if (isSleeveless) {
+    const backNeckFacing = generateBackNeckFacing({
+      back_neck_center,
+      back_neck_shoulder,
+      back_shoulder_tip,
+      backNeckCp1,
+      backNeckCp2,
+      backNeckSamples,
+      backNeckDepth,
+      neckWidth,
+      backFacingWidth: 40,
+      seamAllowance,
+    });
+    parts.back_neck_facing = backNeckFacing;
+
+    const armholeFacing = generateArmholeFacing({
+      front_shoulder_tip,
+      front_armhole_pitch,
+      front_armhole_bottom,
+      frontArmholeUpperSamples,
+      frontArmholeLowerSamples,
+      armholeFacingWidth: 35,
+      seamAllowance,
+    });
+    parts.armhole_facing = armholeFacing;
+  }
 
   // =========================================================================
   // 7. ALGORITMO CRÍTICO: ARMONIZACIÓN MATEMÁTICA SISA-MANGA
@@ -2453,8 +3111,6 @@ export function modifyPattern(
     Math.round((frontArmholeLength + backArmholeLength) * 100) / 100;
 
   let harmonization: ArmholeHarmonization | undefined;
-
-  const isSleeveless = sleeveMod.length_type === 'sleeveless' || sleeveMod.type === 'sleeveless';
 
   if (!isSleeveless) {
     // Largo de manga adaptado (compensación por hombro caído y tipo de largo)
