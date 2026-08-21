@@ -78,6 +78,16 @@ suites_passing: 17/17 (468/468 tests PASS)
   - `T-34` (Commit `8c893d6`): Implementación del juego completo de Bolsillos Cargo 3D (`cargo_pocket_body`, `cargo_pocket_bellows` en tira U, `cargo_pocket_flap` con broches y entretela), blueprint ancla `utility_vest` (Chaleco Táctico / Safari / Cargo) en selector de Web Studio y `MockAiProvider`. 5 tests unitarios en `tests/cargo_pockets.test.ts`. Veredicto **APTO**.
   - Suite determinista global: **21/21 suites PASS (548/548 tests en verde)**. Plan archivado y veredicto **APTO**.
 
+### 📌 Sesión Cerrada: Handoff & Plan v0.9 (Calibración 3D y Triangulación)
+- **Fecha:** 2026-08-21
+- **Job:** `HANDOFF` (Rol: Ingeniero)
+- **Diagnóstico Visual 3D Realizado:**
+  1. Identificada la causa de la tira horizontal atravesada (`cargo_pocket_bellows` proyectada plana a lo largo de X).
+  2. Identificada la causa de la triangulación en abanico (*starburst fan*) por falsos positivos en `isPointInTriangle` en curvas densas.
+  3. Identificada la causa de la distorsión del cuello (proyección de 6 vértices en 360° sin subdivisión cilíndrica).
+  4. Identificado el desajuste de líneas de costura y capas Z en `viewer3d.js`.
+- **Preparación:** Diseñado y dejado en borrador `.agents/PLAN_v0.9-3d-geometry-and-meshing-calibration.md` con las tareas `T-35` a `T-38`. Código intacto sin ejecutar para que el usuario descanse.
+
 ---
 
 ## 3. Matriz de Paradas Humanas (Stop Conditions)
@@ -87,6 +97,7 @@ suites_passing: 17/17 (468/468 tests PASS)
 | **H-01** | Impresión física de Página 1 a escala 100%. | Medición con regla: exactamente $10.0\text{ cm} \times 10.0\text{ cm}$. | ✅ [VERIFICADO OK] |
 | **H-02** | Continuidad de ensamble de hojas A4/Letter. | Líneas de corte continuas con PDFStitcher sin saltos ni escalones. | ✅ [VERIFICADO OK] |
 | **H-03** | Verificación visual de patrones 2D y 3D en Web Studio. | Inspección interactiva del visor 2D y rotación 360° del visor 3D WebGL. | 🟡 [LISTO PARA PROBAR POR EL USUARIO] |
+
 
 
 

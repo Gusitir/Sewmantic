@@ -1,11 +1,9 @@
-# CURRENT - Generador Paramétrico de Patrones IA
-
 ```yaml
-updated_at: 2026-08-21T02:00:00-05:00
-source_commit: 8c893d6 [T-34] add cargo 3D bellows pockets, flaps and utility vest blueprint
+updated_at: 2026-08-21T02:15:00-05:00
+source_commit: 5425d1a [STATE] close phase 0.8: technical collar modules, 3D cargo pockets and utility vest blueprint
 assurance: Lean
-active_job: none
-active_plan: none
+active_job: HANDOFF
+active_plan: PLAN_v0.9-3d-geometry-and-meshing-calibration.md
 active_task: none
 last_verdict: APTO
 backup: local-only
@@ -20,8 +18,9 @@ backup: local-only
 
 ## Next action
 
-1. **Standby:** El sistema se encuentra en estado estable y probado al 100% (**548 tests PASS / 21 suites**).
-2. Listo para pruebas en vivo de generación y visualización 2D/3D con el usuario (`H-03`).
+1. **Próxima Sesión:** Humano aprueba `PLAN_v0.9-3d-geometry-and-meshing-calibration.md`.
+2. **Ingeniero/Obrero:** Despachar y ejecutar `[T-35]` (Corrección de Ear-Clipping en `triangulator.ts` para eliminar la triangulación en abanico) y verificar con `npm test`.
+3. Continuar con `[T-36]` (Bolsillos 3D integrados sin tira horizontal plana), `[T-37]` (Cuellos cilíndricos continuos) y `[T-38]` (Guías de costura y capas Z).
 
 ## Blockers
 

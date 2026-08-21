@@ -2,8 +2,8 @@
 
 This file points to the current active milestone plan for `pattern-ai-core`.
 
-- **Active Plan:** None (All 8 Phases Completed & Verified APTO)
-- **Active Phase:** Standby / Ready for User Confection & Live Testing (`H-03`)
+- **Active Plan:** [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN_v0.9-3d-geometry-and-meshing-calibration.md) (Status: draft / pending user approval)
+- **Active Phase:** Phase 9.0 — Calibración Geométrica 3D, Despiece y Triangulación Homogénea (T-35 a T-38)
 - **Assurance Profile:** Lean (Default)
 - **Archived Plans:**
   - [`archive/PLAN_v0.1-mvp.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/archive/PLAN_v0.1-mvp.md) (Phase 1.0 — MVP Core Geometry, Tiling, Techpack, 10x10cm calibration)
