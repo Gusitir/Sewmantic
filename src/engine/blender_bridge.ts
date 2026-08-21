@@ -133,6 +133,22 @@ export const FABRIC_PBR_PRESETS: Record<string, FabricPBR> = {
     subsurface: 0.08,
     doubleSided: true,
   },
+  interfacing: {
+    name: 'Interfacing_Lining',
+    baseColor: [0.93, 0.93, 0.96, 0.85],
+    roughness: 0.92,
+    metallic: 0.0,
+    subsurface: 0.15,
+    doubleSided: true,
+  },
+  entretela: {
+    name: 'Interfacing_Lining',
+    baseColor: [0.93, 0.93, 0.96, 0.85],
+    roughness: 0.92,
+    metallic: 0.0,
+    subsurface: 0.15,
+    doubleSided: true,
+  },
   default: {
     name: 'Standard_Fabric',
     baseColor: [0.80, 0.80, 0.80, 1.0],
@@ -836,7 +852,23 @@ export function generateTrueToPatternMesh(
       (isPocket && hasLegs && !lowerName.includes('vest') && !lowerName.includes('chest')) ||
       (lowerName.includes('cuff') && hasLegs);
 
-    const materialIndex = isBottomPart && hasMultipleMaterials ? 1 : 0;
+    // Determinar índice de material (incluyendo entretela para vistas)
+    let materialIndex = 0;
+    if (isFacing || part.isFacing || part.requiresInterfacing) {
+      let facingMatIdx = materials.findIndex(
+        (m) =>
+          m.name.toLowerCase().includes('interfacing') ||
+          m.name.toLowerCase().includes('lining') ||
+          m.name.toLowerCase().includes('entretela')
+      );
+      if (facingMatIdx === -1) {
+        materials.push(FABRIC_PBR_PRESETS.interfacing);
+        facingMatIdx = materials.length - 1;
+      }
+      materialIndex = facingMatIdx;
+    } else if (isBottomPart && hasMultipleMaterials) {
+      materialIndex = 1;
+    }
 
     // Vector de desplazamiento para Guía de Ensamble y Despiece 3D (Exploded Assembly View)
     let explodeOffset: [number, number, number] = [0, 0, 0.05];
@@ -891,6 +923,8 @@ export function generateTrueToPatternMesh(
 
     const isFullSpan = minX < -10 && maxX > 10;
     const onFold = part.onFold !== false && !isFullSpan;
+    // Si la pieza no ocupa ambos lados del eje X o es CORTAR x2 o va al lomo, se debe espejar en 3D
+    const shouldMirror = !isFullSpan || onFold || part.cutCount === 2;
 
     const panelPositions: number[] = [];
     const panelUvs: number[] = [];
@@ -912,7 +946,7 @@ export function generateTrueToPatternMesh(
       }
       panelIndices.push(...baseIndices);
 
-      if (onFold) {
+      if (shouldMirror) {
         const vOffset = outline.length;
         for (let k = 0; k < outline.length; k++) {
           const pt = outline[k];
@@ -946,7 +980,7 @@ export function generateTrueToPatternMesh(
         panelIndices.push(baseIndices[i], baseIndices[i + 2], baseIndices[i + 1]);
       }
 
-      if (onFold) {
+      if (shouldMirror) {
         const vOffset = outline.length;
         for (let k = 0; k < outline.length; k++) {
           const pt = outline[k];
@@ -1010,7 +1044,7 @@ export function generateTrueToPatternMesh(
       panelIndices.push(...baseIndices);
 
       // Panel Delantero Izquierdo Espejado (X <= 0)
-      if (onFold) {
+      if (shouldMirror) {
         const vOffset = outline.length;
         for (let k = 0; k < outline.length; k++) {
           const pt = outline[k];
@@ -1046,7 +1080,7 @@ export function generateTrueToPatternMesh(
       }
 
       // Panel Espalda Izquierdo Espejado
-      if (onFold) {
+      if (shouldMirror) {
         const vOffset = outline.length;
         for (let k = 0; k < outline.length; k++) {
           const pt = outline[k];
@@ -1238,7 +1272,7 @@ export function generateTrueToPatternMesh(
       }
       panelIndices.push(...baseIndices);
 
-      if (onFold) {
+      if (shouldMirror) {
         const vOffset = outline.length;
         for (let k = 0; k < outline.length; k++) {
           const pt = outline[k];
@@ -1278,7 +1312,7 @@ export function generateTrueToPatternMesh(
         panelIndices.push(baseIndices[i], baseIndices[i + 2], baseIndices[i + 1]);
       }
 
-      if (onFold) {
+      if (shouldMirror) {
         const vOffset = outline.length;
         for (let k = 0; k < outline.length; k++) {
           const pt = outline[k];
@@ -1317,7 +1351,7 @@ export function generateTrueToPatternMesh(
       }
       panelIndices.push(...baseIndices);
 
-      if (onFold) {
+      if (shouldMirror) {
         const vOffset = outline.length;
         for (let k = 0; k < outline.length; k++) {
           const pt = outline[k];
