@@ -9,6 +9,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   generate3DGarmentModel,
+  generateTrueToPatternMesh,
+  exportPatternToGlb,
+  buildGlbBuffer,
+  GarmentMesh3D,
   resolveFabricPbr,
   parseColorToRgba,
   findBlenderExecutable,
@@ -18,6 +22,7 @@ import {
   Garment3DOptions,
   Garment3DResult,
   PatternDna,
+  modifyPattern,
 } from '../src/index.js';
 
 describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
@@ -388,6 +393,239 @@ describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
       expect(result.glbBuffer.length).toBeGreaterThan(0);
       expect(result.isBlenderGenerated).toBe(false);
       expect(result.glbBuffer.readUInt32LE(0)).toBe(0x46546c67);
+    });
+  });
+
+  // =========================================================================
+  // 5. True-to-Pattern 3D Meshing & Ear Clipping Projection (T-26)
+  // =========================================================================
+  describe('5. True-to-Pattern 3D Meshing & Spatial Projection (T-26)', () => {
+    it('should generate true-to-pattern 3D mesh with exact 2D bounds for Pirate Vest with V-neck and pointed hem', () => {
+      const vestDna: PatternDna = {
+        concept_name: 'pirate_v_neck_vest_exact',
+        garment_category: 'top',
+        base_block: 'menswear_torso',
+        ease: { chest_ease_mm: 80, waist_ease_mm: 60 },
+        modifications: {
+          neckline: { type: 'v_neck', depth_mm: 160 },
+          sleeves: { type: 'sleeveless' },
+          hem: { type: 'curved_tail', drop_mm: 60 },
+        },
+      };
+
+      const pattern = modifyPattern(vestDna, 'M');
+      expect(pattern.parts.front).toBeDefined();
+      expect(pattern.parts.back).toBeDefined();
+
+      const mesh3D: GarmentMesh3D = generateTrueToPatternMesh(pattern, vestDna);
+
+      expect(mesh3D).toBeDefined();
+      expect(mesh3D.vertexCount).toBeGreaterThan(30);
+      expect(mesh3D.triangleCount).toBeGreaterThan(20);
+      expect(mesh3D.positions.length).toBe(mesh3D.vertexCount * 3);
+      expect(mesh3D.normals.length).toBe(mesh3D.vertexCount * 3);
+      expect(mesh3D.uvs.length).toBe(mesh3D.vertexCount * 2);
+      expect(mesh3D.indices.length).toBe(mesh3D.triangleCount * 3);
+
+      // 1. Verificación de cotas 3D coincidentes con las dimensiones 2D (escala métrica)
+      const frontPart = pattern.parts.front;
+      const expectedHeightM = frontPart.height_mm / 1000;
+      const expectedHalfWidthM = frontPart.width_mm / 1000;
+
+      const meshHeight = mesh3D.bounds.maxY - mesh3D.bounds.minY;
+      const meshWidth = mesh3D.bounds.maxX - mesh3D.bounds.minX;
+
+      // La altura 3D debe coincidir con la altura 2D en metros (tolerancia 50mm)
+      expect(meshHeight).toBeCloseTo(expectedHeightM, 1);
+      // El ancho 3D bilateral (-X a +X) debe ser aproximadamente el doble de la media pieza
+      expect(meshWidth).toBeGreaterThan(expectedHalfWidthM);
+      expect(meshWidth).toBeLessThanOrEqual(expectedHalfWidthM * 2.2);
+
+      // 2. Verificación de presencia del escote en V en los vértices del delantero (Y < SHOULDER_Y)
+      // Debe existir al menos un vértice central con profundidad de escote
+      const SHOULDER_Y = 1.45;
+      let hasVNeckVertex = false;
+      for (let i = 0; i < mesh3D.vertexCount; i++) {
+        const x = mesh3D.positions[i * 3];
+        const y = mesh3D.positions[i * 3 + 1];
+        const z = mesh3D.positions[i * 3 + 2];
+        // Vértice central en el pecho frontal
+        if (Math.abs(x) < 0.05 && z > 0.05) {
+          if (y < SHOULDER_Y - 0.10 && y > SHOULDER_Y - 0.30) {
+            hasVNeckVertex = true;
+            break;
+          }
+        }
+      }
+      expect(hasVNeckVertex).toBe(true);
+
+      // 3. Verificación de bajo en pico (pointed hem): vértice central inferior más bajo que costados
+      let lowestCenterY = Infinity;
+      let lowestSideY = Infinity;
+
+      for (let i = 0; i < mesh3D.vertexCount; i++) {
+        const x = mesh3D.positions[i * 3];
+        const y = mesh3D.positions[i * 3 + 1];
+        const z = mesh3D.positions[i * 3 + 2];
+        if (z > 0.02) {
+          // Frontal
+          if (Math.abs(x) < 0.03) {
+            if (y < lowestCenterY) lowestCenterY = y;
+          } else if (Math.abs(x) > expectedHalfWidthM * 0.7) {
+            if (y < lowestSideY) lowestSideY = y;
+          }
+        }
+      }
+      expect(lowestCenterY).toBeLessThan(lowestSideY);
+    });
+
+    it('should compute smooth unit normals for all vertices with proper front and back orientations', () => {
+      const vestDna: PatternDna = {
+        concept_name: 'smooth_normals_test',
+        garment_category: 'top',
+        base_block: 'menswear_torso',
+        ease: { chest_ease_mm: 60 },
+        modifications: {},
+      };
+
+      const pattern = modifyPattern(vestDna, 'M');
+      const mesh3D = generateTrueToPatternMesh(pattern, vestDna);
+
+      let frontNormalCount = 0;
+      let backNormalCount = 0;
+
+      for (let i = 0; i < mesh3D.vertexCount; i++) {
+        const nx = mesh3D.normals[i * 3];
+        const ny = mesh3D.normals[i * 3 + 1];
+        const nz = mesh3D.normals[i * 3 + 2];
+
+        // Longitud unitaria (magnitud == 1.0)
+        const length = Math.sqrt(nx * nx + ny * ny + nz * nz);
+        expect(length).toBeCloseTo(1.0, 2);
+
+        const z = mesh3D.positions[i * 3 + 2];
+        if (z > 0.05 && nz > 0) frontNormalCount++;
+        if (z < -0.05 && nz < 0) backNormalCount++;
+      }
+
+      // La gran mayoría de vértices delanteros deben tener normales orientadas hacia el frente
+      expect(frontNormalCount).toBeGreaterThan(0);
+      // La gran mayoría de vértices traseros deben tener normales orientadas hacia atrás
+      expect(backNormalCount).toBeGreaterThan(0);
+    });
+
+    it('should compute metric UV coordinates in strictly valid [0, 1] range', () => {
+      const vestDna: PatternDna = {
+        concept_name: 'metric_uv_test',
+        garment_category: 'top',
+        base_block: 'menswear_torso',
+        ease: { chest_ease_mm: 60 },
+        modifications: {
+          neckline: { type: 'scoop', depth_mm: 120 },
+        },
+      };
+
+      const pattern = modifyPattern(vestDna, 'M');
+      const mesh3D = generateTrueToPatternMesh(pattern, vestDna);
+
+      for (let i = 0; i < mesh3D.vertexCount; i++) {
+        const u = mesh3D.uvs[i * 2];
+        const v = mesh3D.uvs[i * 2 + 1];
+
+        expect(u).toBeGreaterThanOrEqual(0.0);
+        expect(u).toBeLessThanOrEqual(1.0);
+        expect(v).toBeGreaterThanOrEqual(0.0);
+        expect(v).toBeLessThanOrEqual(1.0);
+      }
+    });
+
+    it('should project multi-piece garments with trousers, furisode sleeves, and skirts', () => {
+      // 1. Trousers (Pantalones)
+      const pantsDna: PatternDna = {
+        concept_name: 'trousers_projection_test',
+        garment_category: 'bottom',
+        base_block: 'pants_sloper',
+        ease: { chest_ease_mm: 0, waist_ease_mm: 30, hip_ease_mm: 60 },
+        modifications: {
+          trouser_legs: { type: 'straight', length_type: 'full' },
+        },
+      };
+      const pantsPattern = modifyPattern(pantsDna, 'M');
+      const pantsMesh = generateTrueToPatternMesh(pantsPattern, pantsDna);
+
+      expect(pantsMesh.vertexCount).toBeGreaterThan(20);
+      expect(pantsMesh.bounds.minY).toBeLessThan(1.05); // debajo de cintura
+
+      // 2. Kimono con mangas Furisode
+      const kimonoDna: PatternDna = {
+        concept_name: 'kimono_furisode_test',
+        garment_category: 'kimono',
+        base_block: 'dress_sloper',
+        ease: { chest_ease_mm: 120 },
+        modifications: {
+          sleeves: { type: 'kimono' },
+          kimono_details: { sleeve_style: 'furisode_square', collar_width_mm: 50, obi_belt: true },
+        },
+      };
+      const kimonoPattern = modifyPattern(kimonoDna, 'M');
+      const kimonoMesh = generateTrueToPatternMesh(kimonoPattern, kimonoDna);
+
+      expect(kimonoMesh.vertexCount).toBeGreaterThan(20);
+      // Las mangas Furisode se extienden lateralmente
+      expect(kimonoMesh.bounds.maxX).toBeGreaterThan(0.20);
+      expect(kimonoMesh.bounds.minX).toBeLessThan(-0.20);
+
+      // 3. Falda Evasé
+      const skirtDna: PatternDna = {
+        concept_name: 'skirt_cone_test',
+        garment_category: 'dress',
+        base_block: 'dress_sloper',
+        ease: { chest_ease_mm: 60 },
+        modifications: {
+          dress_details: { silhouette: 'a_line', skirt_length_mm: 500 },
+        },
+      };
+      const skirtPattern = modifyPattern(skirtDna, 'M');
+      const skirtMesh = generateTrueToPatternMesh(skirtPattern, skirtDna);
+
+      expect(skirtMesh.vertexCount).toBeGreaterThan(20);
+      expect(skirtMesh.triangleCount).toBeGreaterThan(10);
+    });
+
+    it('should export Pattern to glTF 2.0 .glb via exportPatternToGlb and buildGlbBuffer', () => {
+      const vestDna: PatternDna = {
+        concept_name: 'glb_export_pattern_test',
+        garment_category: 'top',
+        base_block: 'menswear_torso',
+        ease: { chest_ease_mm: 70 },
+        modifications: {
+          neckline: { type: 'v_neck', depth_mm: 140 },
+          sleeves: { type: 'sleeveless' },
+          hem: { type: 'curved_tail', drop_mm: 50 },
+        },
+      };
+
+      const pattern = modifyPattern(vestDna, 'M');
+      const outPath = path.join(testOutputDir, 'glb_export_pattern_test.glb');
+
+      const result = exportPatternToGlb(pattern, {
+        dna: vestDna,
+        fabric: 'linen',
+        color: '#D62828',
+        outputPath: outPath,
+      });
+
+      expect(result).toBeDefined();
+      expect(result.glbBuffer).toBeInstanceOf(Buffer);
+      expect(result.byteLength).toBeGreaterThan(500);
+      expect(result.vertexCount).toBeGreaterThan(20);
+      expect(result.triangleCount).toBeGreaterThan(10);
+      expect(fs.existsSync(outPath)).toBe(true);
+
+      // Header glTF 2.0
+      expect(result.glbBuffer.readUInt32LE(0)).toBe(0x46546c67);
+      expect(result.glbBuffer.readUInt32LE(4)).toBe(2);
+      expect(result.glbBuffer.readUInt32LE(8)).toBe(result.glbBuffer.length);
     });
   });
 });

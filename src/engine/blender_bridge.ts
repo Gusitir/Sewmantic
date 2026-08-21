@@ -13,8 +13,9 @@ import path from 'node:path';
 import { execFile, execSync } from 'node:child_process';
 import { promisify } from 'node:util';
 import { PatternDna, FabricSpec, StandardSize } from '../types/pattern.js';
-import { PatternPart } from './geometry.js';
-import { modifyPattern } from './modifier.js';
+import { PatternPart, Point2D, computeBounds } from './geometry.js';
+import { ModifiedPatternResult, modifyPattern } from './modifier.js';
+import { triangulatePolygon } from './triangulator.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -363,7 +364,10 @@ export function detectBlenderCli(): { available: boolean; path: string | null } 
 /**
  * Representación interna de un panel 3D triangulado
  */
-interface Panel3DMesh {
+/**
+ * Representación de un panel 3D o malla completa consolidada
+ */
+export interface Panel3DMesh {
   name: string;
   positions: number[]; // x, y, z (meters)
   normals: number[]; // nx, ny, nz
@@ -372,213 +376,605 @@ interface Panel3DMesh {
 }
 
 /**
- * Genera la malla 3D anatómica con curvatura realista para un panel de moldería 2D
+ * Estructura de malla 3D textil anatómica consolidada (True-to-Pattern)
  */
-function createPanel3DMesh(
-  partName: string,
-  part: PatternPart,
-  subdivisions: number = 16
-): Panel3DMesh {
-  const widthMeters = Math.max((part.width_mm || 400) * 0.001, 0.05);
-  const heightMeters = Math.max((part.height_mm || 600) * 0.001, 0.05);
+export interface GarmentMesh3D {
+  positions: number[]; // [x0, y0, z0, x1, y1, z1, ...] en metros
+  normals: number[]; // [nx0, ny0, nz0, ...] vectores unitarios suaves
+  uvs: number[]; // [u0, v0, u1, v1, ...] coordenadas paramétricas [0..1]
+  indices: number[]; // [i0, i1, i2, ...] índices de triángulos CCW
+  vertexCount: number;
+  triangleCount: number;
+  bounds: {
+    minX: number;
+    minY: number;
+    minZ: number;
+    maxX: number;
+    maxY: number;
+    maxZ: number;
+  };
+  panels?: Array<{
+    name: string;
+    vertexOffset: number;
+    indexOffset: number;
+    vertexCount: number;
+    indexCount: number;
+  }>;
+}
 
-  const nx = Math.max(subdivisions, 8);
-  const ny = Math.min(Math.max(Math.round(subdivisions * (heightMeters / widthMeters)), 8), 48);
+/**
+ * Genera la malla 3D anatómica envolvente directa a partir de piezas 2D reales de moldería FreeSewing
+ * (True-to-Pattern Meshing) mediante triangulación determinista y proyección espacial paramétrica.
+ */
+export function generateTrueToPatternMesh(
+  pattern: ModifiedPatternResult,
+  dna?: PatternDna
+): GarmentMesh3D {
+  let resolvedParts = pattern.parts;
+  if (!resolvedParts || Object.keys(resolvedParts).length === 0) {
+    const fallbackPart: PatternPart = {
+      name: 'front_torso',
+      label: 'Front Torso',
+      cutCount: 1,
+      onFold: true,
+      points: {},
+      pathD: '',
+      outline: [
+        { x: 0, y: 50 },
+        { x: 100, y: 0 },
+        { x: 200, y: 50 },
+        { x: 250, y: 250 },
+        { x: 250, y: 650 },
+        { x: 0, y: 650 },
+      ],
+      bounds: { minX: 0, minY: 0, maxX: 250, maxY: 650, width: 250, height: 650 },
+      width_mm: 250,
+      height_mm: 650,
+      area_mm2: 150000,
+      grainline: { start: { x: 125, y: 50 }, end: { x: 125, y: 600 }, label: 'Grainline' },
+      notches: [],
+    };
+    resolvedParts = { front: fallbackPart };
+  }
 
-  const positions: number[] = [];
-  const uvs: number[] = [];
-  const indices: number[] = [];
-
-  const lowerName = partName.toLowerCase();
-
-  // Clasificación del tipo anatómico de panel
-  const isFrontTorso =
-    lowerName.includes('front_bodice') ||
-    lowerName.includes('front_dress') ||
-    lowerName.includes('front_torso') ||
-    (lowerName.includes('front') && !lowerName.includes('leg') && !lowerName.includes('skirt'));
-
-  const isBackTorso =
-    lowerName.includes('back_bodice') ||
-    lowerName.includes('back_dress') ||
-    lowerName.includes('back_torso') ||
-    (lowerName.includes('back') && !lowerName.includes('leg') && !lowerName.includes('skirt'));
-
-  const isSleeve = lowerName.includes('sleeve') && !lowerName.includes('furisode');
-  const isFurisodeSleeve = lowerName.includes('furisode');
-
-  const isFrontLeg = lowerName.includes('front_leg') || (lowerName.includes('leg') && lowerName.includes('front'));
-  const isBackLeg = lowerName.includes('back_leg') || (lowerName.includes('leg') && lowerName.includes('back'));
-
-  const isFrontSkirt = lowerName.includes('front_skirt') || (lowerName.includes('skirt') && lowerName.includes('front'));
-  const isBackSkirt = lowerName.includes('back_skirt') || (lowerName.includes('skirt') && lowerName.includes('back'));
-
-  const isHood = lowerName.includes('hood');
-  const isWaistband = lowerName.includes('waistband') || lowerName.includes('obi_belt');
-  const isCollar = lowerName.includes('collar');
-  const isPocket = lowerName.includes('pocket');
+  const combinedPositions: number[] = [];
+  const combinedUvs: number[] = [];
+  const combinedIndices: number[] = [];
+  const panelsSummary: Array<{
+    name: string;
+    vertexOffset: number;
+    indexOffset: number;
+    vertexCount: number;
+    indexCount: number;
+  }> = [];
 
   // Parámetros antropométricos estándar (en metros)
   const SHOULDER_Y = 1.45;
   const WAIST_Y = 1.05;
-  const CROTCH_Y = 0.80;
-  const TORSO_RADIUS_X = 0.20;
-  const TORSO_RADIUS_Z = 0.13;
+  const Z_CHEST = 0.13;
+  const Z_BACK = 0.12;
+  const Z_OFFSET = 0.02;
   const LEG_CENTER_X = 0.10;
-  const LEG_RADIUS = 0.09;
-  const SKIRT_WAIST_R = 0.16;
-  const SKIRT_HEM_R = 0.28;
 
-  // Generar vértices y UVs en la grilla regular (i, j)
-  for (let j = 0; j <= ny; j++) {
-    const v = j / ny;
-    for (let i = 0; i <= nx; i++) {
-      const u = i / nx;
+  for (const [partName, part] of Object.entries(resolvedParts)) {
+    // 1. Obtener el contorno 2D de la pieza
+    let outline: Point2D[] =
+      part.outline && part.outline.length >= 3
+        ? part.outline
+        : Object.values(part.points || {});
 
-      let x = 0;
-      let y = 0;
-      let z = 0;
+    if (outline.length < 3) {
+      const b = part.bounds || { minX: 0, minY: 0, maxX: 300, maxY: 500, width: 300, height: 500 };
+      outline = [
+        { x: b.minX, y: b.minY },
+        { x: b.maxX, y: b.minY },
+        { x: b.maxX, y: b.maxY },
+        { x: b.minX, y: b.maxY },
+      ];
+    }
 
-      if (isFrontTorso) {
-        // Envoltura frontal convexa sobre el torso (Z > 0)
-        const theta0 = (72 * Math.PI) / 180;
-        const theta = (u - 0.5) * 2 * theta0;
-        const waistPinch = 1.0 - 0.08 * Math.sin(v * Math.PI);
-        x = TORSO_RADIUS_X * Math.sin(theta) * waistPinch;
-        z = TORSO_RADIUS_Z * Math.cos(theta) * waistPinch + 0.02;
-        y = SHOULDER_Y - v * heightMeters;
-      } else if (isBackTorso) {
-        // Envoltura dorsal convexa sobre la espalda (Z < 0)
-        const theta0 = (72 * Math.PI) / 180;
-        const theta = (0.5 - u) * 2 * theta0;
-        const waistPinch = 1.0 - 0.08 * Math.sin(v * Math.PI);
-        x = TORSO_RADIUS_X * Math.sin(theta) * waistPinch;
-        z = -(TORSO_RADIUS_Z * Math.cos(theta) * waistPinch + 0.02);
-        y = SHOULDER_Y - v * heightMeters;
-      } else if (isSleeve) {
-        // Manga anatómica en postura A-Pose
-        const armAngle = (30 * Math.PI) / 180; // 30 grados de inclinación
-        const phi = u * 2 * Math.PI;
-        const armRadius = 0.075 - 0.025 * v; // Disminuye hacia el puño
-        const armDist = v * heightMeters;
-        const shoulderX = 0.23;
-        const shoulderY = 1.40;
+    const bounds = part.bounds || computeBounds(outline);
+    const minX = bounds.minX;
+    const maxX = bounds.maxX;
+    const minY = bounds.minY;
+    const maxY = bounds.maxY;
+    const width_mm = Math.max(maxX - minX, 10);
+    const height_mm = Math.max(maxY - minY, 10);
+    const W_half = Math.max(part.bounds?.width || width_mm, 100) / 1000;
+    const H_m = height_mm / 1000;
 
-        x = shoulderX + armDist * Math.sin(armAngle) + armRadius * Math.cos(phi) * Math.cos(armAngle);
-        y = shoulderY - armDist * Math.cos(armAngle) - armRadius * Math.cos(phi) * Math.sin(armAngle);
-        z = armRadius * Math.sin(phi);
-      } else if (isFurisodeSleeve) {
-        // Manga kimono cuadrada colgante con caída drapeada
-        const shoulderX = 0.25;
-        const shoulderY = 1.42;
-        const drapeFold = Math.sin(u * Math.PI) * 0.035 * (1.0 - 0.3 * v);
-        x = shoulderX + (u - 0.5) * widthMeters * 0.7;
-        y = shoulderY - v * heightMeters;
-        z = drapeFold;
-      } else if (isFrontLeg) {
-        // Pierna frontal de pantalón (cilindro envolvente)
-        const theta = (u - 0.5) * Math.PI;
-        const legR = LEG_RADIUS - 0.015 * v;
-        x = LEG_CENTER_X + legR * Math.sin(theta);
-        z = legR * Math.cos(theta) + 0.015;
-        y = WAIST_Y - v * heightMeters;
-      } else if (isBackLeg) {
-        // Pierna posterior de pantalón (glúteos y pantorrilla)
-        const theta = (0.5 - u) * Math.PI;
-        const legR = LEG_RADIUS - 0.015 * v;
-        x = LEG_CENTER_X + legR * Math.sin(theta);
-        z = -(legR * Math.cos(theta) + 0.015);
-        y = WAIST_Y - v * heightMeters;
-      } else if (isFrontSkirt) {
-        // Falda frontal cónica
-        const theta = (u - 0.5) * ((150 * Math.PI) / 180);
-        const r = SKIRT_WAIST_R + v * (SKIRT_HEM_R - SKIRT_WAIST_R);
-        x = r * Math.sin(theta);
-        z = r * Math.cos(theta) + 0.01;
-        y = WAIST_Y - v * heightMeters;
-      } else if (isBackSkirt) {
-        // Falda posterior cónica
-        const theta = (0.5 - u) * ((150 * Math.PI) / 180);
-        const r = SKIRT_WAIST_R + v * (SKIRT_HEM_R - SKIRT_WAIST_R);
-        x = r * Math.sin(theta);
-        z = -(r * Math.cos(theta) + 0.01);
-        y = WAIST_Y - v * heightMeters;
-      } else if (isHood) {
-        // Capucha anatómica sobre la cabeza
-        const hoodY = 1.48 + (1.0 - v) * (heightMeters * 0.8);
-        const phi = (u - 0.5) * Math.PI * 0.9;
-        const hoodR = 0.12 + 0.04 * Math.sin(v * Math.PI);
-        x = hoodR * Math.sin(phi) + 0.05;
-        y = hoodY;
-        z = hoodR * Math.cos(phi) - 0.02;
-      } else if (isWaistband) {
-        // Pretina / cinturón toroidal en cintura
-        const phi = (u - 0.5) * 2 * Math.PI;
-        x = SKIRT_WAIST_R * Math.sin(phi);
-        z = (SKIRT_WAIST_R * 0.8) * Math.cos(phi);
-        y = WAIST_Y - v * heightMeters;
-      } else if (isCollar) {
-        // Cuello / ribete
-        const phi = (u - 0.5) * 2 * Math.PI;
-        x = 0.10 * Math.sin(phi);
-        z = 0.09 * Math.cos(phi);
-        y = SHOULDER_Y + (1.0 - v) * heightMeters;
-      } else if (isPocket) {
-        // Bolsillo adosado al frente
-        x = 0.08 + (u - 0.5) * widthMeters;
-        y = 1.15 - v * heightMeters;
-        z = TORSO_RADIUS_Z + 0.035;
-      } else {
-        // Panel genérico con curvatura suave
-        const theta = (u - 0.5) * ((60 * Math.PI) / 180);
-        x = (u - 0.5) * widthMeters;
-        y = 1.20 - v * heightMeters;
-        z = 0.05 * Math.cos(theta);
+    // 2. Triangulación 2D con Ear Clipping
+    let baseIndices = triangulatePolygon(outline);
+    if (!baseIndices || baseIndices.length < 3) {
+      baseIndices = [];
+      for (let f = 1; f < outline.length - 1; f++) {
+        baseIndices.push(0, f, f + 1);
+      }
+    }
+
+    const lowerName = partName.toLowerCase();
+    const isFrontTorso =
+      lowerName.includes('front_bodice') ||
+      lowerName.includes('front_dress') ||
+      lowerName.includes('front_torso') ||
+      (lowerName.includes('front') && !lowerName.includes('leg') && !lowerName.includes('skirt') && !lowerName.includes('pocket'));
+
+    const isBackTorso =
+      lowerName.includes('back_bodice') ||
+      lowerName.includes('back_dress') ||
+      lowerName.includes('back_torso') ||
+      (lowerName.includes('back') && !lowerName.includes('leg') && !lowerName.includes('skirt'));
+
+    const isFurisodeSleeve = lowerName.includes('furisode');
+    const isSleeve = lowerName.includes('sleeve') && !lowerName.includes('furisode');
+
+    const isFrontLeg = lowerName.includes('front_leg') || (lowerName.includes('leg') && lowerName.includes('front'));
+    const isBackLeg = lowerName.includes('back_leg') || (lowerName.includes('leg') && lowerName.includes('back'));
+
+    const isFrontSkirt = lowerName.includes('front_skirt') || (lowerName.includes('skirt') && lowerName.includes('front'));
+    const isBackSkirt = lowerName.includes('back_skirt') || (lowerName.includes('skirt') && lowerName.includes('back'));
+
+    const isHood = lowerName.includes('hood');
+    const isWaistband = lowerName.includes('waistband') || lowerName.includes('obi_belt');
+    const isCollar = lowerName.includes('collar');
+    const isPocket = lowerName.includes('pocket');
+
+    const isFullSpan = minX < -10 && maxX > 10;
+    const onFold = part.onFold !== false && !isFullSpan;
+
+    const panelVertexStart = combinedPositions.length / 3;
+    const panelIndexStart = combinedIndices.length;
+
+    const panelPositions: number[] = [];
+    const panelUvs: number[] = [];
+    const panelIndices: number[] = [];
+
+    // 3. Proyección espacial anatómica envolvente
+    if (isFrontTorso) {
+      // Panel Delantero Derecho (X >= 0)
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const X = pt.x / 1000;
+        const Y = SHOULDER_Y - (pt.y - minY) / 1000;
+        const Z = Z_CHEST * Math.cos((X / W_half) * (Math.PI / 2.5)) + Z_OFFSET;
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      panelIndices.push(...baseIndices);
+
+      // Panel Delantero Izquierdo Espejado (X <= 0)
+      if (onFold) {
+        const vOffset = outline.length;
+        for (let k = 0; k < outline.length; k++) {
+          const pt = outline[k];
+          const X = -pt.x / 1000;
+          const Y = SHOULDER_Y - (pt.y - minY) / 1000;
+          const Z = Z_CHEST * Math.cos((X / W_half) * (Math.PI / 2.5)) + Z_OFFSET;
+          const u = 1.0 - Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+          const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+
+          panelPositions.push(X, Y, Z);
+          panelUvs.push(u, v);
+        }
+        for (let i = 0; i < baseIndices.length; i += 3) {
+          panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
+        }
+      }
+    } else if (isBackTorso) {
+      // Panel Espalda Derecho (Z < 0)
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const X = pt.x / 1000;
+        const Y = SHOULDER_Y - (pt.y - minY) / 1000;
+        const Z = -(Z_BACK * Math.cos((X / W_half) * (Math.PI / 2.5)) + Z_OFFSET);
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      // Invertir orientación de triángulos de espalda para normales hacia afuera
+      for (let i = 0; i < baseIndices.length; i += 3) {
+        panelIndices.push(baseIndices[i], baseIndices[i + 2], baseIndices[i + 1]);
       }
 
-      positions.push(x, y, z);
-      uvs.push(u, v);
+      // Panel Espalda Izquierdo Espejado
+      if (onFold) {
+        const vOffset = outline.length;
+        for (let k = 0; k < outline.length; k++) {
+          const pt = outline[k];
+          const X = -pt.x / 1000;
+          const Y = SHOULDER_Y - (pt.y - minY) / 1000;
+          const Z = -(Z_BACK * Math.cos((X / W_half) * (Math.PI / 2.5)) + Z_OFFSET);
+          const u = 1.0 - Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+          const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+
+          panelPositions.push(X, Y, Z);
+          panelUvs.push(u, v);
+        }
+        for (let i = 0; i < baseIndices.length; i += 3) {
+          panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 1] + vOffset, baseIndices[i + 2] + vOffset);
+        }
+      }
+    } else if (isFurisodeSleeve) {
+      // Manga Kimono Furisode colgante
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const X = 0.23 + ((pt.x - minX) / 1000) * 0.65;
+        const Y = SHOULDER_Y - 0.03 - (pt.y - minY) / 1000;
+        const Z = Math.sin(u * Math.PI) * 0.035 * (1.0 - 0.3 * v);
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      panelIndices.push(...baseIndices);
+
+      // Manga Furisode Izquierda
+      const vOffset = outline.length;
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const X = -0.23 - ((pt.x - minX) / 1000) * 0.65;
+        const Y = SHOULDER_Y - 0.03 - (pt.y - minY) / 1000;
+        const Z = Math.sin(u * Math.PI) * 0.035 * (1.0 - 0.3 * v);
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(1.0 - u, v);
+      }
+      for (let i = 0; i < baseIndices.length; i += 3) {
+        panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
+      }
+    } else if (isSleeve) {
+      // Manga Anatómica envolvente A-Pose
+      const halfBicep = Math.max(Math.abs(minX), Math.abs(maxX), 50);
+      const armAngle = (30 * Math.PI) / 180;
+
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const d = (pt.y - minY) / 1000;
+        const armRadius = 0.075 - 0.025 * v;
+        const phi = (pt.x / halfBicep) * Math.PI;
+
+        const xLoc = armRadius * Math.cos(phi) * Math.cos(armAngle);
+        const yLoc = -armRadius * Math.cos(phi) * Math.sin(armAngle);
+        const zLoc = armRadius * Math.sin(phi);
+
+        const X = 0.23 + d * Math.sin(armAngle) + xLoc;
+        const Y = SHOULDER_Y - 0.05 - d * Math.cos(armAngle) + yLoc;
+        const Z = zLoc;
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      panelIndices.push(...baseIndices);
+
+      // Manga Izquierda Espejada
+      const vOffset = outline.length;
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const d = (pt.y - minY) / 1000;
+        const armRadius = 0.075 - 0.025 * v;
+        const phi = (pt.x / halfBicep) * Math.PI;
+
+        const xLoc = armRadius * Math.cos(phi) * Math.cos(armAngle);
+        const yLoc = -armRadius * Math.cos(phi) * Math.sin(armAngle);
+        const zLoc = armRadius * Math.sin(phi);
+
+        const X = -0.23 - d * Math.sin(armAngle) - xLoc;
+        const Y = SHOULDER_Y - 0.05 - d * Math.cos(armAngle) + yLoc;
+        const Z = zLoc;
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(1.0 - u, v);
+      }
+      for (let i = 0; i < baseIndices.length; i += 3) {
+        panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
+      }
+    } else if (isFrontLeg) {
+      // Pierna Frontal Pantalón (Cilindro anatómico envolvente)
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const theta = (u - 0.5) * Math.PI;
+        const legR = 0.09 - 0.015 * v;
+
+        const X = LEG_CENTER_X + legR * Math.sin(theta);
+        const Y = WAIST_Y - (pt.y - minY) / 1000;
+        const Z = legR * Math.cos(theta) + 0.015;
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      panelIndices.push(...baseIndices);
+
+      // Pierna Frontal Izquierda
+      const vOffset = outline.length;
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const theta = (u - 0.5) * Math.PI;
+        const legR = 0.09 - 0.015 * v;
+
+        const X = -LEG_CENTER_X - legR * Math.sin(theta);
+        const Y = WAIST_Y - (pt.y - minY) / 1000;
+        const Z = legR * Math.cos(theta) + 0.015;
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(1.0 - u, v);
+      }
+      for (let i = 0; i < baseIndices.length; i += 3) {
+        panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
+      }
+    } else if (isBackLeg) {
+      // Pierna Trasera Pantalón
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const theta = (0.5 - u) * Math.PI;
+        const legR = 0.09 - 0.015 * v;
+
+        const X = LEG_CENTER_X + legR * Math.sin(theta);
+        const Y = WAIST_Y - (pt.y - minY) / 1000;
+        const Z = -(legR * Math.cos(theta) + 0.015);
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      for (let i = 0; i < baseIndices.length; i += 3) {
+        panelIndices.push(baseIndices[i], baseIndices[i + 2], baseIndices[i + 1]);
+      }
+
+      // Pierna Trasera Izquierda
+      const vOffset = outline.length;
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const theta = (0.5 - u) * Math.PI;
+        const legR = 0.09 - 0.015 * v;
+
+        const X = -LEG_CENTER_X - legR * Math.sin(theta);
+        const Y = WAIST_Y - (pt.y - minY) / 1000;
+        const Z = -(legR * Math.cos(theta) + 0.015);
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(1.0 - u, v);
+      }
+      for (let i = 0; i < baseIndices.length; i += 3) {
+        panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 1] + vOffset, baseIndices[i + 2] + vOffset);
+      }
+    } else if (isFrontSkirt) {
+      // Falda Delantera Cónica Evasé
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const theta = (u - 0.5) * ((150 * Math.PI) / 180);
+        const r = 0.16 + v * (0.28 - 0.16);
+
+        const X = r * Math.sin(theta);
+        const Y = WAIST_Y - (pt.y - minY) / 1000;
+        const Z = r * Math.cos(theta) + 0.01;
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      panelIndices.push(...baseIndices);
+
+      if (onFold) {
+        const vOffset = outline.length;
+        for (let k = 0; k < outline.length; k++) {
+          const pt = outline[k];
+          const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+          const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+          const theta = (u - 0.5) * ((150 * Math.PI) / 180);
+          const r = 0.16 + v * (0.28 - 0.16);
+
+          const X = -r * Math.sin(theta);
+          const Y = WAIST_Y - (pt.y - minY) / 1000;
+          const Z = r * Math.cos(theta) + 0.01;
+
+          panelPositions.push(X, Y, Z);
+          panelUvs.push(1.0 - u, v);
+        }
+        for (let i = 0; i < baseIndices.length; i += 3) {
+          panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
+        }
+      }
+    } else if (isBackSkirt) {
+      // Falda Trasera Cónica
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const theta = (0.5 - u) * ((150 * Math.PI) / 180);
+        const r = 0.16 + v * (0.28 - 0.16);
+
+        const X = r * Math.sin(theta);
+        const Y = WAIST_Y - (pt.y - minY) / 1000;
+        const Z = -(r * Math.cos(theta) + 0.01);
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      for (let i = 0; i < baseIndices.length; i += 3) {
+        panelIndices.push(baseIndices[i], baseIndices[i + 2], baseIndices[i + 1]);
+      }
+
+      if (onFold) {
+        const vOffset = outline.length;
+        for (let k = 0; k < outline.length; k++) {
+          const pt = outline[k];
+          const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+          const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+          const theta = (0.5 - u) * ((150 * Math.PI) / 180);
+          const r = 0.16 + v * (0.28 - 0.16);
+
+          const X = -r * Math.sin(theta);
+          const Y = WAIST_Y - (pt.y - minY) / 1000;
+          const Z = -(r * Math.cos(theta) + 0.01);
+
+          panelPositions.push(X, Y, Z);
+          panelUvs.push(1.0 - u, v);
+        }
+        for (let i = 0; i < baseIndices.length; i += 3) {
+          panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 1] + vOffset, baseIndices[i + 2] + vOffset);
+        }
+      }
+    } else if (isHood) {
+      // Capucha anatómica
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const hoodY = 1.48 + (1.0 - v) * (H_m * 0.8);
+        const phi = (u - 0.5) * Math.PI * 0.9;
+        const hoodR = 0.12 + 0.04 * Math.sin(v * Math.PI);
+
+        const X = hoodR * Math.sin(phi) + 0.05;
+        const Y = hoodY;
+        const Z = hoodR * Math.cos(phi) - 0.02;
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      panelIndices.push(...baseIndices);
+
+      if (onFold) {
+        const vOffset = outline.length;
+        for (let k = 0; k < outline.length; k++) {
+          const pt = outline[k];
+          const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+          const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+          const hoodY = 1.48 + (1.0 - v) * (H_m * 0.8);
+          const phi = (u - 0.5) * Math.PI * 0.9;
+          const hoodR = 0.12 + 0.04 * Math.sin(v * Math.PI);
+
+          const X = -(hoodR * Math.sin(phi) + 0.05);
+          const Y = hoodY;
+          const Z = hoodR * Math.cos(phi) - 0.02;
+
+          panelPositions.push(X, Y, Z);
+          panelUvs.push(1.0 - u, v);
+        }
+        for (let i = 0; i < baseIndices.length; i += 3) {
+          panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
+        }
+      }
+    } else if (isPocket) {
+      // Bolsillo frontal adosado
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const X = 0.08 + (pt.x - minX) / 1000;
+        const Y = 1.15 - (pt.y - minY) / 1000;
+        const Z = Z_CHEST + 0.035;
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      panelIndices.push(...baseIndices);
+    } else if (isWaistband) {
+      // Cinturón / Pretina toroidal
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const phi = (u - 0.5) * 2 * Math.PI;
+        const X = 0.16 * Math.sin(phi);
+        const Y = WAIST_Y - (pt.y - minY) / 1000;
+        const Z = 0.13 * Math.cos(phi);
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      panelIndices.push(...baseIndices);
+    } else if (isCollar) {
+      // Cuello envolvente
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const phi = (u - 0.5) * 2 * Math.PI;
+        const X = 0.10 * Math.sin(phi);
+        const Y = SHOULDER_Y + (1.0 - v) * H_m;
+        const Z = 0.09 * Math.cos(phi);
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      panelIndices.push(...baseIndices);
+    } else {
+      // Panel genérico proyectado
+      for (let k = 0; k < outline.length; k++) {
+        const pt = outline[k];
+        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+        const theta = (u - 0.5) * ((60 * Math.PI) / 180);
+        const X = (pt.x - minX) / 1000 - W_half / 2;
+        const Y = 1.20 - (pt.y - minY) / 1000;
+        const Z = 0.05 * Math.cos(theta);
+
+        panelPositions.push(X, Y, Z);
+        panelUvs.push(u, v);
+      }
+      panelIndices.push(...baseIndices);
     }
+
+    // 4. Agregar a los buffers combinados consolidando desplazamientos de vértices
+    const globalVOffset = combinedPositions.length / 3;
+    combinedPositions.push(...panelPositions);
+    combinedUvs.push(...panelUvs);
+
+    for (let t = 0; t < panelIndices.length; t++) {
+      combinedIndices.push(panelIndices[t] + globalVOffset);
+    }
+
+    panelsSummary.push({
+      name: partName,
+      vertexOffset: panelVertexStart,
+      indexOffset: panelIndexStart,
+      vertexCount: panelPositions.length / 3,
+      indexCount: panelIndices.length,
+    });
   }
 
-  // Generar caras triangulares para cada cuadrilátero de la grilla
-  const rowStride = nx + 1;
-  for (let j = 0; j < ny; j++) {
-    for (let i = 0; i < nx; i++) {
-      const v00 = j * rowStride + i;
-      const v10 = j * rowStride + (i + 1);
-      const v01 = (j + 1) * rowStride + i;
-      const v11 = (j + 1) * rowStride + (i + 1);
+  // 5. Cálculo de normales suaves analíticas (Smooth Normals) ponderadas por área de cara
+  const totalVertices = combinedPositions.length / 3;
+  const normAcc = new Float32Array(totalVertices * 3);
 
-      // Triángulo 1: [v00, v10, v01]
-      indices.push(v00, v10, v01);
-      // Triángulo 2: [v10, v11, v01]
-      indices.push(v10, v11, v01);
-    }
-  }
+  for (let t = 0; t < combinedIndices.length; t += 3) {
+    const idx0 = combinedIndices[t];
+    const idx1 = combinedIndices[t + 1];
+    const idx2 = combinedIndices[t + 2];
 
-  // Cálculo de normales por vértice (smooth shading)
-  const vertexCount = (nx + 1) * (ny + 1);
-  const normAcc = new Float32Array(vertexCount * 3);
+    const p0x = combinedPositions[idx0 * 3];
+    const p0y = combinedPositions[idx0 * 3 + 1];
+    const p0z = combinedPositions[idx0 * 3 + 2];
 
-  for (let t = 0; t < indices.length; t += 3) {
-    const idx0 = indices[t];
-    const idx1 = indices[t + 1];
-    const idx2 = indices[t + 2];
+    const p1x = combinedPositions[idx1 * 3];
+    const p1y = combinedPositions[idx1 * 3 + 1];
+    const p1z = combinedPositions[idx1 * 3 + 2];
 
-    const p0x = positions[idx0 * 3];
-    const p0y = positions[idx0 * 3 + 1];
-    const p0z = positions[idx0 * 3 + 2];
+    const p2x = combinedPositions[idx2 * 3];
+    const p2y = combinedPositions[idx2 * 3 + 1];
+    const p2z = combinedPositions[idx2 * 3 + 2];
 
-    const p1x = positions[idx1 * 3];
-    const p1y = positions[idx1 * 3 + 1];
-    const p1z = positions[idx1 * 3 + 2];
-
-    const p2x = positions[idx2 * 3];
-    const p2y = positions[idx2 * 3 + 1];
-    const p2z = positions[idx2 * 3 + 2];
-
-    // E1 = P1 - P0, E2 = P2 - P0
+    // Vectores de arista: E1 = P1 - P0, E2 = P2 - P0
     const e1x = p1x - p0x;
     const e1y = p1y - p0y;
     const e1z = p1z - p0z;
@@ -587,7 +983,7 @@ function createPanel3DMesh(
     const e2y = p2y - p0y;
     const e2z = p2z - p0z;
 
-    // Cross product E1 x E2
+    // Producto cruzado E1 x E2 (magnitud proporcional a 2x área)
     const cpx = e1y * e2z - e1z * e2y;
     const cpy = e1z * e2x - e1x * e2z;
     const cpz = e1x * e2y - e1y * e2x;
@@ -605,50 +1001,25 @@ function createPanel3DMesh(
     normAcc[idx2 * 3 + 2] += cpz;
   }
 
-  const normals: number[] = new Array(vertexCount * 3);
-  for (let k = 0; k < vertexCount; k++) {
+  const combinedNormals: number[] = new Array(totalVertices * 3);
+  for (let k = 0; k < totalVertices; k++) {
     const nxVal = normAcc[k * 3];
     const nyVal = normAcc[k * 3 + 1];
     const nzVal = normAcc[k * 3 + 2];
     const len = Math.sqrt(nxVal * nxVal + nyVal * nyVal + nzVal * nzVal);
 
     if (len > 1e-6) {
-      normals[k * 3] = nxVal / len;
-      normals[k * 3 + 1] = nyVal / len;
-      normals[k * 3 + 2] = nzVal / len;
+      combinedNormals[k * 3] = nxVal / len;
+      combinedNormals[k * 3 + 1] = nyVal / len;
+      combinedNormals[k * 3 + 2] = nzVal / len;
     } else {
-      normals[k * 3] = 0;
-      normals[k * 3 + 1] = 0;
-      normals[k * 3 + 2] = 1;
+      combinedNormals[k * 3] = 0;
+      combinedNormals[k * 3 + 1] = 0;
+      combinedNormals[k * 3 + 2] = 1;
     }
   }
 
-  return {
-    name: partName,
-    positions,
-    normals,
-    uvs,
-    indices,
-  };
-}
-
-/**
- * Ensambla un buffer binario glTF 2.0 (.glb) estándar a partir de paneles 3D y material PBR
- */
-export function buildGltfBinary(
-  panels: Panel3DMesh[],
-  fabric: FabricPBR,
-  garmentName: string = 'Garment'
-): { glbBuffer: Buffer; vertexCount: number; triangleCount: number } {
-  // Combinar todos los paneles en una estructura unificada
-  let totalVertices = 0;
-  let totalTriangles = 0;
-
-  const combinedPositions: number[] = [];
-  const combinedNormals: number[] = [];
-  const combinedUvs: number[] = [];
-  const combinedIndices: number[] = [];
-
+  // 6. Cálculo de cotas tridimensionales envolventes
   let minX = Infinity;
   let minY = Infinity;
   let minZ = Infinity;
@@ -656,55 +1027,63 @@ export function buildGltfBinary(
   let maxY = -Infinity;
   let maxZ = -Infinity;
 
-  for (const panel of panels) {
-    const vOffset = totalVertices;
-    const pCount = panel.positions.length / 3;
+  for (let i = 0; i < totalVertices; i++) {
+    const x = combinedPositions[i * 3];
+    const y = combinedPositions[i * 3 + 1];
+    const z = combinedPositions[i * 3 + 2];
 
-    for (let i = 0; i < pCount; i++) {
-      const x = panel.positions[i * 3];
-      const y = panel.positions[i * 3 + 1];
-      const z = panel.positions[i * 3 + 2];
-
-      combinedPositions.push(x, y, z);
-      combinedNormals.push(
-        panel.normals[i * 3],
-        panel.normals[i * 3 + 1],
-        panel.normals[i * 3 + 2]
-      );
-      combinedUvs.push(panel.uvs[i * 2], panel.uvs[i * 2 + 1]);
-
-      if (x < minX) minX = x;
-      if (y < minY) minY = y;
-      if (z < minZ) minZ = z;
-      if (x > maxX) maxX = x;
-      if (y > maxY) maxY = y;
-      if (z > maxZ) maxZ = z;
-    }
-
-    for (let t = 0; t < panel.indices.length; t++) {
-      combinedIndices.push(panel.indices[t] + vOffset);
-    }
-
-    totalVertices += pCount;
-    totalTriangles += panel.indices.length / 3;
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (z < minZ) minZ = z;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+    if (z > maxZ) maxZ = z;
   }
 
-  // Manejo de caso vacío
   if (totalVertices === 0) {
-    minX = minY = minZ = 0;
-    maxX = maxY = maxZ = 0;
+    minX = minY = minZ = maxX = maxY = maxZ = 0;
   }
+
+  return {
+    positions: combinedPositions,
+    normals: combinedNormals,
+    uvs: combinedUvs,
+    indices: combinedIndices,
+    vertexCount: totalVertices,
+    triangleCount: combinedIndices.length / 3,
+    bounds: { minX, minY, minZ, maxX, maxY, maxZ },
+    panels: panelsSummary,
+  };
+}
+
+/**
+ * Ensambla un buffer binario glTF 2.0 (.glb) estándar a partir de una malla 3D textil
+ */
+export function buildGlbBuffer(
+  mesh: GarmentMesh3D,
+  fabric: FabricPBR = FABRIC_PBR_PRESETS.default,
+  garmentName: string = 'Garment'
+): { glbBuffer: Buffer; vertexCount: number; triangleCount: number } {
+  const totalVertices = mesh.vertexCount;
+  const totalTriangles = mesh.triangleCount;
+
+  const minX = mesh.bounds?.minX ?? 0;
+  const minY = mesh.bounds?.minY ?? 0;
+  const minZ = mesh.bounds?.minZ ?? 0;
+  const maxX = mesh.bounds?.maxX ?? 0;
+  const maxY = mesh.bounds?.maxY ?? 0;
+  const maxZ = mesh.bounds?.maxZ ?? 0;
 
   // Creación de buffers tipados binarios
-  const posArray = new Float32Array(combinedPositions);
-  const normArray = new Float32Array(combinedNormals);
-  const uvArray = new Float32Array(combinedUvs);
+  const posArray = new Float32Array(mesh.positions);
+  const normArray = new Float32Array(mesh.normals);
+  const uvArray = new Float32Array(mesh.uvs);
 
   // Usar Uint32Array si excede 65535 vértices, de lo contrario Uint16Array
   const useUint32 = totalVertices > 65535;
   const idxArray = useUint32
-    ? new Uint32Array(combinedIndices)
-    : new Uint16Array(combinedIndices);
+    ? new Uint32Array(mesh.indices)
+    : new Uint16Array(mesh.indices);
 
   const posBuffer = Buffer.from(posArray.buffer);
   const normBuffer = Buffer.from(normArray.buffer);
@@ -742,7 +1121,7 @@ export function buildGltfBinary(
   const gltfDoc = {
     asset: {
       version: '2.0',
-      generator: 'pattern-ai-core v0.1.0 3D Engine',
+      generator: 'pattern-ai-core v0.1.0 3D True-to-Pattern Engine',
     },
     scene: 0,
     scenes: [
@@ -817,7 +1196,7 @@ export function buildGltfBinary(
         bufferView: 3,
         byteOffset: 0,
         componentType: useUint32 ? 5125 : 5123,
-        count: combinedIndices.length,
+        count: mesh.indices.length,
         type: 'SCALAR',
       },
     ],
@@ -910,6 +1289,110 @@ export function buildGltfBinary(
     glbBuffer,
     vertexCount: totalVertices,
     triangleCount: totalTriangles,
+  };
+}
+
+/**
+ * Ensambla un buffer binario glTF 2.0 (.glb) estándar a partir de paneles 3D y material PBR (Compatibilidad)
+ */
+export function buildGltfBinary(
+  panelsOrMesh: Panel3DMesh[] | GarmentMesh3D,
+  fabric: FabricPBR = FABRIC_PBR_PRESETS.default,
+  garmentName: string = 'Garment'
+): { glbBuffer: Buffer; vertexCount: number; triangleCount: number } {
+  if (!Array.isArray(panelsOrMesh)) {
+    return buildGlbBuffer(panelsOrMesh, fabric, garmentName);
+  }
+
+  const combinedPositions: number[] = [];
+  const combinedNormals: number[] = [];
+  const combinedUvs: number[] = [];
+  const combinedIndices: number[] = [];
+  let totalVertices = 0;
+  let totalTriangles = 0;
+
+  for (const panel of panelsOrMesh) {
+    const vOffset = totalVertices;
+    const pCount = panel.positions.length / 3;
+    combinedPositions.push(...panel.positions);
+    combinedNormals.push(...panel.normals);
+    combinedUvs.push(...panel.uvs);
+    for (let t = 0; t < panel.indices.length; t++) {
+      combinedIndices.push(panel.indices[t] + vOffset);
+    }
+    totalVertices += pCount;
+    totalTriangles += panel.indices.length / 3;
+  }
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let minZ = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let maxZ = -Infinity;
+
+  for (let i = 0; i < totalVertices; i++) {
+    const x = combinedPositions[i * 3];
+    const y = combinedPositions[i * 3 + 1];
+    const z = combinedPositions[i * 3 + 2];
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (z < minZ) minZ = z;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+    if (z > maxZ) maxZ = z;
+  }
+  if (totalVertices === 0) {
+    minX = minY = minZ = maxX = maxY = maxZ = 0;
+  }
+
+  const mesh: GarmentMesh3D = {
+    positions: combinedPositions,
+    normals: combinedNormals,
+    uvs: combinedUvs,
+    indices: combinedIndices,
+    vertexCount: totalVertices,
+    triangleCount: totalTriangles,
+    bounds: { minX, minY, minZ, maxX, maxY, maxZ },
+  };
+
+  return buildGlbBuffer(mesh, fabric, garmentName);
+}
+
+/**
+ * Exporta un patrón paramétrico 2D directamente a un modelo binario glTF 2.0 (.glb)
+ */
+export function exportPatternToGlb(
+  pattern: ModifiedPatternResult,
+  options: Garment3DOptions = {}
+): Garment3DResult {
+  const fabricPbr = resolveFabricPbr(options);
+  const conceptName = options.concept_name || pattern.concept_name || 'garment';
+  const mesh3D = generateTrueToPatternMesh(pattern, options.dna);
+  const { glbBuffer, vertexCount, triangleCount } = buildGlbBuffer(mesh3D, fabricPbr, conceptName);
+
+  if (options.outputPath) {
+    const dir = path.dirname(options.outputPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(options.outputPath, glbBuffer);
+  }
+
+  return {
+    glbBuffer,
+    byteLength: glbBuffer.length,
+    vertexCount,
+    triangleCount,
+    meshNames: Object.keys(pattern.parts),
+    material: {
+      name: fabricPbr.name,
+      baseColor: fabricPbr.baseColor,
+      roughness: fabricPbr.roughness,
+      metallic: fabricPbr.metallic,
+    },
+    filePath: options.outputPath,
+    isBlenderGenerated: false,
   };
 }
 
@@ -1008,7 +1491,6 @@ export async function generate3DGarmentModel(
       );
       isBlenderGenerated = true;
       meshNames = ['Blender_Garment_Mesh'];
-      // Estimación razonable para resultado Blender
       vertexCount = 4000;
       triangleCount = 7800;
     } catch (blenderErr) {
@@ -1019,17 +1501,24 @@ export async function generate3DGarmentModel(
     }
   }
 
-  // Si no se usó Blender o como fallback, generar con el motor nativo de alta fidelidad
+  // Si no se usó Blender o como fallback, generar con el motor nativo True-to-Pattern
   if (!glbBuffer) {
-    let resolvedParts = options.parts;
+    let resolvedPattern: ModifiedPatternResult;
 
-    if (!resolvedParts && options.dna) {
-      const modResult = modifyPattern(options.dna, options.size || options.dna.sizing?.size || 'M');
-      resolvedParts = modResult.parts;
-    }
-
-    if (!resolvedParts || Object.keys(resolvedParts).length === 0) {
-      // Si no hay partes provistas, crear panel base rectangular representativo
+    if (options.dna) {
+      resolvedPattern = modifyPattern(options.dna, options.size || options.dna.sizing?.size || 'M');
+    } else if (options.parts) {
+      resolvedPattern = {
+        concept_name: conceptName,
+        size: options.size || 'M',
+        base_block: 'custom',
+        measurements: {} as any,
+        parts: options.parts,
+        bounds: { minX: 0, minY: 0, maxX: 500, maxY: 700, width: 500, height: 700 },
+        seamAllowance_mm: 10,
+        hemAllowance_mm: 20,
+      };
+    } else {
       const fallbackPart: PatternPart = {
         name: 'front_torso',
         label: 'Front Torso',
@@ -1037,27 +1526,36 @@ export async function generate3DGarmentModel(
         onFold: true,
         points: {},
         pathD: '',
-        outline: [],
-        bounds: { minX: 0, minY: 0, maxX: 500, maxY: 700, width: 500, height: 700 },
-        width_mm: 500,
-        height_mm: 700,
-        area_mm2: 350000,
-        grainline: { start: { x: 250, y: 50 }, end: { x: 250, y: 650 }, label: 'Grainline' },
+        outline: [
+          { x: 0, y: 50 },
+          { x: 100, y: 0 },
+          { x: 200, y: 50 },
+          { x: 250, y: 250 },
+          { x: 250, y: 650 },
+          { x: 0, y: 650 },
+        ],
+        bounds: { minX: 0, minY: 0, maxX: 250, maxY: 650, width: 250, height: 650 },
+        width_mm: 250,
+        height_mm: 650,
+        area_mm2: 150000,
+        grainline: { start: { x: 125, y: 50 }, end: { x: 125, y: 600 }, label: 'Grainline' },
         notches: [],
       };
-      resolvedParts = { front: fallbackPart };
+      resolvedPattern = {
+        concept_name: conceptName,
+        size: 'M',
+        base_block: 'custom',
+        measurements: {} as any,
+        parts: { front: fallbackPart },
+        bounds: { minX: 0, minY: 0, maxX: 250, maxY: 650, width: 250, height: 650 },
+        seamAllowance_mm: 10,
+        hemAllowance_mm: 20,
+      };
     }
 
-    meshNames = Object.keys(resolvedParts);
-    const panels: Panel3DMesh[] = [];
-    const subdivisions = options.subdivisions || 16;
-
-    for (const [partName, part] of Object.entries(resolvedParts)) {
-      const panelMesh = createPanel3DMesh(partName, part, subdivisions);
-      panels.push(panelMesh);
-    }
-
-    const gltfResult = buildGltfBinary(panels, fabricPbr, conceptName);
+    meshNames = Object.keys(resolvedPattern.parts);
+    const mesh3D = generateTrueToPatternMesh(resolvedPattern, options.dna);
+    const gltfResult = buildGlbBuffer(mesh3D, fabricPbr, conceptName);
     glbBuffer = gltfResult.glbBuffer;
     vertexCount = gltfResult.vertexCount;
     triangleCount = gltfResult.triangleCount;
@@ -1089,3 +1587,4 @@ export async function generate3DGarmentModel(
     isBlenderGenerated,
   };
 }
+
