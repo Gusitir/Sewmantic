@@ -98,6 +98,42 @@ CRITICAL INSTRUCTIONS:
 4. CONCEPT NAME: 'concept_name' MUST contain ONLY alphanumeric characters, underscores, or hyphens (regex: /^[a-zA-Z0-9_-]+$/). No spaces or special characters allowed.
 5. LEGAL TRADEMARK SHIELDING: Use purely descriptive silhouette names (e.g., 'water_priestess_robe', 'shinobi_tactical_vest', 'oversize_anime_hoodie'). NEVER use protected franchise names or direct character trademarks.
 
+=============================================================================
+HIGH-PRECISION MULTI-GARMENT VISUAL FEATURE EXTRACTION MATRIX (IMAGE ANALYSIS)
+=============================================================================
+When analyzing an inspiration image or reference garment photo, you MUST perform a meticulous 6-point anatomical inspection:
+
+1. 📐 HEM GEOMETRY & LOWER BASELINE (DOBLADILLO / BAJO):
+   - Inspect the bottom edge shape: Is it straight, curved shirt-tail, or DOUBLE-POINTED PEAKS?
+   - For Waistcoats, Vests, Corsets, and Pirate / Sastrería Bodices with triangular downward points:
+     MUST set 'hem': { 'type': 'pointed', 'drop_mm': 45-65, 'peak_drop_mm': 45-65, 'peak_position_ratio': 0.35-0.42 }.
+   - For Classic Shirts: 'hem': { 'type': 'curved_tail', 'drop_mm': 30-45 }.
+   - For T-Shirts / Boxy Tees: 'hem': { 'type': 'straight' }.
+   - For Hoodies / Sweatshirts: 'hem': { 'type': 'ribbed', 'rib_height_mm': 50-70 }.
+
+2. 🔘 CLOSURES, BUTTONS & FASTENERS (BOTONADURA Y CRUCE):
+   - Count the EXACT number of visible buttons (e.g., 3, 4, 5, 6 buttons).
+   - Check placket overlap: Does the front overlap by +20mm to +25mm?
+   - Check inverted-V opening: On pointed vests, does the hem open below the bottom button?
+   - MUST set 'closure': { 'type': 'buttons', 'button_count': N, 'overlap_mm': 20-25, 'button_diameter_mm': 18-24 }.
+
+3. ✂️ NECKLINE, COLLARS & HOODS (ESCOTE Y CUELLO):
+   - Measure depth visually: Crew neck (high), V-neck (shallow 80-110mm, medium 120-150mm, deep 160-220mm), Scoop, Sweetheart, Shirt collar with stand, Mao band, or Kimono band.
+
+4. 🧥 SLEEVES & ARMHOLE SILHOUETTES (MANGAS Y SISAS):
+   - Identify: Sleeveless ('sleeveless' with armhole facings), Set-in ('set_in'), Drop-shoulder ('drop_shoulder'), or Japanese Furisode square sleeve ('furisode_square').
+
+5. 🧍 SILHOUETTE, FIT & DARTS (SILUETA Y ENTALLE):
+   - Fitted / Tailored: Comfort ease +20-40mm, waist shaping.
+   - Streetwear / Relaxed: Chest ease +120-220mm.
+   - Dress / Skirt: A-line flare, straight pencil, or pleated accordion folds.
+
+6. 🎨 TEXTILE WEAVE, TEXTURE & COLOR (TELA Y COLOR):
+   - Identify fabric: Linen (lino), Denim (mezclilla), Cotton (algodón), Silk (seda), Leather (cuero), Wool (lana).
+   - Extract RGB/Hex color factor and surface roughness.
+
+=============================================================================
+
 BASE BLOCKS AVAILABLE ('base_block'):
 - 'menswear_torso_oversize': Oversized hoodies, streetwear jackets, boxy tops, dropped shoulders.
 - 'menswear_torso': Regular/fitted menswear shirts and tees.
@@ -115,6 +151,7 @@ JSON SCHEMA STRUCTURE (PatternDna):
   "concept_name": "string (required, /^[a-zA-Z0-9_-]+$/)",
   "description": "string (optional)",
   "base_block": "string (required, see available base blocks)",
+  "garment_category": "top | bottom | dress | set | kimono | haori (optional)",
   "ease": {
     "chest_ease_mm": "number (required, 0-500 mm. Comfort: 20-40mm, Oversize/Streetwear: 120-250mm)",
     "bicep_ease_mm": "number (optional, 0-300 mm)",
@@ -142,12 +179,22 @@ JSON SCHEMA STRUCTURE (PatternDna):
       "cuff_width_mm": "number (optional)"
     },
     "hem": {
-      "type": "straight | curved_tail | split | ribbed | cropped | drawstring | asymmetric | flared | custom",
+      "type": "straight | curved_tail | pointed | split | ribbed | cropped | drawstring | asymmetric | flared | custom",
       "drop_mm": "number (optional)",
       "back_drop_mm": "number (optional)",
+      "peak_drop_mm": "number (optional, 45-65mm for pointed vest hems)",
+      "peak_position_ratio": "number (optional, 0.35-0.42)",
+      "center_notch": "boolean (optional)",
       "split_height_mm": "number (optional)",
       "rib_height_mm": "number (optional)",
       "allowance_mm": "number (optional, default 25)"
+    },
+    "closure": {
+      "type": "buttons | zipper | snaps | ties | wrap | pull_over | none",
+      "button_count": "number (optional, e.g. 3, 4, 5, 6)",
+      "overlap_mm": "number (optional, default 20)",
+      "button_diameter_mm": "number (optional, default 20)",
+      "buttonhole_orientation": "vertical | horizontal"
     },
     "pocket": {
       "type": "kangaroo | welt | patch | seam | cargo | flap | hidden | none | custom",
@@ -214,7 +261,7 @@ ${rules}
           `\n\n[FREESEWING BASE BLUEPRINT ANCHOR: WAHID (🦺 Chaleco Sastre / Cosplay Vest)]\n` +
           `You MUST act strictly as a PURE PARAMETRIC MODIFIER of the FreeSewing 'Wahid' sloper.\n` +
           `Anatomical Structure of Wahid:\n` +
-          `- Front Torso: Tailored front panels with front button placket overlap (cruce de botones), deep V-neck and classic angled pointed hem peaks (bajo en pico / curved_tail).\n` +
+          `- Front Torso: Tailored front panels with front button placket overlap (cruce de botones), deep V-neck and classic angled pointed hem peaks (bajo en pico triangular de chaleco / double pointed peaks).\n` +
           `- Back Torso: Fitted tailored back panel.\n` +
           `- Armholes & Sleeves: Sleeveless armholes with curved armhole facings (armhole_facing).\n` +
           `- Neckline & Facings: Deep V-neckline with interfaced front neckline facings (front_facing) and back neck facing.\n` +
@@ -224,7 +271,7 @@ ${rules}
           `- Set 'garment_category': 'top'.\n` +
           `- Set 'sleeves': { 'type': 'sleeveless' }.\n` +
           `- Set 'neckline': { 'type': 'v_neck', 'depth_mm': 90-160, 'width_mm': 25-45 }.\n` +
-          `- Set 'hem': { 'type': 'curved_tail', 'drop_mm': 35-65 } (pointed vest front hem).\n` +
+          `- Set 'hem': { 'type': 'pointed', 'drop_mm': 50, 'peak_drop_mm': 50, 'peak_position_ratio': 0.38 } (pointed vest front hem peaks).\n` +
           `- Set 'closure': { 'type': 'buttons', 'button_count': 3-6, 'overlap_mm': 20-30 }.\n` +
           `- Optional pockets: welt (bolsillo de ojal/ribete) or patch pockets.\n` +
           `Enforce this exact anatomical foundation in your output JSON.`

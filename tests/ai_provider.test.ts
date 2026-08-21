@@ -97,7 +97,7 @@ describe("AI Provider Subsystem & Factory (Fireworks AI & Direct API)", () => {
       expect(wahidContext).toContain("cruce de botones");
       expect(wahidContext).toContain("armhole_facing");
       expect(wahidContext).toContain("v_neck");
-      expect(wahidContext).toContain("curved_tail");
+      expect(wahidContext).toContain("pointed");
 
       // 3. simon
       const simonContext = PromptBuilder.buildBlueprintContext("simon");

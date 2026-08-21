@@ -92,6 +92,7 @@ export interface SleeveMod {
 export type HemType =
   | 'straight'
   | 'curved_tail'
+  | 'pointed'
   | 'split'
   | 'ribbed'
   | 'cropped'
@@ -107,6 +108,9 @@ export interface HemMod {
   type: HemType;
   drop_mm?: number;
   back_drop_mm?: number;
+  peak_drop_mm?: number;
+  peak_position_ratio?: number;
+  center_notch?: boolean;
   split_height_mm?: number;
   rib_height_mm?: number;
   allowance_mm?: number;

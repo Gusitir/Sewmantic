@@ -251,6 +251,7 @@ export function generateFrontFacing(options: {
   frontNeckSamples: Point2D[];
   front_center_hem: Point2D;
   overlap_hem: Point2D;
+  front_hem_peak?: Point2D;
   armholeDepth: number;
   facingWidth?: number;
   facingShoulderWidth?: number;
@@ -266,6 +267,7 @@ export function generateFrontFacing(options: {
     frontNeckSamples,
     front_center_hem,
     overlap_hem,
+    front_hem_peak,
     armholeDepth,
     facingWidth = 45,
     facingShoulderWidth = 40,
@@ -280,7 +282,13 @@ export function generateFrontFacing(options: {
     'facing_shoulder'
   );
   const facing_inner_mid = createPoint(facingWidth, armholeDepth + 20, 'facing_inner_mid');
-  const facing_inner_hem = createPoint(facingWidth, front_center_hem.y, 'facing_inner_hem');
+  const facing_inner_hem = createPoint(
+    facingWidth,
+    front_hem_peak
+      ? front_center_hem.y + (front_hem_peak.y - front_center_hem.y) * 0.4
+      : front_center_hem.y,
+    'facing_inner_hem'
+  );
 
   const frontFacingOutline: Point2D[] = [
     overlap_neck,
@@ -322,6 +330,7 @@ export function generateFrontFacing(options: {
       facing_inner_hem,
       center_hem: front_center_hem,
       overlap_hem,
+      ...(front_hem_peak ? { hem_peak: front_hem_peak } : {}),
     },
     pathD: frontFacingPathD,
     outline: frontFacingOutline,
@@ -2553,7 +2562,11 @@ export function modifyPattern(
   // 4. TRANSFORMACIONES DE BAJO / DOBLADILLO (HEM MODIFICATIONS)
   // =========================================================================
   const hemMod: HemMod = dna.modifications.hem ?? { type: 'straight' };
-  const isCurvedTail = hemMod.type === 'curved_tail';
+  const isPointedHem =
+    hemMod.type === 'pointed' ||
+    (dna.base_block.toLowerCase().includes('wahid') && hemMod.type !== 'straight') ||
+    (dna.concept_name.includes('pirate_vest') && hemMod.type !== 'straight');
+  const isCurvedTail = hemMod.type === 'curved_tail' && !isPointedHem;
   const isCropped = hemMod.type === 'cropped';
   const isRibbed = hemMod.type === 'ribbed';
 
@@ -2569,7 +2582,10 @@ export function modifyPattern(
   const frontLength = measurements.front_length_mm - lengthReduction + dressLengthDelta;
   const backLength = measurements.back_length_mm - lengthReduction + dressLengthDelta;
 
-  const hemFrontDrop = isCurvedTail ? (hemMod.drop_mm ?? 35) : 0;
+  const peakDrop = isPointedHem ? (hemMod.peak_drop_mm ?? hemMod.drop_mm ?? 50) : 0;
+  const peakPositionRatio = isPointedHem ? (hemMod.peak_position_ratio ?? 0.38) : 0.38;
+
+  const hemFrontDrop = isPointedHem ? peakDrop : isCurvedTail ? (hemMod.drop_mm ?? 35) : 0;
   const hemBackDrop = isCurvedTail ? (hemMod.back_drop_mm ?? (hemMod.drop_mm ? hemMod.drop_mm + 15 : 50)) : 0;
 
   // Límites de Escote V y Profundidades de Escote
@@ -2621,7 +2637,6 @@ export function modifyPattern(
     sleeveMod.length_type === 'sleeveless' || sleeveMod.type === 'sleeveless';
 
   const overlap_neck = createPoint(-overlap_mm, frontNeckDepth, 'overlap_neck');
-  const overlap_hem = createPoint(-overlap_mm, frontLength + hemFrontDrop, 'overlap_hem');
   const front_neck_center = createPoint(0, frontNeckDepth, 'neck_center');
   const front_neck_shoulder = createPoint(neckWidth, 0, 'neck_shoulder');
   const front_shoulder_tip = createPoint(halfShoulder, shoulderDrop, 'shoulder_tip');
@@ -2632,7 +2647,14 @@ export function modifyPattern(
   );
   const front_armhole_bottom = createPoint(quarterChest, armholeDepth, 'armhole_bottom');
   const front_side_hem = createPoint(quarterChest, frontLength, 'side_hem');
-  const front_center_hem = createPoint(0, frontLength + hemFrontDrop, 'center_hem');
+  const front_hem_peak = isPointedHem
+    ? createPoint(quarterChest * peakPositionRatio, frontLength + peakDrop, 'hem_peak')
+    : undefined;
+  const frontCenterHemY = isPointedHem
+    ? frontLength + (hasButtonClosure ? Math.round(peakDrop * 0.35) : Math.round(peakDrop * 0.45))
+    : frontLength + hemFrontDrop;
+  const front_center_hem = createPoint(0, frontCenterHemY, 'center_hem');
+  const overlap_hem = createPoint(-overlap_mm, frontCenterHemY, 'overlap_hem');
 
   // Curvas de escote delantero
   let frontNeckCp1: Point2D;
@@ -2679,11 +2701,13 @@ export function modifyPattern(
     front_armhole_bottom
   );
 
-  // Curva de dobladillo delantero
+  // Curva o picos de dobladillo delantero
   let frontHemSamples: Point2D[];
   let frontHemCp1: Point2D | undefined;
   let frontHemCp2: Point2D | undefined;
-  if (isCurvedTail) {
+  if (isPointedHem && front_hem_peak) {
+    frontHemSamples = [front_side_hem, front_hem_peak, front_center_hem];
+  } else if (isCurvedTail) {
     frontHemCp1 = createPoint(quarterChest * 0.65, frontLength);
     frontHemCp2 = createPoint(quarterChest * 0.25, frontLength + hemFrontDrop);
     frontHemSamples = sampleBezier(front_side_hem, frontHemCp1, frontHemCp2, front_center_hem);
@@ -2718,9 +2742,16 @@ export function modifyPattern(
         `C ${frontArmholeCp1.x} ${frontArmholeCp1.y}, ${frontArmholeCp2.x} ${frontArmholeCp2.y}, ${front_armhole_pitch.x} ${front_armhole_pitch.y}`,
         `C ${frontArmholeLowerCp1.x} ${frontArmholeLowerCp1.y}, ${frontArmholeLowerCp2.x} ${frontArmholeLowerCp2.y}, ${front_armhole_bottom.x} ${front_armhole_bottom.y}`,
         `L ${front_side_hem.x} ${front_side_hem.y}`,
-        isCurvedTail && frontHemCp1 && frontHemCp2
-          ? `C ${frontHemCp1.x} ${frontHemCp1.y}, ${frontHemCp2.x} ${frontHemCp2.y}, ${front_center_hem.x} ${front_center_hem.y}`
-          : `L ${front_center_hem.x} ${front_center_hem.y}`,
+        ...(isPointedHem && front_hem_peak
+          ? [
+              `L ${front_hem_peak.x} ${front_hem_peak.y}`,
+              `L ${front_center_hem.x} ${front_center_hem.y}`,
+            ]
+          : isCurvedTail && frontHemCp1 && frontHemCp2
+          ? [
+              `C ${frontHemCp1.x} ${frontHemCp1.y}, ${frontHemCp2.x} ${frontHemCp2.y}, ${front_center_hem.x} ${front_center_hem.y}`,
+            ]
+          : [`L ${front_center_hem.x} ${front_center_hem.y}`]),
         `L ${overlap_hem.x} ${overlap_hem.y}`,
         `Z`,
       ]
@@ -2731,9 +2762,16 @@ export function modifyPattern(
         `C ${frontArmholeCp1.x} ${frontArmholeCp1.y}, ${frontArmholeCp2.x} ${frontArmholeCp2.y}, ${front_armhole_pitch.x} ${front_armhole_pitch.y}`,
         `C ${frontArmholeLowerCp1.x} ${frontArmholeLowerCp1.y}, ${frontArmholeLowerCp2.x} ${frontArmholeLowerCp2.y}, ${front_armhole_bottom.x} ${front_armhole_bottom.y}`,
         `L ${front_side_hem.x} ${front_side_hem.y}`,
-        isCurvedTail && frontHemCp1 && frontHemCp2
-          ? `C ${frontHemCp1.x} ${frontHemCp1.y}, ${frontHemCp2.x} ${frontHemCp2.y}, ${front_center_hem.x} ${front_center_hem.y}`
-          : `L ${front_center_hem.x} ${front_center_hem.y}`,
+        ...(isPointedHem && front_hem_peak
+          ? [
+              `L ${front_hem_peak.x} ${front_hem_peak.y}`,
+              `L ${front_center_hem.x} ${front_center_hem.y}`,
+            ]
+          : isCurvedTail && frontHemCp1 && frontHemCp2
+          ? [
+              `C ${frontHemCp1.x} ${frontHemCp1.y}, ${frontHemCp2.x} ${frontHemCp2.y}, ${front_center_hem.x} ${front_center_hem.y}`,
+            ]
+          : [`L ${front_center_hem.x} ${front_center_hem.y}`]),
         `Z`,
       ];
 
@@ -2832,6 +2870,7 @@ export function modifyPattern(
       side_notch: front_side_notch,
       side_hem: front_side_hem,
       center_hem: front_center_hem,
+      ...(front_hem_peak ? { hem_peak: front_hem_peak } : {}),
     },
     pathD: frontPathSegments.join(' '),
     outline: frontOutline,
@@ -3038,6 +3077,7 @@ export function modifyPattern(
       frontNeckSamples,
       front_center_hem,
       overlap_hem,
+      front_hem_peak,
       armholeDepth,
       facingWidth: 45,
       facingShoulderWidth: 40,

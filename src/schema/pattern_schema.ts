@@ -184,6 +184,7 @@ export const HemModSchema = z.object({
     [
       "straight",
       "curved_tail",
+      "pointed",
       "split",
       "ribbed",
       "cropped",
@@ -208,6 +209,17 @@ export const HemModSchema = z.object({
     .min(0, "Hem back drop cannot be negative")
     .max(350, "Hem back drop exceeds maximum limit (350mm)")
     .optional(),
+  peak_drop_mm: z
+    .number()
+    .min(0, "Peak drop cannot be negative")
+    .max(350, "Peak drop exceeds maximum limit (350mm)")
+    .optional(),
+  peak_position_ratio: z
+    .number()
+    .min(0.1, "Peak position ratio cannot be less than 0.1")
+    .max(0.9, "Peak position ratio cannot exceed 0.9")
+    .optional(),
+  center_notch: z.boolean().optional(),
   split_height_mm: z
     .number()
     .min(0, "Split height cannot be negative")

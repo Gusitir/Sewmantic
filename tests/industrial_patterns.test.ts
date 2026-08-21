@@ -528,6 +528,58 @@ describe('Moldería Industrial: Cruces, Ojales, Vistas y Piquetes Pareados (T-29
       expect(shNotchBack).toBeDefined();
     });
 
+    it('debe generar el bajo en doble pico (pointed waistcoat hem) con vértice hem_peak y abertura en V', () => {
+      const vestDna: PatternDna = {
+        concept_name: 'straw_pirate_pointed_vest',
+        base_block: 'wahid',
+        ease: { chest_ease_mm: 35 },
+        modifications: {
+          neckline: { type: 'v_neck', depth_mm: 120 },
+          sleeves: { type: 'sleeveless' },
+          hem: {
+            type: 'pointed',
+            peak_drop_mm: 50,
+            peak_position_ratio: 0.38,
+          },
+          closure: {
+            type: 'buttons',
+            overlap_mm: 20,
+            button_count: 3,
+            button_diameter_mm: 20,
+          },
+        },
+      };
+
+      const parsed = parsePatternDna(vestDna);
+      expect(parsed.modifications.hem?.type).toBe('pointed');
+      expect(parsed.modifications.hem?.peak_drop_mm).toBe(50);
+
+      const res = modifyPattern(parsed, 'M');
+      const front = res.parts.front;
+
+      // 1. El vértice del pico existe en points y outline
+      expect(front.points.hem_peak).toBeDefined();
+      expect(front.points.side_hem).toBeDefined();
+      expect(front.points.center_hem).toBeDefined();
+
+      const peak = front.points.hem_peak!;
+      const side = front.points.side_hem!;
+      const center = front.points.center_hem!;
+
+      // 2. El pico desciende más abajo que el costado y que el centro
+      expect(peak.y).toBeGreaterThan(side.y);
+      expect(peak.y).toBeGreaterThan(center.y);
+      expect(peak.y - side.y).toBeCloseTo(50, 1);
+
+      // 3. El centro delantero queda por encima del pico formando la abertura en V
+      expect(center.y).toBeLessThan(peak.y);
+      expect(center.y).toBeGreaterThan(side.y);
+
+      // 4. La vista interior contiene también la referencia al hem_peak
+      expect(res.parts.front_facing).toBeDefined();
+      expect(res.parts.front_facing.points.hem_peak).toBeDefined();
+    });
+
     it('debe validar la estructura de ADN con Zod parsePatternDna incluyendo ClosureModSchema', () => {
       const validDna = {
         concept_name: 'industrial_jacket',
