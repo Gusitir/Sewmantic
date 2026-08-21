@@ -45,6 +45,7 @@ export * from './pocket.js';
 export * from './trousers.js';
 export * from './womens_bodice.js';
 export * from './skirt.js';
+export * from '../triangulator.js';
 
 export interface BaseBlockResult {
   blockType: string;
