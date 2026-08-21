@@ -13,6 +13,7 @@ import {
   generatePatternPipeline,
   createEtsyBundle,
   PatternDna,
+  generate3DGarmentModel,
 } from '../src/index.js';
 
 const TEST_3D_DIR = path.resolve('tests/output_viewer3d_test');
@@ -269,6 +270,147 @@ describe('Visor 3D WebGL, Streaming .GLB y Empaquetado Comercial 3D (T-24)', () 
       expect(parsed.radius).toBeGreaterThan(0);
       expect(parsed.material).toBeDefined();
       expect(parsed.material.baseColor).toHaveLength(3);
+    });
+
+    it('parseGlbBuffer extrae y acumula todas las primitivas y materiales en conjuntos coordinados de 2 piezas (Luffy Full Set)', async () => {
+      const { parseGlbBuffer: parseFn } = await import('../src/server/public/viewer3d.js');
+
+      const pirateSetDna: PatternDna = {
+        concept_name: 'straw_pirate_full_set',
+        description: 'Conjunto coordinado cosplay aventurero del Rey de los Piratas: chaleco lino rojo y bermuda denim azul',
+        garment_category: 'set',
+        base_block: 'two_piece_set',
+        ease: {
+          chest_ease_mm: 70,
+          waist_ease_mm: 40,
+          hip_ease_mm: 60,
+          shoulder_ease_mm: 0,
+          crotch_ease_mm: 30,
+          thigh_ease_mm: 70,
+        },
+        modifications: {
+          neckline: { type: 'v_neck', depth_mm: 160 },
+          sleeves: { type: 'sleeveless' },
+          hem: { type: 'curved_tail', drop_mm: 60 },
+          trouser_legs: { type: 'wide_baggy', length_type: 'bermuda' },
+          waistband: { type: 'fitted', height_mm: 40 },
+        },
+        fabric_details: {
+          main_fabric: {
+            name: 'Lino Rústico Rojo Carmesí',
+            type: 'linen',
+            color: '#D62828',
+          },
+          secondary_fabric: {
+            name: 'Denim Azul Índigo Selvedge',
+            type: 'denim',
+            color: '#1E3A8A',
+          },
+        },
+        sub_garments: {
+          top: {
+            concept_name: 'straw_pirate_adventurer_vest',
+            garment_category: 'top',
+            base_block: 'menswear_torso_fitted',
+            ease: { chest_ease_mm: 50, waist_ease_mm: 40 },
+            modifications: {
+              neckline: { type: 'v_neck', depth_mm: 130 },
+              sleeves: { type: 'sleeveless' },
+              hem: { type: 'curved_tail', drop_mm: 45 },
+            },
+            fabric_details: {
+              main_fabric: { type: 'linen', color: '#D62828' },
+            },
+          },
+          bottom: {
+            concept_name: 'straw_pirate_denim_shorts',
+            garment_category: 'bottom',
+            base_block: 'pants_sloper',
+            ease: { chest_ease_mm: 0, waist_ease_mm: 35, hip_ease_mm: 50 },
+            modifications: {
+              trouser_legs: { type: 'wide_baggy', length_type: 'bermuda' },
+              waistband: { type: 'fitted', height_mm: 40 },
+            },
+            fabric_details: {
+              main_fabric: { type: 'denim', color: '#1E3A8A' },
+            },
+          },
+        },
+      };
+
+      const set3DResult = await generate3DGarmentModel({
+        dna: pirateSetDna,
+      });
+
+      expect(set3DResult.glbBuffer).toBeDefined();
+
+      const parsed = await parseFn(set3DResult.glbBuffer);
+      expect(parsed).toBeDefined();
+      expect(parsed.primitives).toBeDefined();
+      expect(parsed.primitives.length).toBeGreaterThanOrEqual(2);
+
+      // Validar acumulación total de vértices y triángulos
+      let expectedVertexTotal = 0;
+      let expectedTriangleTotal = 0;
+      for (const prim of parsed.primitives) {
+        expectedVertexTotal += prim.vertexCount;
+        expectedTriangleTotal += prim.triangleCount;
+        expect(prim.positions.length).toBe(prim.vertexCount * 3);
+        expect(prim.normals.length).toBe(prim.vertexCount * 3);
+        expect(prim.uvs.length).toBe(prim.vertexCount * 2);
+        expect(prim.indices.length).toBe(prim.triangleCount * 3);
+      }
+
+      expect(parsed.vertexCount).toBe(expectedVertexTotal);
+      expect(parsed.triangleCount).toBe(expectedTriangleTotal);
+      expect(parsed.positions.length).toBe(expectedVertexTotal * 3);
+      expect(parsed.normals.length).toBe(expectedVertexTotal * 3);
+      expect(parsed.uvs.length).toBe(expectedVertexTotal * 2);
+      expect(parsed.indices.length).toBe(expectedTriangleTotal * 3);
+
+      // Validar materiales PBR extraídos
+      expect(parsed.materials).toBeDefined();
+      expect(parsed.materials.length).toBeGreaterThanOrEqual(2);
+      expect(parsed.materials[0].name).toContain('Linen');
+      expect(parsed.materials[1].name).toContain('Denim');
+
+      // Validar offset de índices
+      const prim0 = parsed.primitives[0];
+      const prim1 = parsed.primitives[1];
+      const prim0IndicesCount = prim0.indices.length;
+      // Los índices combinados correspondientes a prim1 deben tener un offset igual a prim0.vertexCount
+      for (let i = 0; i < prim1.indices.length; i++) {
+        expect(parsed.indices[prim0IndicesCount + i]).toBe(prim1.indices[i] + prim0.vertexCount);
+      }
+    });
+
+    it('parseGlbBuffer procesa prendas de 1 sola pieza complejas (Kimono Furisode, Falda, Chaleco)', async () => {
+      const { parseGlbBuffer: parseFn } = await import('../src/server/public/viewer3d.js');
+
+      const kimonoDna: PatternDna = {
+        concept_name: 'anime_miko_kimono_dress',
+        garment_category: 'kimono',
+        base_block: 'dress_sloper',
+        ease: { chest_ease_mm: 120, waist_ease_mm: 100 },
+        modifications: {
+          sleeves: { type: 'kimono' },
+          kimono_details: { sleeve_style: 'furisode_square', collar_width_mm: 50, obi_belt: true },
+        },
+        tech_specs: { fabric_type: 'silk' },
+      };
+
+      const kimono3DResult = await generate3DGarmentModel({
+        dna: kimonoDna,
+        fabric: 'silk',
+        color: '#E8D5F2',
+      });
+
+      const parsedKimono = await parseFn(kimono3DResult.glbBuffer);
+      expect(parsedKimono).toBeDefined();
+      expect(parsedKimono.vertexCount).toBeGreaterThan(0);
+      expect(parsedKimono.triangleCount).toBeGreaterThan(0);
+      expect(parsedKimono.material.name).toContain('Silk');
+      expect(parsedKimono.primitives.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

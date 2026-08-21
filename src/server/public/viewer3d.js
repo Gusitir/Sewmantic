@@ -314,11 +314,19 @@ void main() {
 // PARSER AUTÓNOMO glTF 2.0 BINARIO (.GLB)
 // =========================================================================
 /**
- * Parsea un buffer binario .glb glTF 2.0 extrayendo posiciones, normales, UVs e índices
+ * Parsea un buffer binario .glb glTF 2.0 extrayendo todas las primitivas y mallas,
+ * acumulando posiciones, normales, UVs e índices (con desplazamiento de índices)
+ * y resolviendo la lista completa de materiales PBR textiles.
  */
-export async function parseGlbBuffer(buffer) {
-  if (!buffer || buffer.byteLength < 20) {
+export async function parseGlbBuffer(inputBuffer) {
+  if (!inputBuffer || inputBuffer.byteLength < 20) {
     throw new Error('Buffer binario inválido o demasiado pequeño.');
+  }
+
+  // Normalizar a ArrayBuffer puro si viene como TypedArray o Node.js Buffer
+  let buffer = inputBuffer;
+  if (inputBuffer.buffer && inputBuffer.byteOffset !== undefined && inputBuffer.byteLength !== undefined) {
+    buffer = inputBuffer.buffer.slice(inputBuffer.byteOffset, inputBuffer.byteOffset + inputBuffer.byteLength);
   }
 
   const view = new DataView(buffer);
@@ -347,71 +355,178 @@ export async function parseGlbBuffer(buffer) {
     binBuffer = new ArrayBuffer(0);
   }
 
-  // Extraer atributos del primer mesh
-  let positions = null;
-  let normals = null;
-  let uvs = null;
-  let indices = null;
-  let vertexCount = 0;
-  let triangleCount = 0;
-
-  const meshDef = gltfDoc.meshes?.[0];
-  const prim = meshDef?.primitives?.[0];
-
-  if (prim && gltfDoc.accessors && gltfDoc.bufferViews && binBuffer) {
-    // 1. POSICIONES (vec3 FLOAT)
-    if (prim.attributes.POSITION !== undefined) {
-      const posAcc = gltfDoc.accessors[prim.attributes.POSITION];
-      const viewDef = gltfDoc.bufferViews[posAcc.bufferView];
-      const offset = (viewDef.byteOffset || 0) + (posAcc.byteOffset || 0);
-      positions = new Float32Array(binBuffer, offset, posAcc.count * 3);
-      vertexCount = posAcc.count;
+  // 1. Extraer materiales PBR del documento glTF
+  const parsedMaterials = [];
+  if (Array.isArray(gltfDoc.materials) && gltfDoc.materials.length > 0) {
+    for (const mat of gltfDoc.materials) {
+      const pbr = mat.pbrMetallicRoughness || {};
+      const baseColorFactor = pbr.baseColorFactor || [0.82, 0.78, 0.70, 1.0];
+      parsedMaterials.push({
+        name: mat.name || 'PBR Fabric',
+        baseColor: [baseColorFactor[0], baseColorFactor[1], baseColorFactor[2]],
+        roughness: pbr.roughnessFactor ?? 0.75,
+        metallic: pbr.metallicFactor ?? 0.0,
+      });
     }
+  } else {
+    parsedMaterials.push({
+      name: 'PBR Fabric',
+      baseColor: [0.82, 0.78, 0.70],
+      roughness: 0.75,
+      metallic: 0.0,
+    });
+  }
 
-    // 2. NORMALES (vec3 FLOAT)
-    if (prim.attributes.NORMAL !== undefined) {
-      const normAcc = gltfDoc.accessors[prim.attributes.NORMAL];
-      const viewDef = gltfDoc.bufferViews[normAcc.bufferView];
-      const offset = (viewDef.byteOffset || 0) + (normAcc.byteOffset || 0);
-      normals = new Float32Array(binBuffer, offset, normAcc.count * 3);
-    }
+  // 2. Iterar sobre todas las mallas y primitivas de gltfDoc
+  const parsedPrimitives = [];
+  const meshes = gltfDoc.meshes || [];
+  let totalVertexCount = 0;
+  let totalTriangleCount = 0;
 
-    // 3. TEXTURE UVS (vec2 FLOAT)
-    if (prim.attributes.TEXCOORD_0 !== undefined) {
-      const uvAcc = gltfDoc.accessors[prim.attributes.TEXCOORD_0];
-      const viewDef = gltfDoc.bufferViews[uvAcc.bufferView];
-      const offset = (viewDef.byteOffset || 0) + (uvAcc.byteOffset || 0);
-      uvs = new Float32Array(binBuffer, offset, uvAcc.count * 2);
-    }
+  for (let m = 0; m < meshes.length; m++) {
+    const meshDef = meshes[m];
+    const primitives = meshDef.primitives || [];
 
-    // 4. ÍNDICES DE TRIÁNGULOS (UINT16 o UINT32)
-    if (prim.indices !== undefined) {
-      const idxAcc = gltfDoc.accessors[prim.indices];
-      const viewDef = gltfDoc.bufferViews[idxAcc.bufferView];
-      const offset = (viewDef.byteOffset || 0) + (idxAcc.byteOffset || 0);
-      if (idxAcc.componentType === 5125) {
-        indices = new Uint32Array(binBuffer, offset, idxAcc.count);
-      } else {
-        indices = new Uint16Array(binBuffer, offset, idxAcc.count);
+    for (let p = 0; p < primitives.length; p++) {
+      const prim = primitives[p];
+      let primPositions = null;
+      let primNormals = null;
+      let primUvs = null;
+      let primIndices = null;
+      let primVertexCount = 0;
+      let primTriangleCount = 0;
+
+      if (gltfDoc.accessors && gltfDoc.bufferViews && binBuffer) {
+        // POSICIONES (vec3 FLOAT)
+        if (prim.attributes.POSITION !== undefined) {
+          const posAcc = gltfDoc.accessors[prim.attributes.POSITION];
+          const viewDef = gltfDoc.bufferViews[posAcc.bufferView];
+          const offset = (viewDef.byteOffset || 0) + (posAcc.byteOffset || 0);
+          primPositions = new Float32Array(binBuffer.slice(offset, offset + posAcc.count * 3 * 4));
+          primVertexCount = posAcc.count;
+        }
+
+        // NORMALES (vec3 FLOAT)
+        if (prim.attributes.NORMAL !== undefined) {
+          const normAcc = gltfDoc.accessors[prim.attributes.NORMAL];
+          const viewDef = gltfDoc.bufferViews[normAcc.bufferView];
+          const offset = (viewDef.byteOffset || 0) + (normAcc.byteOffset || 0);
+          primNormals = new Float32Array(binBuffer.slice(offset, offset + normAcc.count * 3 * 4));
+        }
+
+        // TEXTURE UVS (vec2 FLOAT)
+        if (prim.attributes.TEXCOORD_0 !== undefined) {
+          const uvAcc = gltfDoc.accessors[prim.attributes.TEXCOORD_0];
+          const viewDef = gltfDoc.bufferViews[uvAcc.bufferView];
+          const offset = (viewDef.byteOffset || 0) + (uvAcc.byteOffset || 0);
+          primUvs = new Float32Array(binBuffer.slice(offset, offset + uvAcc.count * 2 * 4));
+        } else if (primVertexCount > 0) {
+          primUvs = new Float32Array(primVertexCount * 2);
+        }
+
+        // ÍNDICES DE TRIÁNGULOS (UINT16 o UINT32)
+        if (prim.indices !== undefined) {
+          const idxAcc = gltfDoc.accessors[prim.indices];
+          const viewDef = gltfDoc.bufferViews[idxAcc.bufferView];
+          const offset = (viewDef.byteOffset || 0) + (idxAcc.byteOffset || 0);
+          if (idxAcc.componentType === 5125) {
+            primIndices = new Uint32Array(binBuffer.slice(offset, offset + idxAcc.count * 4));
+          } else if (idxAcc.componentType === 5123) {
+            primIndices = new Uint16Array(binBuffer.slice(offset, offset + idxAcc.count * 2));
+          } else {
+            const u8 = new Uint8Array(binBuffer.slice(offset, offset + idxAcc.count));
+            primIndices = new Uint16Array(u8);
+          }
+          primTriangleCount = Math.round(idxAcc.count / 3);
+        } else if (primPositions) {
+          primTriangleCount = Math.round(primPositions.length / 9);
+          primIndices = primPositions.length / 3 > 65535 ? new Uint32Array(primTriangleCount * 3) : new Uint16Array(primTriangleCount * 3);
+          for (let i = 0; i < primIndices.length; i++) primIndices[i] = i;
+        }
       }
-      triangleCount = Math.round(idxAcc.count / 3);
-    } else if (positions) {
-      triangleCount = Math.round(positions.length / 9);
+
+      if (primPositions && primPositions.length > 0) {
+        // Generar normales suaves si no vienen en el archivo
+        if (!primNormals || primNormals.length !== primPositions.length) {
+          primNormals = computeNormals(primPositions, primIndices);
+        }
+
+        const matIdx = prim.material !== undefined ? prim.material : 0;
+        const primMat = parsedMaterials[matIdx] || parsedMaterials[0] || {
+          name: 'PBR Fabric',
+          baseColor: [0.82, 0.78, 0.70],
+          roughness: 0.75,
+          metallic: 0.0,
+        };
+
+        // Bounding Box local de la primitiva
+        let pMinX = Infinity, pMinY = Infinity, pMinZ = Infinity;
+        let pMaxX = -Infinity, pMaxY = -Infinity, pMaxZ = -Infinity;
+        for (let i = 0; i < primPositions.length; i += 3) {
+          const px = primPositions[i], py = primPositions[i + 1], pz = primPositions[i + 2];
+          if (px < pMinX) pMinX = px; if (px > pMaxX) pMaxX = px;
+          if (py < pMinY) pMinY = py; if (py > pMaxY) pMaxY = py;
+          if (pz < pMinZ) pMinZ = pz; if (pz > pMaxZ) pMaxZ = pz;
+        }
+
+        parsedPrimitives.push({
+          name: meshDef.name || `primitive_${m}_${p}`,
+          positions: primPositions,
+          normals: primNormals,
+          uvs: primUvs,
+          indices: primIndices,
+          vertexCount: primVertexCount,
+          triangleCount: primTriangleCount,
+          materialIndex: matIdx,
+          material: primMat,
+          bounds: { minX: pMinX, minY: pMinY, minZ: pMinZ, maxX: pMaxX, maxY: pMaxY, maxZ: pMaxZ },
+        });
+
+        totalVertexCount += primVertexCount;
+        totalTriangleCount += primTriangleCount;
+      }
     }
   }
 
-  // Generar normales si no vienen en el archivo
-  if (positions && (!normals || normals.length !== positions.length)) {
-    normals = computeNormals(positions, indices);
+  // 3. Acumular y consolidar todos los buffers con desplazamiento (index offset)
+  const combinedPositions = new Float32Array(totalVertexCount * 3);
+  const combinedNormals = new Float32Array(totalVertexCount * 3);
+  const combinedUvs = new Float32Array(totalVertexCount * 2);
+
+  const useUint32 = totalVertexCount > 65535;
+  const combinedIndices = useUint32
+    ? new Uint32Array(totalTriangleCount * 3)
+    : new Uint16Array(totalTriangleCount * 3);
+
+  let vertexOffset = 0;
+  let indexOffset = 0;
+
+  for (const prim of parsedPrimitives) {
+    if (prim.positions) {
+      combinedPositions.set(prim.positions, vertexOffset * 3);
+    }
+    if (prim.normals) {
+      combinedNormals.set(prim.normals, vertexOffset * 3);
+    }
+    if (prim.uvs) {
+      combinedUvs.set(prim.uvs, vertexOffset * 2);
+    }
+    if (prim.indices) {
+      for (let i = 0; i < prim.indices.length; i++) {
+        combinedIndices[indexOffset + i] = prim.indices[i] + vertexOffset;
+      }
+      indexOffset += prim.indices.length;
+    }
+    vertexOffset += prim.vertexCount;
   }
 
-  // Calcular Bounding Box y Centro para auto-encuadre de cámara
+  // 4. Calcular Bounding Box y Centro Global para auto-encuadre de cámara
   let minX = Infinity, minY = Infinity, minZ = Infinity;
   let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
 
-  if (positions) {
-    for (let i = 0; i < positions.length; i += 3) {
-      const x = positions[i], y = positions[i + 1], z = positions[i + 2];
+  if (totalVertexCount > 0) {
+    for (let i = 0; i < combinedPositions.length; i += 3) {
+      const x = combinedPositions[i], y = combinedPositions[i + 1], z = combinedPositions[i + 2];
       if (x < minX) minX = x; if (x > maxX) maxX = x;
       if (y < minY) minY = y; if (y > maxY) maxY = y;
       if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
@@ -426,32 +541,29 @@ export async function parseGlbBuffer(buffer) {
   const dx = maxX - minX, dy = maxY - minY, dz = maxZ - minZ;
   const radius = Math.max(0.4, Math.sqrt(dx * dx + dy * dy + dz * dz) / 2);
 
-  // Material PBR
-  const matDef = gltfDoc.materials?.[0]?.pbrMetallicRoughness || {};
-  const baseColorFactor = matDef.baseColorFactor || [0.82, 0.78, 0.70, 1.0];
-  const roughnessFactor = matDef.roughnessFactor ?? 0.75;
-  const metallicFactor = matDef.metallicFactor ?? 0.0;
-  const materialName = gltfDoc.materials?.[0]?.name || 'PBR Fabric';
+  const primaryMaterial = parsedMaterials[0] || {
+    name: 'PBR Fabric',
+    baseColor: [0.82, 0.78, 0.70],
+    roughness: 0.75,
+    metallic: 0.0,
+  };
 
   return {
     gltfDoc,
     binBuffer,
-    positions,
-    normals,
-    uvs,
-    indices,
-    vertexCount,
-    triangleCount,
+    positions: combinedPositions,
+    normals: combinedNormals,
+    uvs: combinedUvs,
+    indices: combinedIndices,
+    vertexCount: totalVertexCount,
+    triangleCount: totalTriangleCount,
     bounds: { minX, minY, minZ, maxX, maxY, maxZ },
     center: [cx, cy, cz],
     size: [dx, dy, dz],
     radius,
-    material: {
-      name: materialName,
-      baseColor: [baseColorFactor[0], baseColorFactor[1], baseColorFactor[2]],
-      roughness: roughnessFactor,
-      metallic: metallicFactor,
-    },
+    material: primaryMaterial,
+    materials: parsedMaterials,
+    primitives: parsedPrimitives,
   };
 }
 
@@ -542,9 +654,13 @@ class NativeWebGlEngine {
     this.baseColor = [0.82, 0.78, 0.70];
     this.roughness = 0.75;
     this.metallic = 0.0;
+    this.customBaseColor = null;
+    this.customRoughness = null;
+    this.customMetallic = null;
 
-    // Geometría cargada
+    // Geometría cargada y buffers GPU multi-primitiva
     this.meshData = null;
+    this.primitiveBuffers = [];
     this.positionBuffer = null;
     this.normalBuffer = null;
     this.uvBuffer = null;
@@ -748,60 +864,149 @@ class NativeWebGlEngine {
     window.addEventListener('touchend', onTouchEnd, { passive: true });
   }
 
+  disposeBuffers() {
+    const gl = this.gl;
+    if (this.primitiveBuffers && this.primitiveBuffers.length > 0) {
+      for (const pBuf of this.primitiveBuffers) {
+        if (pBuf.positionBuffer) gl.deleteBuffer(pBuf.positionBuffer);
+        if (pBuf.normalBuffer) gl.deleteBuffer(pBuf.normalBuffer);
+        if (pBuf.uvBuffer) gl.deleteBuffer(pBuf.uvBuffer);
+        if (pBuf.indexBuffer) gl.deleteBuffer(pBuf.indexBuffer);
+        if (pBuf.wireframeIndexBuffer) gl.deleteBuffer(pBuf.wireframeIndexBuffer);
+      }
+      this.primitiveBuffers = [];
+    }
+    if (this.positionBuffer) { gl.deleteBuffer(this.positionBuffer); this.positionBuffer = null; }
+    if (this.normalBuffer) { gl.deleteBuffer(this.normalBuffer); this.normalBuffer = null; }
+    if (this.uvBuffer) { gl.deleteBuffer(this.uvBuffer); this.uvBuffer = null; }
+    if (this.indexBuffer) { gl.deleteBuffer(this.indexBuffer); this.indexBuffer = null; }
+    if (this.wireframeIndexBuffer) { gl.deleteBuffer(this.wireframeIndexBuffer); this.wireframeIndexBuffer = null; }
+  }
+
   setModel(meshData) {
     const gl = this.gl;
     this.meshData = meshData;
 
-    // Destruir buffers anteriores
-    if (this.positionBuffer) gl.deleteBuffer(this.positionBuffer);
-    if (this.normalBuffer) gl.deleteBuffer(this.normalBuffer);
-    if (this.uvBuffer) gl.deleteBuffer(this.uvBuffer);
-    if (this.indexBuffer) gl.deleteBuffer(this.indexBuffer);
-    if (this.wireframeIndexBuffer) gl.deleteBuffer(this.wireframeIndexBuffer);
+    // Destruir buffers GPU anteriores
+    this.disposeBuffers();
 
-    // Crear y llenar nuevos buffers GPU
-    if (meshData.positions) {
-      this.positionBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, meshData.positions, gl.STATIC_DRAW);
-    }
+    // Crear buffers GPU por primitiva (soporte multi-material y multi-panel)
+    this.primitiveBuffers = [];
 
-    if (meshData.normals) {
-      this.normalBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, meshData.normals, gl.STATIC_DRAW);
-    }
+    if (meshData.primitives && meshData.primitives.length > 0) {
+      for (const prim of meshData.primitives) {
+        const primBuf = {
+          positionBuffer: null,
+          normalBuffer: null,
+          uvBuffer: null,
+          indexBuffer: null,
+          wireframeIndexBuffer: null,
+          wireframeIndexCount: 0,
+          vertexCount: prim.vertexCount,
+          indexCount: prim.indices ? prim.indices.length : 0,
+          indexType: prim.indices instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT,
+          material: prim.material || { baseColor: [0.82, 0.78, 0.70], roughness: 0.75, metallic: 0.0 },
+        };
 
-    if (meshData.uvs) {
-      this.uvBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.uvBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, meshData.uvs, gl.STATIC_DRAW);
-    }
+        if (prim.positions) {
+          primBuf.positionBuffer = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, primBuf.positionBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, prim.positions, gl.STATIC_DRAW);
+        }
 
-    if (meshData.indices) {
-      this.indexBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, meshData.indices, gl.STATIC_DRAW);
+        if (prim.normals) {
+          primBuf.normalBuffer = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, primBuf.normalBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, prim.normals, gl.STATIC_DRAW);
+        }
 
-      // Generar líneas de alambre (Wireframe) a partir de los triángulos
-      const wireIndices = [];
-      for (let i = 0; i < meshData.indices.length; i += 3) {
-        const a = meshData.indices[i], b = meshData.indices[i + 1], c = meshData.indices[i + 2];
-        wireIndices.push(a, b, b, c, c, a);
+        if (prim.uvs) {
+          primBuf.uvBuffer = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, primBuf.uvBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, prim.uvs, gl.STATIC_DRAW);
+        }
+
+        if (prim.indices) {
+          primBuf.indexBuffer = gl.createBuffer();
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, primBuf.indexBuffer);
+          gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, prim.indices, gl.STATIC_DRAW);
+
+          // Generar líneas de alambre (Wireframe)
+          const wireIndices = [];
+          for (let i = 0; i < prim.indices.length; i += 3) {
+            const a = prim.indices[i], b = prim.indices[i + 1], c = prim.indices[i + 2];
+            wireIndices.push(a, b, b, c, c, a);
+          }
+          primBuf.wireframeIndexCount = wireIndices.length;
+          primBuf.wireframeIndexBuffer = gl.createBuffer();
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, primBuf.wireframeIndexBuffer);
+          const wireArr = prim.indices instanceof Uint32Array ? new Uint32Array(wireIndices) : new Uint16Array(wireIndices);
+          gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, wireArr, gl.STATIC_DRAW);
+        }
+
+        this.primitiveBuffers.push(primBuf);
       }
-      this.wireframeIndexCount = wireIndices.length;
-      this.wireframeIndexBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.wireframeIndexBuffer);
-      const wireArr = meshData.indices instanceof Uint32Array ? new Uint32Array(wireIndices) : new Uint16Array(wireIndices);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, wireArr, gl.STATIC_DRAW);
+    } else if (meshData.positions) {
+      // Fallback para malla simple
+      const fallbackBuf = {
+        positionBuffer: gl.createBuffer(),
+        normalBuffer: null,
+        uvBuffer: null,
+        indexBuffer: null,
+        wireframeIndexBuffer: null,
+        wireframeIndexCount: 0,
+        vertexCount: meshData.vertexCount,
+        indexCount: meshData.indices ? meshData.indices.length : 0,
+        indexType: meshData.indices instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT,
+        material: meshData.material || { baseColor: [0.82, 0.78, 0.70], roughness: 0.75, metallic: 0.0 },
+      };
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, fallbackBuf.positionBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, meshData.positions, gl.STATIC_DRAW);
+
+      if (meshData.normals) {
+        fallbackBuf.normalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, fallbackBuf.normalBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, meshData.normals, gl.STATIC_DRAW);
+      }
+
+      if (meshData.uvs) {
+        fallbackBuf.uvBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, fallbackBuf.uvBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, meshData.uvs, gl.STATIC_DRAW);
+      }
+
+      if (meshData.indices) {
+        fallbackBuf.indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, fallbackBuf.indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, meshData.indices, gl.STATIC_DRAW);
+
+        const wireIndices = [];
+        for (let i = 0; i < meshData.indices.length; i += 3) {
+          const a = meshData.indices[i], b = meshData.indices[i + 1], c = meshData.indices[i + 2];
+          wireIndices.push(a, b, b, c, c, a);
+        }
+        fallbackBuf.wireframeIndexCount = wireIndices.length;
+        fallbackBuf.wireframeIndexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, fallbackBuf.wireframeIndexBuffer);
+        const wireArr = meshData.indices instanceof Uint32Array ? new Uint32Array(wireIndices) : new Uint16Array(wireIndices);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, wireArr, gl.STATIC_DRAW);
+      }
+
+      this.primitiveBuffers.push(fallbackBuf);
     }
 
-    // Configurar Material PBR
+    // Configurar Material PBR por defecto
     if (meshData.material) {
       this.baseColor = meshData.material.baseColor || [0.82, 0.78, 0.70];
       this.roughness = meshData.material.roughness ?? 0.75;
       this.metallic = meshData.material.metallic ?? 0.0;
     }
+
+    // Resetear anulaciones personalizadas de toolbar
+    this.customBaseColor = null;
+    this.customRoughness = null;
+    this.customMetallic = null;
 
     // Auto-ajustar cámara al modelo
     this.fitToScreen();
@@ -894,8 +1099,8 @@ class NativeWebGlEngine {
       gl.drawArrays(gl.LINES, 0, this.gridVertexCount);
     }
 
-    // 3. Renderizar Malla de Prenda 3D
-    if (this.meshData && this.positionBuffer && this.meshProgram) {
+    // 3. Renderizar Mallas de Prenda 3D con soporte Multi-Material y Multi-Primitiva
+    if (this.meshData && this.primitiveBuffers && this.primitiveBuffers.length > 0 && this.meshProgram) {
       gl.useProgram(this.meshProgram);
 
       const mMatrix = mat4.create();
@@ -911,12 +1116,6 @@ class NativeWebGlEngine {
       gl.uniformMatrix4fv(this.meshLocations.uNormalMatrix, false, nMatrix);
       gl.uniform3fv(this.meshLocations.uCameraPosition, eye);
 
-      // Material PBR
-      gl.uniform3fv(this.meshLocations.uBaseColor, this.baseColor);
-      gl.uniform1f(this.meshLocations.uRoughness, this.roughness);
-      gl.uniform1f(this.meshLocations.uMetallic, this.metallic);
-      gl.uniform1i(this.meshLocations.uIsWireframe, 0);
-
       // Iluminación de Estudio PBR
       gl.uniform3fv(this.meshLocations.uKeyLightDir, [1.5, 3.0, 2.5]);
       gl.uniform3fv(this.meshLocations.uKeyLightColor, [1.2, 1.2, 1.2]);
@@ -927,38 +1126,58 @@ class NativeWebGlEngine {
       const amb = this.theme === 'light' ? [0.65, 0.65, 0.65] : [0.35, 0.38, 0.45];
       gl.uniform3fv(this.meshLocations.uAmbientColor, amb);
 
-      // Bind Buffers
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-      gl.enableVertexAttribArray(this.meshLocations.aPosition);
-      gl.vertexAttribPointer(this.meshLocations.aPosition, 3, gl.FLOAT, false, 0, 0);
+      for (const primBuf of this.primitiveBuffers) {
+        if (!primBuf.positionBuffer) continue;
 
-      if (this.normalBuffer) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-        gl.enableVertexAttribArray(this.meshLocations.aNormal);
-        gl.vertexAttribPointer(this.meshLocations.aNormal, 3, gl.FLOAT, false, 0, 0);
-      }
+        // Material PBR (usar color de la primitiva o anulación de toolbar)
+        const primColor = this.customBaseColor || primBuf.material.baseColor || this.baseColor;
+        const primRoughness = this.customRoughness !== null && this.customRoughness !== undefined
+          ? this.customRoughness
+          : (primBuf.material.roughness ?? this.roughness);
+        const primMetallic = this.customMetallic !== null && this.customMetallic !== undefined
+          ? this.customMetallic
+          : (primBuf.material.metallic ?? this.metallic);
 
-      if (this.uvBuffer && this.meshLocations.aUv !== -1) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.uvBuffer);
-        gl.enableVertexAttribArray(this.meshLocations.aUv);
-        gl.vertexAttribPointer(this.meshLocations.aUv, 2, gl.FLOAT, false, 0, 0);
-      }
+        gl.uniform3fv(this.meshLocations.uBaseColor, primColor);
+        gl.uniform1f(this.meshLocations.uRoughness, primRoughness);
+        gl.uniform1f(this.meshLocations.uMetallic, primMetallic);
+        gl.uniform1i(this.meshLocations.uIsWireframe, 0);
 
-      // Dibujar Triángulos Superficie
-      if (this.meshData.indices && this.indexBuffer) {
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-        const indexType = this.meshData.indices instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
-        gl.drawElements(gl.TRIANGLES, this.meshData.indices.length, indexType, 0);
-      } else if (this.meshData.positions) {
-        gl.drawArrays(gl.TRIANGLES, 0, this.meshData.positions.length / 3);
-      }
+        // Bind Buffers
+        gl.bindBuffer(gl.ARRAY_BUFFER, primBuf.positionBuffer);
+        gl.enableVertexAttribArray(this.meshLocations.aPosition);
+        gl.vertexAttribPointer(this.meshLocations.aPosition, 3, gl.FLOAT, false, 0, 0);
 
-      // Dibujar Wireframe si está habilitado
-      if (this.showWireframe && this.wireframeIndexBuffer && this.wireframeIndexCount > 0) {
-        gl.uniform1i(this.meshLocations.uIsWireframe, 1);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.wireframeIndexBuffer);
-        const indexType = this.meshData.indices instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
-        gl.drawElements(gl.LINES, this.wireframeIndexCount, indexType, 0);
+        if (primBuf.normalBuffer) {
+          gl.bindBuffer(gl.ARRAY_BUFFER, primBuf.normalBuffer);
+          gl.enableVertexAttribArray(this.meshLocations.aNormal);
+          gl.vertexAttribPointer(this.meshLocations.aNormal, 3, gl.FLOAT, false, 0, 0);
+        } else {
+          gl.disableVertexAttribArray(this.meshLocations.aNormal);
+        }
+
+        if (primBuf.uvBuffer && this.meshLocations.aUv !== -1) {
+          gl.bindBuffer(gl.ARRAY_BUFFER, primBuf.uvBuffer);
+          gl.enableVertexAttribArray(this.meshLocations.aUv);
+          gl.vertexAttribPointer(this.meshLocations.aUv, 2, gl.FLOAT, false, 0, 0);
+        } else if (this.meshLocations.aUv !== -1) {
+          gl.disableVertexAttribArray(this.meshLocations.aUv);
+        }
+
+        // Dibujar Triángulos Superficie
+        if (primBuf.indexBuffer && primBuf.indexCount > 0) {
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, primBuf.indexBuffer);
+          gl.drawElements(gl.TRIANGLES, primBuf.indexCount, primBuf.indexType, 0);
+        } else if (primBuf.vertexCount > 0) {
+          gl.drawArrays(gl.TRIANGLES, 0, primBuf.vertexCount);
+        }
+
+        // Dibujar Wireframe si está habilitado
+        if (this.showWireframe && primBuf.wireframeIndexBuffer && primBuf.wireframeIndexCount > 0) {
+          gl.uniform1i(this.meshLocations.uIsWireframe, 1);
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, primBuf.wireframeIndexBuffer);
+          gl.drawElements(gl.LINES, primBuf.wireframeIndexCount, primBuf.indexType, 0);
+        }
       }
     }
   }
@@ -969,11 +1188,7 @@ class NativeWebGlEngine {
       cancelAnimationFrame(this.animationFrameId);
     }
     const gl = this.gl;
-    if (this.positionBuffer) gl.deleteBuffer(this.positionBuffer);
-    if (this.normalBuffer) gl.deleteBuffer(this.normalBuffer);
-    if (this.uvBuffer) gl.deleteBuffer(this.uvBuffer);
-    if (this.indexBuffer) gl.deleteBuffer(this.indexBuffer);
-    if (this.wireframeIndexBuffer) gl.deleteBuffer(this.wireframeIndexBuffer);
+    this.disposeBuffers();
     if (this.gridVbo) gl.deleteBuffer(this.gridVbo);
     if (this.meshProgram) gl.deleteProgram(this.meshProgram);
     if (this.gridProgram) gl.deleteProgram(this.gridProgram);
@@ -1169,8 +1384,11 @@ export class GarmentViewer3D {
       this.stats = {
         vertexCount: meshData.vertexCount,
         triangleCount: meshData.triangleCount,
-        meshCount: 1,
-        materialName: meshData.material?.name || 'PBR Fabric',
+        meshCount: meshData.primitives?.length || 1,
+        materialName:
+          meshData.materials && meshData.materials.length > 1
+            ? meshData.materials.map((m) => m.name).join(', ')
+            : meshData.material?.name || 'PBR Fabric',
       };
       this.updateHud();
       this.hideLoader();
@@ -1238,8 +1456,18 @@ export class GarmentViewer3D {
    */
   applyFabricPreset(fabricKey) {
     if (fabricKey === 'default') {
-      if (this.currentModelUrl) {
-        this.loadModel(this.currentModelUrl);
+      if (this.nativeEngine) {
+        this.nativeEngine.customBaseColor = null;
+        this.nativeEngine.customRoughness = null;
+        this.nativeEngine.customMetallic = null;
+        if (this.nativeEngine.meshData?.material) {
+          this.nativeEngine.baseColor = this.nativeEngine.meshData.material.baseColor || [0.82, 0.78, 0.70];
+          this.nativeEngine.roughness = this.nativeEngine.meshData.material.roughness ?? 0.75;
+          this.nativeEngine.metallic = this.nativeEngine.meshData.material.metallic ?? 0.0;
+        }
+      }
+      if (this.valMaterial && this.stats) {
+        this.valMaterial.textContent = this.stats.materialName;
       }
       return;
     }
@@ -1249,6 +1477,9 @@ export class GarmentViewer3D {
 
     const rgb = hexToRgb(preset.color);
     if (this.nativeEngine) {
+      this.nativeEngine.customBaseColor = rgb;
+      this.nativeEngine.customRoughness = preset.roughness;
+      this.nativeEngine.customMetallic = preset.metallic;
       this.nativeEngine.baseColor = rgb;
       this.nativeEngine.roughness = preset.roughness;
       this.nativeEngine.metallic = preset.metallic;
@@ -1265,6 +1496,7 @@ export class GarmentViewer3D {
   applyCustomColor(hexColor) {
     const rgb = hexToRgb(hexColor);
     if (this.nativeEngine) {
+      this.nativeEngine.customBaseColor = rgb;
       this.nativeEngine.baseColor = rgb;
     }
   }
