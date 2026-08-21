@@ -1,6 +1,6 @@
 # APPCORE - Generador Paramétrico de Patrones IA
 
-Verified: 2026-08-21 at reindex-v3 (commit f39ddc1, 538 tests PASS)
+Verified: 2026-08-21 at Phase 8.0 Milestone Closure (commit 8c893d6, 548 tests PASS)
 
 ## Purpose and users
 

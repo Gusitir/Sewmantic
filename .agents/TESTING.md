@@ -4,7 +4,7 @@ Guía completa de pruebas automatizadas, semi-automatizadas y verificación huma
 
 ---
 
-## 1. Suite de Pruebas Automatizadas (538/538 PASS — 19 Suites Vitest)
+## 1. Suite de Pruebas Automatizadas (548/548 PASS — 21 Suites Vitest)
 
 Para ejecutar la suite completa de pruebas deterministas:
 ```powershell
@@ -15,6 +15,8 @@ npm test
 
 | Suite de Test | Módulo / Archivo | Tests | Qué valida |
 | :--- | :--- | :---: | :--- |
+| `tests/collars.test.ts` | `src/engine/modifier.ts` | 5 | Módulos de cuellos técnicos: cuello chimenea/alzado (`stand_collar`) con curvatura anatómica y piquetes de hombro/centro, y cuello camisero (`collar_stand` + `collar_fall`) con entretela y validación Zod. |
+| `tests/cargo_pockets.test.ts` | `src/engine/modifier.ts` | 5 | Módulos de bolsillos cargo 3D con fuelle perimetral en tira U (`cargo_pocket_bellows`), cuerpo principal (`cargo_pocket_body`), solapas con broches (`cargo_pocket_flap`), y blueprint ancla `utility_vest`. |
 | `tests/industrial_patterns.test.ts` | `src/engine/modifier.ts` | 15 | Moldería industrial: cruces de botonadura (+20mm), marcas vectoriales de botones y ojales, vistas interiores con entretela (`front_facing`, `armhole_facing`, `back_neck_facing`), piquetes pareados en hombros/costados y bajo en doble pico de chaleco (`hem: pointed`). |
 | `tests/triangulator.test.ts` | `src/engine/triangulator.ts` | 30 | Motor de Triangulación 2D Ear-Clipping; polígonos cóncavos, escotes en V, bajo en pico, mangas, perneras y faldas; área analítica ($\Delta < 0.1\%$) y orientación CCW. |
 | `tests/schema.test.ts` | `src/schema/pattern_schema.ts` | 30 | Contratos Zod para ADN paramétrico, límites antropométricos, sub-prendas, vestidos, kimonos, telas y árboles de modificación. |
@@ -34,7 +36,7 @@ npm test
 | `tests/server.test.ts` | `src/server/app.ts` | 20 | Servidor HTTP REST nativo; CORS universal, soporte para selección de `blueprint`, logging estructurado y respuestas de error con `details`. |
 | `tests/viewer.test.ts` | `src/server/public/viewer.js` | 22 | Visor Vectorial 2D; transformaciones matemáticas (Zoom, Pan, Fit View), capas XS-3XL y cuadrícula A4. |
 | `tests/e2e.test.ts` | `src/pipeline.ts` | 11 | Pipeline End-to-End generando físicamente todos los 12 entregables (2D + 3D + ZIP) en disco. |
-| **TOTAL** | **19 suites** | **538** | **100% PASS (0 errores)** |
+| **TOTAL** | **21 suites** | **548** | **100% PASS (0 errores)** |
 
 ---
 

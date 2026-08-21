@@ -70,6 +70,14 @@ suites_passing: 17/17 (468/468 tests PASS)
 - **Job MAINTAIN (Rol: Ingeniero):** Sincronización de roles en `AGENTS.md` (Humano, Arquitecto, Ingeniero, Obrero), perfiles de aseguramiento (Lean por defecto: puertas deterministas por commit + fresh-context self-audit en hitos), separación estricta de planos (producto `[T-NN]` vs control `[STATE]`) y eliminación de campos obsoletos.
 - **Job REINDEX (Rol: Ingeniero):** Revalidación de `APPCORE.md` con 538 tests PASS, motor 3D glTF 2.0, Ear-Clipping y reconstrucción de `INDEX.md` y `CURRENT.md`.
 
+### 📌 Fase 8.0: Módulos de Cuellos Técnicos, Bolsillos Cargo con Fuelle 3D y Blueprint Utility Vest
+- **Fecha:** 2026-08-21
+- **Plan:** `archive/PLAN_v0.8-technical-modules-and-outerwear.md`
+- **Resultados:**
+  - `T-33` (Commit `2a61b72`): Implementación de generadores paramétricos para Cuello Alzado/Chimenea (`stand_collar`) con curvatura anatómica y Cuello Camisero con Tirilla (`shirt_collar_with_stand` -> `collar_stand` + `collar_fall`). 5 tests unitarios en `tests/collars.test.ts`. Veredicto **APTO**.
+  - `T-34` (Commit `8c893d6`): Implementación del juego completo de Bolsillos Cargo 3D (`cargo_pocket_body`, `cargo_pocket_bellows` en tira U, `cargo_pocket_flap` con broches y entretela), blueprint ancla `utility_vest` (Chaleco Táctico / Safari / Cargo) en selector de Web Studio y `MockAiProvider`. 5 tests unitarios en `tests/cargo_pockets.test.ts`. Veredicto **APTO**.
+  - Suite determinista global: **21/21 suites PASS (548/548 tests en verde)**. Plan archivado y veredicto **APTO**.
+
 ---
 
 ## 3. Matriz de Paradas Humanas (Stop Conditions)
@@ -79,6 +87,7 @@ suites_passing: 17/17 (468/468 tests PASS)
 | **H-01** | Impresión física de Página 1 a escala 100%. | Medición con regla: exactamente $10.0\text{ cm} \times 10.0\text{ cm}$. | ✅ [VERIFICADO OK] |
 | **H-02** | Continuidad de ensamble de hojas A4/Letter. | Líneas de corte continuas con PDFStitcher sin saltos ni escalones. | ✅ [VERIFICADO OK] |
 | **H-03** | Verificación visual de patrones 2D y 3D en Web Studio. | Inspección interactiva del visor 2D y rotación 360° del visor 3D WebGL. | 🟡 [LISTO PARA PROBAR POR EL USUARIO] |
+
 
 
 

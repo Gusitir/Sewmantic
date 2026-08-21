@@ -14,6 +14,7 @@
   - `archive/PLAN_v0.5-womenswear-and-3d-blender.md`: Fase 5.0 (Womenswear Bodice & Skirt Slopers, Anime Dresses/Kimonos & Headless Blender 3D Bridge / WebGL Viewer).
   - `archive/PLAN_v0.6-true-to-pattern-3d-meshing.md`: Fase 6.0 (True-to-Pattern 3D Meshing, 2D Ear-Clipping Triangulation, Smooth Normals & Multi-Material glTF).
   - `archive/PLAN_v0.7-industrial-blueprints-and-3d-assembly.md`: Fase 7.0 (FreeSewing Base Blueprints Architecture, Industrial Patterns with Button Overlaps/Facings/Notches & Exploded 3D Assembly Guide).
+  - `archive/PLAN_v0.8-technical-modules-and-outerwear.md`: Fase 8.0 (Technical Collar Modules: Stand Collar & Shirt Collar, 3D Cargo Bellows Pockets & Utility Vest Blueprint).
 
 ## Important product paths
 
@@ -29,4 +30,5 @@
 - `src/server/`: Servidor HTTP REST y frontend Web Studio (HTML, CSS, JS, Visor 2D, Visor 3D WebGL con Exploded View Slider).
 - `output/`: PDFs, SVGs, Modelos .glb 3D, Fichas técnicas y paquetes comerciales ZIP generados.
 
-Last reindexed: 2026-08-21 at reindex-v3 (commit f39ddc1).
+Last reindexed: 2026-08-21 at Phase 8.0 Milestone Closure (commit 8c893d6).
+
