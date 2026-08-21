@@ -2,76 +2,71 @@
 
 ## Operating mode
 
-- Assurance: Lean (default)
-- Product plane owner: executor (Ingeniero / Obrero)
-- Control plane owner: planner/auditor (Arquitecto)
+- Assurance: Lean (default: deterministic gates per commit, fresh-context self-audit at milestone boundaries)
+- Product plane owner: Worker (`[T-NN]` commits)
+- Control plane owner: Architect / Engineer (`[STATE]` commits)
 - Local Git: required
 - Backup: local-only
 - Sibling systems outside scope: MyPetCreature 3D/AR WebGL viewer (Fase 2)
 
-## Roles y Jerarquía de Agentes (Modelo: Gemini 3.7 Flash High)
+## Roles y Jerarquía de Orquestación (agents-workflow v3)
 
-1. **Arquitecto (Lead / Planner / Auditor General)**:
+1. **Humano (Usuario)**:
+   - Aprobación de alcance material, decisiones irreversibles, evaluación visual y validación física.
+
+2. **Arquitecto (Lead / Planner / Milestone Closure)**:
    - Modelo: **Gemini 3.7 Flash High**
-   - Dueño exclusivo del plano de control (`.agents/`).
-   - Planifica hitos, desglosa tareas y gestiona el flujo global del proyecto.
-   - Orquesta la asignación de tareas a **Ingeniero** y **Obrero**.
-   - Realiza auditorías de fase y emite veredictos finales (APTO, NO APTO, BLOCKED).
-   - Realiza commits de control con prefijo `[STATE] ...`.
+   - Dueño exclusivo de INIT, PLAN (preflight de diseño y descomposición de tareas), coherencia de arquitectura y CLOSE.
+   - Genera planes aprobados y diseño modular. Nunca realiza implementación de código de producto.
+   - Emite veredictos finales de fase y realiza commits `[STATE] close phase X.Y`.
 
-2. **Ingeniero (Subagente de Razonamiento, Geometría y Auditoría Técnica)**:
+3. **Ingeniero (Loop Orchestration, Technical Audit & Control State)**:
    - Modelo: **Gemini 3.7 Flash High** (`Model: inherit`)
-   - Resuelve problemas de alta complejidad lógica, fórmulas matemáticas y patronaje computacional en FreeSewing v3.
-   - Diseña contratos de datos (Zod schemas, interfaces TypeScript) y arquitecturas de módulos.
-   - Ejecuta mini-auditorías localizadas por tarea y genera Audit Capsules con evidencia verificada.
-   - Especifica directivas técnicas precisas para la implementación por parte del Obrero.
+   - Dueño de RUN THE LOOP, AUDIT, MAINTAIN, REINDEX, COMPACT, HANDOFF y EXPORT DOCUMENTATION.
+   - Resuelve problemas de alta complejidad lógica, contratos de datos (Zod schemas, TypeScript), matemáticas y patronaje FreeSewing v3.
+   - Despacha briefs de tareas al Obrero, ejecuta mini-auditorías localizadas y evalúa Audit Capsules con evidencia empírica verificada.
+   - Mantiene el plano de control (`.agents/`) y genera commits de control `[STATE] ...`.
 
-3. **Obrero (Subagente de Código y Ejecución)**:
+4. **Obrero (Implementación Acotada & Puertas Deterministas)**:
    - Modelo: **Gemini 3.7 Flash High** (`Model: inherit`)
-   - Implementa código fuente TypeScript/Node.js/HTML/CSS/JS de manera directa, limpia y eficiente siguiendo las especificaciones.
-   - Realiza tareas de refactorización y adición de archivos.
-   - Ejecuta pruebas locales y comandos de compilación (`npm run build`, `npm test`).
+   - Dueño del plano de producto: implementa código fuente TypeScript/Node.js/HTML/CSS/JS estrictamente dentro del alcance de su brief `[T-NN]`.
+   - Ejecuta puertas deterministas locales (`npm run build`, `npm test`) y genera la Cápsula de Auditoría (Audit Capsule).
+   - Nunca expande el alcance por iniciativa propia ni se auto-aprueba.
 
-4. **Automatización Mecánica (Scripts)**:
-   - Todas las tareas repetitivas o mecánicas (generación de esqueletos, ejecución de matrices de pruebas, formateo, empaquetado) se ejecutan mediante scripts versionados en `scripts/` (Node.js / PowerShell).
+5. **Automatización Mecánica (Scripts)**:
+   - Todas las tareas repetitivas o mecánicas (generación de esqueletos, matrices de pruebas, formateo, empaquetado) se ejecutan mediante scripts versionados en `scripts/` (Node.js / PowerShell).
 
-## Verification surface & Puertas por Fase
+## Verification Surface & Puertas Deterministas
 
 - **Política Zero-Trust (Evidencia Empírica Obligatoria):**
-  - Ninguna afirmación verbal de ningún agente (incluido el Arquitecto) es válida por sí misma.
+  - Ninguna afirmación verbal es válida por sí misma.
   - Todo resultado se verifica exclusivamente contra el código fuente, ejecución real de comandos y diffs de Git.
-  - El Ingeniero debe adjuntar la salida literal de los comandos de prueba en el Audit Capsule.
+  - El Obrero/Ingeniero adjunta la salida literal de los comandos de prueba en el Audit Capsule.
 
 - **Puertas Deterministas por Tarea y Fase:**
-  - **Fase 1.0 (MVP Core Geometry & Tiling: T-01 a T-08):**
-    - *Gate:* `npm run build && npm test`
-    - *Criterio:* Compilación estricta sin errores, cuadro de calibración 10x10cm verificado, 193 tests PASS.
-  - **Fase 2.0 (Slopers de Pantalón, Medidas a Medida & Etsy ZIP: T-09 a T-12):**
-    - *Gate:* `npm test`
-    - *Criterio:* Coincidencia de entrepiernas $< 0.05\text{ mm}$, paquetes ZIP generados, 309 tests PASS.
-  - **Fase 3.0 (Web Studio 2D & Conjuntos de 2 Piezas: T-13 a T-16):**
-    - *Gate:* `npm test`
-    - *Criterio:* Servidor REST nativo, Visor 2D interactivo, preset multi-tela de Luffy, 375 tests PASS.
-  - **Fase 4.0 (Integración Multimodal Fireworks AI & Diagnóstico en Vivo: T-17 a T-20):**
-    - *Gate:* `node scripts/test_fireworks_call.js && npm test`
-    - *Criterio:* Diagnóstico empírico exitoso con Fireworks API (Qwen 3.7 Plus), logs transparentes en consola del servidor, manejo de errores detallados en Web Studio y generación end-to-end por imagen.
+  - **Fase 1.0 (MVP Core Geometry & Tiling: T-01 a T-08):** `npm run build && npm test` (193 tests PASS).
+  - **Fase 2.0 (Slopers de Pantalón, Medidas a Medida & Etsy ZIP: T-09 a T-12):** `npm test` (309 tests PASS).
+  - **Fase 3.0 (Web Studio 2D & Conjuntos de 2 Piezas: T-13 a T-16):** `npm test` (375 tests PASS).
+  - **Fase 4.0 (Integración Multimodal Fireworks AI: T-17 a T-20):** `node scripts/test_fireworks_call.js && npm test` (404 tests PASS).
+  - **Fase 5.0 (Womenswear Slopers & Headless 3D Export: T-21 a T-24):** `npm run build && npm test` (468 tests PASS).
+  - **Fase 6.0 (True-to-Pattern 3D Meshing & Ear-Clipping: T-25 a T-28):** `npm run build && npm test` (513 tests PASS).
+  - **Fase 7.0 (Blueprints Ancla, Moldería Industrial & Despiece 3D: T-29 a T-32):** `npm run build && npm test` (537 tests PASS).
+  - **Mejoras Continuas (Inspección Ocular Multimodal & Pointed Waistcoat Hem):** `npm run build && npm test` (538 tests PASS).
 
 - **Barrera de Parada Humana (Stop Condition Obligatorio):**
-  - El loop autónomo se ejecuta de forma continua hasta alcanzar pruebas físicas indispensables:
-    - `H-01`: Impresión física de la Página 1 a escala 100% y medición con regla del recuadro de 10x10 cm. [VERIFICADO OK]
-    - `H-02`: Ensamble físico/digital de las hojas A4/Letter para validar continuidad de corte con PDFStitcher. [VERIFICADO OK]
-    - `H-03`: Inspección visual del patrón generado a partir de una imagen de referencia en el Visor 2D del Web Studio.
+  - `H-01`: Impresión física de la Página 1 a escala 100% y medición con regla del recuadro de 10x10 cm. [VERIFICADO OK]
+  - `H-02`: Ensamble físico/digital de las hojas A4/Letter para validar continuidad de corte con PDFStitcher. [VERIFICADO OK]
+  - `H-03`: Inspección visual del patrón generado a partir de una imagen de referencia en el Visor 2D/3D del Web Studio. [LISTO PARA PROBAR]
 
-## Workflow
+## Workflow v3
 
-1. El **Arquitecto** selecciona la tarea activa y despacha el brief.
-2. El **Ingeniero** diseña la solución lógica / matemática si la tarea involucra complejidad o diseño de tipos.
-3. El **Obrero** (o scripts mecánicos) codifica e implementa la solución y verifica que pase las puertas deterministas (`npm run build`, `npm test`).
-4. El **Ingeniero** realiza una mini-auditoría localizada y prepara el **Audit Capsule** (criterios, commits `[T-NN]`, diff, puertas, riesgos).
-5. El **Arquitecto** audita la evidencia empírica, emite veredicto (APTO/NO APTO) y actualiza el plano de control (`[STATE]`).
-6. Al finalizar cada fase, el Arquitecto realiza una sincronización integral de todos los `.md` de `.agents/` y genera un commit de fase `[STATE] close phase X.Y`.
-
-Lean batches low-risk audits at a phase boundary. Deterministic gates still run per commit.
+1. **Humano**: Define objetivo o aprueba alcance material.
+2. **Arquitecto**: Diseña solución / planifica hitos y preflight (`PLAN`).
+3. **Humano**: Aprueba el plan.
+4. **Ingeniero**: Despacha brief de tarea `[T-NN]` al Obrero (`RUN THE LOOP`).
+5. **Obrero**: Implementa en plano de producto, ejecuta puertas deterministas (`npm run build && npm test`), comitea `[T-NN]` y retorna Audit Capsule.
+6. **Ingeniero**: Audita evidencia (`AUDIT`), emite veredicto (APTO / NO APTO) y actualiza estado de control (`[STATE]`).
+7. **Arquitecto**: Cierra y archiva el hito verificado (`CLOSE`).
 
 ## Durable rules
 
@@ -87,7 +82,7 @@ Lean batches low-risk audits at a phase boundary. Deterministic gates still run 
 ## Environment
 
 - OS/shell: Windows (PowerShell)
-- Runtime/tool versions: Node.js (TypeScript), FreeSewing v3+
+- Runtime/tool versions: Node.js (TypeScript, ESM NodeNext), FreeSewing v3+
 - Build/test quirks: Output PDFs must be tested against 100% scale rendering.
 - Ignored/generated directories: node_modules/, dist/, output/, .env
 
@@ -97,3 +92,6 @@ Lean batches low-risk audits at a phase boundary. Deterministic gates still run 
 - Ensure grainline direction and notch alignment are computed geometrically on all generated pattern pieces.
 - Always include explicit `console.log` / `console.error` and structured error responses in server API endpoints.
 - Auto-sync static frontend files to `dist/` during build and launcher execution.
+- Maintain double-sided normals and mirrored left panels for `cutCount === 2` in 3D projection.
+- Include High-Precision Visual Feature Extraction Matrix when processing inspiration images.
+

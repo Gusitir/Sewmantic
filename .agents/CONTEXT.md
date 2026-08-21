@@ -59,7 +59,16 @@ suites_passing: 17/17 (468/468 tests PASS)
 - `T-29` (Commit `87ea073`): Moldería industrial implementada (cruce de botonadura $+20\text{ mm}$, marcas vectoriales de botones/ojales, vistas interiores `front_facing`, `armhole_facing`, `back_neck_facing` con entretela y piquetes pareados en hombros/costados). 14 tests unitarios. Veredicto **APTO**.
 - `T-30` (Commit `f6d6b0d`): Selector visual de 7 Bloques Base FreeSewing en Web Studio e inyección anatómica contextual al LLM (Qwen 3.8 Max como modificador puro). 20 tests unitarios y de servidor. Veredicto **APTO**.
 - `T-31` (Commit `467587d`): Guía Visual de Ensamble y Doblado 3D Despiezada (*Exploded Assembly View*) con slider interactivo 0-100%, metadatos `explodeOffset` en glTF 2.0 y líneas de unión de costura. Veredicto **APTO**.
-- **Estado:** Activo (`PLAN_v0.7-industrial-blueprints-and-3d-assembly.md`). Tarea activa: `T-32`.
+- `T-32` (Commit `ee491d6`): Ficha Técnica Industrial con secuencia de 4 pasos de confección, enriquecimiento de metadatos Etsy con guía de armado y empaquetado ZIP comercial de 7 carpetas. Veredicto **APTO**. Plan archivado en `archive/PLAN_v0.7-industrial-blueprints-and-3d-assembly.md` (Commit `7cf0c9a`).
+
+### 📌 Mejoras Continuas: Espejado Frontal 3D, Entretela y Bajo en Doble Pico
+- Commit `176a509` (`[FIX]`): Corrección de condición de espejado en `blender_bridge.ts` (`shouldMirror = !isFullSpan || onFold || part.cutCount === 2`), generando ambos lados frontales en 3D para `CORTAR x2` y asignación de material `Interfacing_Lining` a las vistas interiores.
+- Commit `f39ddc1` (`[FEAT]`): Matriz de Inspección Ocular Multimodal de 6 Puntos en `prompt_builder.ts` y geometría de bajo en doble pico (`hem: { type: 'pointed', peak_drop_mm: 50 }`) en `modifier.ts` con abertura en V invertida y vista interior coordinada. 538 tests PASS.
+
+### 📌 Migración y Sincronización a agents-workflow v3 (3.0.0-dev)
+- **Fecha:** 2026-08-21
+- **Job MAINTAIN (Rol: Ingeniero):** Sincronización de roles en `AGENTS.md` (Humano, Arquitecto, Ingeniero, Obrero), perfiles de aseguramiento (Lean por defecto: puertas deterministas por commit + fresh-context self-audit en hitos), separación estricta de planos (producto `[T-NN]` vs control `[STATE]`) y eliminación de campos obsoletos.
+- **Job REINDEX (Rol: Ingeniero):** Revalidación de `APPCORE.md` con 538 tests PASS, motor 3D glTF 2.0, Ear-Clipping y reconstrucción de `INDEX.md` y `CURRENT.md`.
 
 ---
 
@@ -70,6 +79,7 @@ suites_passing: 17/17 (468/468 tests PASS)
 | **H-01** | Impresión física de Página 1 a escala 100%. | Medición con regla: exactamente $10.0\text{ cm} \times 10.0\text{ cm}$. | ✅ [VERIFICADO OK] |
 | **H-02** | Continuidad de ensamble de hojas A4/Letter. | Líneas de corte continuas con PDFStitcher sin saltos ni escalones. | ✅ [VERIFICADO OK] |
 | **H-03** | Verificación visual de patrones 2D y 3D en Web Studio. | Inspección interactiva del visor 2D y rotación 360° del visor 3D WebGL. | 🟡 [LISTO PARA PROBAR POR EL USUARIO] |
+
 
 
 

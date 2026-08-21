@@ -4,7 +4,7 @@ Guía completa de pruebas automatizadas, semi-automatizadas y verificación huma
 
 ---
 
-## 1. Suite de Pruebas Automatizadas (537/537 PASS — 19 Suites Vitest)
+## 1. Suite de Pruebas Automatizadas (538/538 PASS — 19 Suites Vitest)
 
 Para ejecutar la suite completa de pruebas deterministas:
 ```powershell
@@ -15,7 +15,7 @@ npm test
 
 | Suite de Test | Módulo / Archivo | Tests | Qué valida |
 | :--- | :--- | :---: | :--- |
-| `tests/industrial_patterns.test.ts` | `src/engine/modifier.ts` | 14 | Moldería industrial: cruces de botonadura (+20mm), marcas vectoriales de botones y ojales, vistas interiores con entretela (`front_facing`, `armhole_facing`, `back_neck_facing`) y piquetes pareados en hombros/costados. |
+| `tests/industrial_patterns.test.ts` | `src/engine/modifier.ts` | 15 | Moldería industrial: cruces de botonadura (+20mm), marcas vectoriales de botones y ojales, vistas interiores con entretela (`front_facing`, `armhole_facing`, `back_neck_facing`), piquetes pareados en hombros/costados y bajo en doble pico de chaleco (`hem: pointed`). |
 | `tests/triangulator.test.ts` | `src/engine/triangulator.ts` | 30 | Motor de Triangulación 2D Ear-Clipping; polígonos cóncavos, escotes en V, bajo en pico, mangas, perneras y faldas; área analítica ($\Delta < 0.1\%$) y orientación CCW. |
 | `tests/schema.test.ts` | `src/schema/pattern_schema.ts` | 30 | Contratos Zod para ADN paramétrico, límites antropométricos, sub-prendas, vestidos, kimonos, telas y árboles de modificación. |
 | `tests/ai_provider.test.ts` | `src/ai/` | 29 | AI Provider Factory, `DirectApiProvider` (Fireworks AI / Qwen 3.8 Max `max_tokens: 6000`, inyección de Blueprints FreeSewing, Data URLs, visión) y `MockAiProvider`. |
@@ -34,7 +34,7 @@ npm test
 | `tests/server.test.ts` | `src/server/app.ts` | 20 | Servidor HTTP REST nativo; CORS universal, soporte para selección de `blueprint`, logging estructurado y respuestas de error con `details`. |
 | `tests/viewer.test.ts` | `src/server/public/viewer.js` | 22 | Visor Vectorial 2D; transformaciones matemáticas (Zoom, Pan, Fit View), capas XS-3XL y cuadrícula A4. |
 | `tests/e2e.test.ts` | `src/pipeline.ts` | 11 | Pipeline End-to-End generando físicamente todos los 12 entregables (2D + 3D + ZIP) en disco. |
-| **TOTAL** | **19 suites** | **537** | **100% PASS (0 errores)** |
+| **TOTAL** | **19 suites** | **538** | **100% PASS (0 errores)** |
 
 ---
 

@@ -1,11 +1,11 @@
 # INDEX - `.agents/`
 
-- `AGENTS.md`: roles (Arquitecto, Ingeniero, Obrero), modo LEAN, reglas de aseguramiento y entorno.
+- `AGENTS.md`: roles de orquestación (Humano, Arquitecto, Ingeniero, Obrero), modo LEAN, reglas de aseguramiento y entorno.
 - `APPCORE.md`: propósito, invariantes textiles inmutables, pipeline de FreeSewing v3, arquitectura y contrato de datos ADN.
-- `CURRENT.md`: estado activo del proyecto, jerarquía de subagentes y siguiente acción inmediata.
+- `CURRENT.md`: estado activo del proyecto, jerarquía de subagentes, veredicto y siguiente acción inmediata.
 - `CONTEXT.md`: registro cronológico inmutable de decisiones, auditorías y eventos.
 - `PLAN.md`: puntero al estado de planes del proyecto.
-- `TESTING.md`: matriz de pruebas automatizadas (19 suites Vitest, 537 tests), pruebas humanas y verificación de APIs.
+- `TESTING.md`: matriz de pruebas automatizadas (19 suites Vitest, 538 tests), pruebas humanas y verificación de APIs.
 - `archive/`: directorio para planes cerrados e histórico archivado:
   - `archive/PLAN_v0.1-mvp.md`: Fase 1.0 (MVP Geometría Base, Tiling y PDFs paginados).
   - `archive/PLAN_v0.2-features.md`: Fase 2.0 (Slopers de Pantalón, Medidas a Medida y Empaquetador Etsy).
@@ -29,4 +29,4 @@
 - `src/server/`: Servidor HTTP REST y frontend Web Studio (HTML, CSS, JS, Visor 2D, Visor 3D WebGL con Exploded View Slider).
 - `output/`: PDFs, SVGs, Modelos .glb 3D, Fichas técnicas y paquetes comerciales ZIP generados.
 
-Last reindexed: 2026-08-20 at phase-7-closure.
+Last reindexed: 2026-08-21 at reindex-v3 (commit f39ddc1).
