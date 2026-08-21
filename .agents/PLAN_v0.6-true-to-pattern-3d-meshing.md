@@ -10,8 +10,8 @@ Assurance: Lean
 |---|---|---|---|---|:---:|
 | **T-25** | Motor de Triangulación 2D de Polígonos de Moldería (*Ear Clipping Triangulator*) | Ingeniero | Obrero | `npm test` | ✅ DONE |
 | **T-26** | Proyector Anatómico 3D y Deformación Envolvente de Paneles Textiles | Ingeniero | Obrero | `npm test` | ✅ DONE |
-| **T-27** | Ensamblado de Paneles Multi-Pieza y Costuras 3D en Buffer glTF 2.0 | Ingeniero | Obrero | `node scripts/test_blender_export.js` | 🟡 READY |
-| **T-28** | Verificación Visual E2E en Web Studio y Auditoría de Fase 6.0 | Arquitecto | Ingeniero | `npm test && node dist/index.js` | ⚪ QUEUED |
+| **T-27** | Ensamblado de Paneles Multi-Pieza y Costuras 3D en Buffer glTF 2.0 | Ingeniero | Obrero | `node scripts/test_blender_export.js` | ✅ DONE |
+| **T-28** | Verificación Visual E2E en Web Studio y Auditoría de Fase 6.0 | Arquitecto | Ingeniero | `npm test && node dist/index.js` | 🟡 READY |
 
 ---
 
@@ -57,14 +57,15 @@ Assurance: Lean
 
 ### T-27 - Ensamblado de Paneles Multi-Pieza y Costuras 3D en Buffer glTF 2.0
 
-- Status: ready
+- Status: done
 - Depends on: T-26
 - Scope: `src/engine/blender_bridge.ts`, `src/pipeline.ts`, `scripts/test_blender_export.js`
 - Rol: Ingeniero / Obrero (Pipeline de empaquetado binario glTF).
 - Acceptance:
-  - [ ] Unificar todas las piezas de la prenda (delantero, espalda, mangas, cuello, bolsillos) en una sola escena glTF con jerarquía de nodos o malla única con costuras cerradas.
-  - [ ] Asegurar que el tamaño del `.glb` se mantenga optimizado para WebGL ($< 300\text{ KB}$).
-  - [ ] Actualizar script `scripts/test_blender_export.js` verificando siluetas reales para chaleco pirata, kimono Furisode y bermuda.
+  - [x] Unificar todas las piezas de la prenda (delantero, espalda, mangas, cuello, bolsillos) en una sola escena glTF con jerarquía de nodos o malla única con costuras cerradas.
+  - [x] Soporte multi-material PBR y multi-primitiva glTF 2.0 (ej. Lino Rojo + Denim Azul en conjuntos).
+  - [x] Asegurar que el tamaño del `.glb` se mantenga optimizado para WebGL ($< 300\text{ KB}$).
+  - [x] Actualizar script `scripts/test_blender_export.js` verificando siluetas reales para chaleco pirata, kimono Furisode, bermuda y set coordinado de 2 piezas.
 - Gates: `node scripts/test_blender_export.js`
 - Human checks: none
 
@@ -72,7 +73,7 @@ Assurance: Lean
 
 ### T-28 - Verificación Visual E2E en Web Studio y Auditoría de Fase 6.0
 
-- Status: queued
+- Status: ready
 - Depends on: T-27
 - Scope: `src/server/public/viewer3d.js`, `src/server/public/app.js`, `output/`
 - Rol: Arquitecto (Lead / Auditor General).
