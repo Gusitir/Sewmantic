@@ -569,6 +569,224 @@ export function generateArmholeFacing(options: {
 }
 
 /**
+ * Genera la pieza de patrón paramétrico para Cuello Alzado / Chimenea / Mao (Stand Collar)
+ */
+export function generateStandCollarPiece(options: {
+  frontNeckLen: number;
+  backNeckLen: number;
+  overlapMm?: number;
+  collarHeight?: number;
+  seamAllowance?: number;
+}): PatternPart {
+  const {
+    frontNeckLen,
+    backNeckLen,
+    overlapMm = 0,
+    collarHeight = 45,
+    seamAllowance = 10,
+  } = options;
+
+  // Longitud de medio cuello: Espalda + Delantero + Solape
+  const halfCollarLen = Math.round(backNeckLen + frontNeckLen + overlapMm);
+  const shoulderNotchX = Math.round(backNeckLen);
+  const centerFrontNotchX = Math.round(backNeckLen + frontNeckLen);
+
+  // Curvatura anatómica suave en la base del cuello
+  const curveRise = 8;
+
+  const p_cb_base = createPoint(0, 0, 'cb_base');
+  const p_sh_base = createPoint(shoulderNotchX, 1, 'shoulder_base');
+  const p_cf_base = createPoint(halfCollarLen, curveRise, 'cf_base');
+
+  const p_cf_top = createPoint(halfCollarLen, curveRise + collarHeight, 'cf_top');
+  const p_sh_top = createPoint(shoulderNotchX, collarHeight + 1, 'shoulder_top');
+  const p_cb_top = createPoint(0, collarHeight, 'cb_top');
+
+  const outline: Point2D[] = [
+    p_cb_base,
+    p_sh_base,
+    p_cf_base,
+    p_cf_top,
+    p_sh_top,
+    p_cb_top,
+  ];
+
+  const bounds = computeBounds(outline);
+  const area = computePolygonArea(outline);
+
+  const pathD = `M ${p_cb_base.x} ${p_cb_base.y} L ${p_sh_base.x} ${p_sh_base.y} L ${p_cf_base.x} ${p_cf_base.y} L ${p_cf_top.x} ${p_cf_top.y} L ${p_sh_top.x} ${p_sh_top.y} L ${p_cb_top.x} ${p_cb_top.y} Z`;
+
+  const notches: TechnicalNotch[] = [
+    {
+      point: p_sh_base,
+      type: 'single',
+      angle_deg: 90,
+      label: 'Piquete de Hombro Cuello Chimenea',
+    },
+  ];
+  if (overlapMm > 0) {
+    notches.push({
+      point: createPoint(centerFrontNotchX, curveRise, 'cf_notch'),
+      type: 'single',
+      angle_deg: 90,
+      label: 'Piquete Centro Delantero (Línea de Aplomo)',
+    });
+  }
+
+  return {
+    name: 'stand_collar',
+    label: 'CUELLO CHIMENEA / ALZADO (STAND COLLAR)',
+    cutCount: 2,
+    onFold: true,
+    requiresInterfacing: true,
+    points: {
+      cb_base: p_cb_base,
+      shoulder_base: p_sh_base,
+      cf_base: p_cf_base,
+      cf_top: p_cf_top,
+      shoulder_top: p_sh_top,
+      cb_top: p_cb_top,
+    },
+    pathD,
+    outline,
+    bounds,
+    width_mm: bounds.width,
+    height_mm: bounds.height,
+    area_mm2: area,
+    grainline: {
+      start: createPoint(bounds.width * 0.2, bounds.height / 2),
+      end: createPoint(bounds.width * 0.8, bounds.height / 2),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches,
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: 0,
+  };
+}
+
+/**
+ * Genera el juego de piezas para Cuello Camisero con Pie de Cuello (Shirt Collar with Stand)
+ */
+export function generateShirtCollarPieces(options: {
+  frontNeckLen: number;
+  backNeckLen: number;
+  overlapMm?: number;
+  standHeight?: number;
+  collarHeight?: number;
+  pointLength?: number;
+  seamAllowance?: number;
+}): { stand: PatternPart; fall: PatternPart } {
+  const {
+    frontNeckLen,
+    backNeckLen,
+    overlapMm = 15,
+    standHeight = 32,
+    collarHeight = 45,
+    pointLength = 65,
+    seamAllowance = 10,
+  } = options;
+
+  const halfNeck = Math.round(backNeckLen + frontNeckLen);
+  const standTotalLen = Math.round(halfNeck + overlapMm + 10);
+  const shoulderX = Math.round(backNeckLen);
+
+  // 1. Pie de Cuello (Collar Stand)
+  const s_cb_b = createPoint(0, 0, 'stand_cb_base');
+  const s_sh_b = createPoint(shoulderX, 2, 'stand_sh_base');
+  const s_cf_b = createPoint(halfNeck, 8, 'stand_cf_base');
+  const s_tip_b = createPoint(standTotalLen, 12, 'stand_tip_base');
+  const s_tip_t = createPoint(standTotalLen - 3, 12 + standHeight - 4, 'stand_tip_top');
+  const s_cf_t = createPoint(halfNeck, 8 + standHeight, 'stand_cf_top');
+  const s_sh_t = createPoint(shoulderX, 2 + standHeight, 'stand_sh_top');
+  const s_cb_t = createPoint(0, standHeight, 'stand_cb_top');
+
+  const standOutline = [s_cb_b, s_sh_b, s_cf_b, s_tip_b, s_tip_t, s_cf_t, s_sh_t, s_cb_t];
+  const standBounds = computeBounds(standOutline);
+  const standArea = computePolygonArea(standOutline);
+  const standPathD = `M ${s_cb_b.x} ${s_cb_b.y} L ${s_sh_b.x} ${s_sh_b.y} L ${s_cf_b.x} ${s_cf_b.y} L ${s_tip_b.x} ${s_tip_b.y} L ${s_tip_t.x} ${s_tip_t.y} L ${s_cf_t.x} ${s_cf_t.y} L ${s_sh_t.x} ${s_sh_t.y} L ${s_cb_t.x} ${s_cb_t.y} Z`;
+
+  const standPart: PatternPart = {
+    name: 'collar_stand',
+    label: 'PIE DE CUELLO / COLLAR STAND',
+    cutCount: 2,
+    onFold: true,
+    requiresInterfacing: true,
+    points: {
+      cb_base: s_cb_b,
+      sh_base: s_sh_b,
+      cf_base: s_cf_b,
+      tip_base: s_tip_b,
+      tip_top: s_tip_t,
+      cf_top: s_cf_t,
+      sh_top: s_sh_t,
+      cb_top: s_cb_t,
+    },
+    pathD: standPathD,
+    outline: standOutline,
+    bounds: standBounds,
+    width_mm: standBounds.width,
+    height_mm: standBounds.height,
+    area_mm2: standArea,
+    grainline: {
+      start: createPoint(standBounds.width * 0.2, standBounds.height / 2),
+      end: createPoint(standBounds.width * 0.8, standBounds.height / 2),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches: [
+      { point: s_sh_b, type: 'single', angle_deg: 90, label: 'Piquete Hombro Pie de Cuello' },
+      { point: s_cf_b, type: 'single', angle_deg: 90, label: 'Piquete Centro Delantero' },
+    ],
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: 0,
+  };
+
+  // 2. Pala de Cuello (Collar Fall / Leaf)
+  const f_cb_b = createPoint(0, 0, 'fall_cb_base');
+  const f_sh_b = createPoint(shoulderX, 1, 'fall_sh_base');
+  const f_cf_b = createPoint(halfNeck - 5, 4, 'fall_cf_base');
+  const f_point = createPoint(halfNeck + pointLength * 0.35, collarHeight + pointLength * 0.45, 'fall_point');
+  const f_cb_t = createPoint(0, collarHeight, 'fall_cb_top');
+
+  const fallOutline = [f_cb_b, f_sh_b, f_cf_b, f_point, f_cb_t];
+  const fallBounds = computeBounds(fallOutline);
+  const fallArea = computePolygonArea(fallOutline);
+  const fallPathD = `M ${f_cb_b.x} ${f_cb_b.y} L ${f_sh_b.x} ${f_sh_b.y} L ${f_cf_b.x} ${f_cf_b.y} L ${f_point.x} ${f_point.y} L ${f_cb_t.x} ${f_cb_t.y} Z`;
+
+  const fallPart: PatternPart = {
+    name: 'collar_fall',
+    label: 'PALA DE CUELLO / COLLAR FALL',
+    cutCount: 2,
+    onFold: true,
+    requiresInterfacing: true,
+    points: {
+      cb_base: f_cb_b,
+      sh_base: f_sh_b,
+      cf_base: f_cf_b,
+      point: f_point,
+      cb_top: f_cb_t,
+    },
+    pathD: fallPathD,
+    outline: fallOutline,
+    bounds: fallBounds,
+    width_mm: fallBounds.width,
+    height_mm: fallBounds.height,
+    area_mm2: fallArea,
+    grainline: {
+      start: createPoint(fallBounds.width * 0.2, fallBounds.height / 2),
+      end: createPoint(fallBounds.width * 0.8, fallBounds.height / 2),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches: [
+      { point: f_sh_b, type: 'single', angle_deg: 90, label: 'Piquete Hombro Pala de Cuello' },
+    ],
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: 0,
+  };
+
+  return { stand: standPart, fall: fallPart };
+}
+
+/**
  * Determina si el ADN corresponde a un conjunto completo de 2 piezas (Top + Bottom / Set)
  */
 export function isSetGarment(dna: PatternDna): boolean {
@@ -3359,6 +3577,70 @@ export function modifyPattern(
     hoodPart.seamAllowance_mm = seamAllowance;
     hoodPart.hemAllowance_mm = hemAllowance;
     parts.hood = hoodPart;
+  }
+
+  // =========================================================================
+  // 8.5. INTEGRACIÓN DE CUELLOS MODULARES (STAND COLLAR & SHIRT COLLAR)
+  // =========================================================================
+  const isStandCollar =
+    neckMod.type === 'stand_collar' ||
+    neckMod.type === 'mandarin' ||
+    neckMod.type === 'high_neck' ||
+    (neckMod.type === 'collar' && !dna.base_block.toLowerCase().includes('simon'));
+
+  const isShirtCollar =
+    neckMod.type === 'shirt_collar_with_stand' ||
+    (neckMod.type === 'collar' && dna.base_block.toLowerCase().includes('simon'));
+
+  if (isStandCollar) {
+    const frontNeckLen = bezierLength(
+      front_neck_center,
+      frontNeckCp1,
+      frontNeckCp2,
+      front_neck_shoulder
+    );
+    const backNeckLen = bezierLength(
+      back_neck_center,
+      backNeckCp1,
+      backNeckCp2,
+      back_neck_shoulder
+    );
+
+    const standCollar = generateStandCollarPiece({
+      frontNeckLen,
+      backNeckLen,
+      overlapMm: hasButtonClosure ? overlap_mm : 0,
+      collarHeight: neckMod.collar_height_mm ?? neckMod.band_height_mm ?? 45,
+      seamAllowance,
+    });
+    parts.stand_collar = standCollar;
+    parts.collar = standCollar;
+  } else if (isShirtCollar) {
+    const frontNeckLen = bezierLength(
+      front_neck_center,
+      frontNeckCp1,
+      frontNeckCp2,
+      front_neck_shoulder
+    );
+    const backNeckLen = bezierLength(
+      back_neck_center,
+      backNeckCp1,
+      backNeckCp2,
+      back_neck_shoulder
+    );
+
+    const shirtCollar = generateShirtCollarPieces({
+      frontNeckLen,
+      backNeckLen,
+      overlapMm: hasButtonClosure ? overlap_mm : 15,
+      standHeight: neckMod.collar_stand_height_mm ?? 32,
+      collarHeight: neckMod.collar_height_mm ?? 45,
+      pointLength: neckMod.collar_point_length_mm ?? 65,
+      seamAllowance,
+    });
+    parts.collar_stand = shirtCollar.stand;
+    parts.collar_fall = shirtCollar.fall;
+    parts.collar = shirtCollar.fall;
   }
 
   // =========================================================================

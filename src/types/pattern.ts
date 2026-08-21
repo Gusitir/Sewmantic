@@ -37,6 +37,9 @@ export type NecklineType =
   | 'boat'
   | 'high_neck'
   | 'collar'
+  | 'stand_collar'
+  | 'shirt_collar_with_stand'
+  | 'mandarin'
   | 'square'
   | 'sweetheart'
   | 'custom';
@@ -51,6 +54,8 @@ export interface NecklineMod {
   drop_mm?: number;
   band_height_mm?: number;
   collar_height_mm?: number;
+  collar_stand_height_mm?: number;
+  collar_point_length_mm?: number;
 }
 
 /**

@@ -86,6 +86,9 @@ export const NecklineModSchema = z.object({
       "boat",
       "high_neck",
       "collar",
+      "stand_collar",
+      "shirt_collar_with_stand",
+      "mandarin",
       "square",
       "sweetheart",
       "custom",
@@ -120,6 +123,16 @@ export const NecklineModSchema = z.object({
     .number()
     .min(0, "Collar height cannot be negative")
     .max(200, "Collar height exceeds maximum limit (200mm)")
+    .optional(),
+  collar_stand_height_mm: z
+    .number()
+    .min(0, "Collar stand height cannot be negative")
+    .max(100, "Collar stand height exceeds maximum limit (100mm)")
+    .optional(),
+  collar_point_length_mm: z
+    .number()
+    .min(0, "Collar point length cannot be negative")
+    .max(150, "Collar point length exceeds maximum limit (150mm)")
     .optional(),
 });
 
