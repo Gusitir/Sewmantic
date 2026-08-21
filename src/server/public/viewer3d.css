@@ -122,6 +122,99 @@
   background: rgba(0, 0, 0, 0.15);
 }
 
+/* Slider de Despiece / Guía Visual de Ensamble */
+.viewer3d-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(30, 41, 59, 0.7);
+  padding: 3px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(71, 85, 105, 0.5);
+  font-size: 0.75rem;
+  color: #e2e8f0;
+  user-select: none;
+}
+
+.theme-light .viewer3d-slider-container {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.viewer3d-slider-container label {
+  font-weight: 600;
+  color: #38bdf8;
+  white-space: nowrap;
+}
+
+.theme-light .viewer3d-slider-container label {
+  color: #2563eb;
+}
+
+.viewer3d-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 90px;
+  height: 4px;
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.viewer3d-slider:hover {
+  background: rgba(56, 189, 248, 0.5);
+}
+
+.viewer3d-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #38bdf8;
+  border: 2px solid #0f172a;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+
+.viewer3d-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: #7dd3fc;
+}
+
+.viewer3d-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #38bdf8;
+  border: 2px solid #0f172a;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+  cursor: pointer;
+}
+
+.theme-light .viewer3d-slider::-webkit-slider-thumb {
+  background: #2563eb;
+  border-color: #ffffff;
+  box-shadow: 0 0 5px rgba(37, 99, 235, 0.4);
+}
+
+#v3dExplodeVal {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.70rem;
+  min-width: 32px;
+  text-align: right;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.theme-light #v3dExplodeVal {
+  color: #64748b;
+}
+
 /* Selector de tela PBR en toolbar */
 .viewer3d-select {
   background: rgba(30, 41, 59, 0.8);

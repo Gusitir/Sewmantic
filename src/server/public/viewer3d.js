@@ -310,6 +310,49 @@ void main() {
 }
 `;
 
+const SEAM_VERTEX_SHADER = `
+attribute vec3 aPosition;
+uniform mat4 uProjectionMatrix;
+uniform mat4 uViewMatrix;
+
+void main() {
+  gl_Position = uProjectionMatrix * uViewMatrix * vec4(aPosition, 1.0);
+}
+`;
+
+const SEAM_FRAGMENT_SHADER = `
+precision mediump float;
+uniform vec3 uLineColor;
+uniform float uLineAlpha;
+
+void main() {
+  gl_FragColor = vec4(uLineColor, uLineAlpha);
+}
+`;
+
+/**
+ * Determina el vector de desplazamiento de despiece por defecto según el nombre o tipo de pieza
+ */
+export function getFallbackExplodeOffset(name) {
+  const n = (name || '').toLowerCase();
+  if (n.includes('front_facing') || (n.includes('facing') && n.includes('front'))) return [0, 0, 0.05];
+  if (n.includes('back_neck_facing') || (n.includes('facing') && (n.includes('back') || n.includes('neck')))) return [0, 0, -0.05];
+  if (n.includes('armhole_facing') || (n.includes('facing') && n.includes('armhole'))) return [0.08, 0, 0.04];
+  if (n.includes('front_leg') || (n.includes('leg') && n.includes('front'))) return [0, -0.15, 0.08];
+  if (n.includes('back_leg') || (n.includes('leg') && n.includes('back'))) return [0, -0.15, -0.08];
+  if (n.includes('front_skirt') || (n.includes('skirt') && n.includes('front'))) return [0, -0.10, 0.08];
+  if (n.includes('back_skirt') || (n.includes('skirt') && n.includes('back'))) return [0, -0.10, -0.08];
+  if (n.includes('sleeve') || n.includes('furisode')) return [0.25, 0, 0];
+  if (n.includes('front')) return [0, 0, 0.12];
+  if (n.includes('back')) return [0, 0, -0.12];
+  if (n.includes('hood')) return [0, 0.18, 0];
+  if (n.includes('collar')) return [0, 0.10, 0];
+  if (n.includes('waistband') || n.includes('obi')) return [0, -0.05, 0];
+  if (n.includes('pocket')) return [0, 0, 0.16];
+  if (n.includes('cuff')) return [0, -0.12, 0];
+  return [0, 0, 0.05];
+}
+
 // =========================================================================
 // PARSER AUTÓNOMO glTF 2.0 BINARIO (.GLB)
 // =========================================================================
@@ -469,8 +512,15 @@ export async function parseGlbBuffer(inputBuffer) {
           if (pz < pMinZ) pMinZ = pz; if (pz > pMaxZ) pMaxZ = pz;
         }
 
+        const extras = prim.extras || {};
+        let explodeOffset = extras.explodeOffset;
+        if (!explodeOffset || !Array.isArray(explodeOffset) || explodeOffset.length < 3) {
+          explodeOffset = getFallbackExplodeOffset(extras.name || meshDef.name || `primitive_${m}_${p}`);
+        }
+
         parsedPrimitives.push({
-          name: meshDef.name || `primitive_${m}_${p}`,
+          name: extras.name || meshDef.name || `primitive_${m}_${p}`,
+          partType: extras.partType || extras.name || meshDef.name || `primitive_${m}_${p}`,
           positions: primPositions,
           normals: primNormals,
           uvs: primUvs,
@@ -480,6 +530,7 @@ export async function parseGlbBuffer(inputBuffer) {
           materialIndex: matIdx,
           material: primMat,
           bounds: { minX: pMinX, minY: pMinY, minZ: pMinZ, maxX: pMaxX, maxY: pMaxY, maxZ: pMaxZ },
+          explodeOffset,
         });
 
         totalVertexCount += primVertexCount;
@@ -628,6 +679,7 @@ class NativeWebGlEngine {
     this.autoRotate = options.autoRotate ?? true;
     this.showWireframe = false;
     this.isDisposed = false;
+    this.explodeFactor = options.explodeFactor ?? 0.35;
 
     // Inicializar Contexto WebGL / WebGL2
     const gl = canvas.getContext('webgl2', { antialias: true, alpha: true }) ||
@@ -667,6 +719,10 @@ class NativeWebGlEngine {
     this.indexBuffer = null;
     this.wireframeIndexBuffer = null;
     this.wireframeIndexCount = 0;
+
+    // Buffers para Líneas Guía de Costura (Seam Guide Lines)
+    this.seamGuideVbo = null;
+    this.seamGuideVertexCount = 0;
 
     // Compilar Shaders
     this.initShaders();
@@ -715,6 +771,17 @@ class NativeWebGlEngine {
       uGridColor: gl.getUniformLocation(this.gridProgram, 'uGridColor'),
       uGridAlpha: gl.getUniformLocation(this.gridProgram, 'uGridAlpha'),
     };
+
+    // 3. Shader de Líneas Guía de Costura y Ensamble (Seam Guide Lines)
+    this.seamProgram = this.createProgram(SEAM_VERTEX_SHADER, SEAM_FRAGMENT_SHADER);
+    this.seamLocations = {
+      aPosition: gl.getAttribLocation(this.seamProgram, 'aPosition'),
+      uProjectionMatrix: gl.getUniformLocation(this.seamProgram, 'uProjectionMatrix'),
+      uViewMatrix: gl.getUniformLocation(this.seamProgram, 'uViewMatrix'),
+      uLineColor: gl.getUniformLocation(this.seamProgram, 'uLineColor'),
+      uLineAlpha: gl.getUniformLocation(this.seamProgram, 'uLineAlpha'),
+    };
+    this.seamGuideVbo = gl.createBuffer();
   }
 
   createProgram(vertSrc, fragSrc) {
@@ -896,6 +963,10 @@ class NativeWebGlEngine {
     if (meshData.primitives && meshData.primitives.length > 0) {
       for (const prim of meshData.primitives) {
         const primBuf = {
+          name: prim.name || '',
+          partType: prim.partType || '',
+          explodeOffset: prim.explodeOffset || [0, 0, 0],
+          bounds: prim.bounds || { minX: -0.2, maxX: 0.2, minY: 0, maxY: 1, minZ: -0.1, maxZ: 0.1 },
           positionBuffer: null,
           normalBuffer: null,
           uvBuffer: null,
@@ -949,6 +1020,10 @@ class NativeWebGlEngine {
     } else if (meshData.positions) {
       // Fallback para malla simple
       const fallbackBuf = {
+        name: 'Garment_Mesh',
+        partType: 'torso',
+        explodeOffset: [0, 0, 0],
+        bounds: meshData.bounds || { minX: -0.2, maxX: 0.2, minY: 0, maxY: 1, minZ: -0.1, maxZ: 0.1 },
         positionBuffer: gl.createBuffer(),
         normalBuffer: null,
         uvBuffer: null,
@@ -1010,6 +1085,122 @@ class NativeWebGlEngine {
 
     // Auto-ajustar cámara al modelo
     this.fitToScreen();
+  }
+
+  updateSeamGuideLines() {
+    const gl = this.gl;
+    if (!this.seamGuideVbo) return;
+
+    const f = this.explodeFactor;
+    if (f < 0.001) {
+      this.seamGuideVertexCount = 0;
+      return;
+    }
+
+    // Identificar offsets dinámicos de piezas
+    let frontOffset = [0, 0, 0.12];
+    let backOffset = [0, 0, -0.12];
+    let sleeveOffset = [0.25, 0, 0];
+    let facingOffset = [0, 0, 0.05];
+    let backFacingOffset = [0, 0, -0.05];
+    let legOffset = [0, -0.15, 0.08];
+
+    let hasFacings = false;
+    let hasSleeves = false;
+    let hasPants = false;
+
+    if (this.primitiveBuffers) {
+      for (const p of this.primitiveBuffers) {
+        const name = (p.name || p.partType || '').toLowerCase();
+        if (name.includes('front') && !name.includes('facing') && !name.includes('leg') && !name.includes('skirt')) {
+          frontOffset = p.explodeOffset || frontOffset;
+        } else if (name.includes('back') && !name.includes('facing') && !name.includes('leg') && !name.includes('skirt')) {
+          backOffset = p.explodeOffset || backOffset;
+        } else if (name.includes('sleeve') || name.includes('furisode')) {
+          sleeveOffset = p.explodeOffset || sleeveOffset;
+          hasSleeves = true;
+        } else if (name.includes('facing')) {
+          hasFacings = true;
+          if (name.includes('back')) backFacingOffset = p.explodeOffset || backFacingOffset;
+          else facingOffset = p.explodeOffset || facingOffset;
+        } else if (name.includes('leg')) {
+          hasPants = true;
+          legOffset = p.explodeOffset || legOffset;
+        }
+      }
+    }
+
+    const lines = [];
+
+    const addDashedLine = (p0, p1, dashes = 8) => {
+      for (let j = 0; j < dashes; j++) {
+        const t1 = j / dashes;
+        const t2 = (j + 0.65) / dashes;
+        lines.push(
+          p0[0] + (p1[0] - p0[0]) * t1,
+          p0[1] + (p1[1] - p0[1]) * t1,
+          p0[2] + (p1[2] - p0[2]) * t1,
+          p0[0] + (p1[0] - p0[0]) * t2,
+          p0[1] + (p1[1] - p0[1]) * t2,
+          p0[2] + (p1[2] - p0[2]) * t2
+        );
+      }
+    };
+
+    // 1. Costuras de Hombro Derecho e Izquierdo (Frontal -> Espalda)
+    const frontShR = [0.12 + frontOffset[0] * f, 1.43 + frontOffset[1] * f, 0.14 + frontOffset[2] * f];
+    const backShR = [0.12 + backOffset[0] * f, 1.43 + backOffset[1] * f, -0.13 + backOffset[2] * f];
+    addDashedLine(frontShR, backShR, 10);
+
+    const frontShL = [-0.12 + frontOffset[0] * f, 1.43 + frontOffset[1] * f, 0.14 + frontOffset[2] * f];
+    const backShL = [-0.12 + backOffset[0] * f, 1.43 + backOffset[1] * f, -0.13 + backOffset[2] * f];
+    addDashedLine(frontShL, backShL, 10);
+
+    // 2. Costuras de Costado Torso (Frontal -> Espalda)
+    const frontSideR = [0.22 + frontOffset[0] * f, 1.15 + frontOffset[1] * f, 0.07 + frontOffset[2] * f];
+    const backSideR = [0.22 + backOffset[0] * f, 1.15 + backOffset[1] * f, -0.07 + backOffset[2] * f];
+    addDashedLine(frontSideR, backSideR, 8);
+
+    const frontSideL = [-0.22 + frontOffset[0] * f, 1.15 + frontOffset[1] * f, 0.07 + frontOffset[2] * f];
+    const backSideL = [-0.22 + backOffset[0] * f, 1.15 + backOffset[1] * f, -0.07 + backOffset[2] * f];
+    addDashedLine(frontSideL, backSideL, 8);
+
+    // 3. Costuras de Sisa / Manga (si hay mangas)
+    if (hasSleeves) {
+      const armR = [0.23 + frontOffset[0] * f * 0.5, 1.38, 0.0];
+      const slvR = [0.23 + sleeveOffset[0] * f, 1.38 + sleeveOffset[1] * f, 0.0 + sleeveOffset[2] * f];
+      addDashedLine(armR, slvR, 8);
+
+      const armL = [-0.23 + frontOffset[0] * f * 0.5, 1.38, 0.0];
+      const slvL = [-0.23 - sleeveOffset[0] * f, 1.38 + sleeveOffset[1] * f, 0.0 + sleeveOffset[2] * f];
+      addDashedLine(armL, slvL, 8);
+    }
+
+    // 4. Guías de Ensamble de Vistas Interiores (Facings)
+    if (hasFacings) {
+      const frontNeck = [0.0 + frontOffset[0] * f, 1.36 + frontOffset[1] * f, 0.13 + frontOffset[2] * f];
+      const facingPt = [0.0 + facingOffset[0] * f, 1.36 + facingOffset[1] * f, 0.04 + facingOffset[2] * f];
+      addDashedLine(frontNeck, facingPt, 6);
+
+      const backNeck = [0.0 + backOffset[0] * f, 1.42 + backOffset[1] * f, -0.13 + backOffset[2] * f];
+      const backFacingPt = [0.0 + backFacingOffset[0] * f, 1.42 + backFacingOffset[1] * f, -0.04 + backFacingOffset[2] * f];
+      addDashedLine(backNeck, backFacingPt, 6);
+    }
+
+    // 5. Costuras de Costado de Pantalón / Bermuda (si aplica)
+    if (hasPants) {
+      const frontLegR = [0.18, 0.80 + legOffset[1] * f, 0.08 + legOffset[2] * f];
+      const backLegR = [0.18, 0.80 + legOffset[1] * f, -0.08 - legOffset[2] * f];
+      addDashedLine(frontLegR, backLegR, 8);
+
+      const frontLegL = [-0.18, 0.80 + legOffset[1] * f, 0.08 + legOffset[2] * f];
+      const backLegL = [-0.18, 0.80 + legOffset[1] * f, -0.08 - legOffset[2] * f];
+      addDashedLine(frontLegL, backLegL, 8);
+    }
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.seamGuideVbo);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lines), gl.DYNAMIC_DRAW);
+    this.seamGuideVertexCount = lines.length / 3;
   }
 
   fitToScreen() {
@@ -1099,21 +1290,12 @@ class NativeWebGlEngine {
       gl.drawArrays(gl.LINES, 0, this.gridVertexCount);
     }
 
-    // 3. Renderizar Mallas de Prenda 3D con soporte Multi-Material y Multi-Primitiva
+    // 3. Renderizar Mallas de Prenda 3D con soporte Multi-Material y Despiece Suave
     if (this.meshData && this.primitiveBuffers && this.primitiveBuffers.length > 0 && this.meshProgram) {
       gl.useProgram(this.meshProgram);
 
-      const mMatrix = mat4.create();
-      mat4.identity(mMatrix);
-
-      const nMatrix = mat4.create();
-      mat4.invert(nMatrix, mMatrix);
-      mat4.transpose(nMatrix, nMatrix);
-
       gl.uniformMatrix4fv(this.meshLocations.uProjectionMatrix, false, pMatrix);
       gl.uniformMatrix4fv(this.meshLocations.uViewMatrix, false, vMatrix);
-      gl.uniformMatrix4fv(this.meshLocations.uModelMatrix, false, mMatrix);
-      gl.uniformMatrix4fv(this.meshLocations.uNormalMatrix, false, nMatrix);
       gl.uniform3fv(this.meshLocations.uCameraPosition, eye);
 
       // Iluminación de Estudio PBR
@@ -1128,6 +1310,22 @@ class NativeWebGlEngine {
 
       for (const primBuf of this.primitiveBuffers) {
         if (!primBuf.positionBuffer) continue;
+
+        // Traslación individual de despiece para cada pieza T = explodeFactor * explodeOffset
+        const mMatrix = mat4.create();
+        mat4.identity(mMatrix);
+
+        const off = primBuf.explodeOffset || [0, 0, 0];
+        mMatrix[12] += (off[0] || 0) * this.explodeFactor;
+        mMatrix[13] += (off[1] || 0) * this.explodeFactor;
+        mMatrix[14] += (off[2] || 0) * this.explodeFactor;
+
+        const nMatrix = mat4.create();
+        mat4.invert(nMatrix, mMatrix);
+        mat4.transpose(nMatrix, nMatrix);
+
+        gl.uniformMatrix4fv(this.meshLocations.uModelMatrix, false, mMatrix);
+        gl.uniformMatrix4fv(this.meshLocations.uNormalMatrix, false, nMatrix);
 
         // Material PBR (usar color de la primitiva o anulación de toolbar)
         const primColor = this.customBaseColor || primBuf.material.baseColor || this.baseColor;
@@ -1180,6 +1378,27 @@ class NativeWebGlEngine {
         }
       }
     }
+
+    // 4. Renderizar Líneas Guía de Costura y Ensamble (Seam Guide Lines)
+    if (this.explodeFactor > 0.01 && this.seamProgram && this.seamGuideVbo) {
+      this.updateSeamGuideLines();
+      if (this.seamGuideVertexCount > 0) {
+        gl.useProgram(this.seamProgram);
+        gl.uniformMatrix4fv(this.seamLocations.uProjectionMatrix, false, pMatrix);
+        gl.uniformMatrix4fv(this.seamLocations.uViewMatrix, false, vMatrix);
+
+        const seamColor = this.theme === 'light' ? [0.10, 0.55, 0.85] : [0.22, 0.78, 0.95];
+        const seamAlpha = Math.min(0.85, Math.max(0.2, this.explodeFactor * 1.4));
+        gl.uniform3fv(this.seamLocations.uLineColor, seamColor);
+        gl.uniform1f(this.seamLocations.uLineAlpha, seamAlpha);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.seamGuideVbo);
+        gl.enableVertexAttribArray(this.seamLocations.aPosition);
+        gl.vertexAttribPointer(this.seamLocations.aPosition, 3, gl.FLOAT, false, 0, 0);
+
+        gl.drawArrays(gl.LINES, 0, this.seamGuideVertexCount);
+      }
+    }
   }
 
   dispose() {
@@ -1190,8 +1409,10 @@ class NativeWebGlEngine {
     const gl = this.gl;
     this.disposeBuffers();
     if (this.gridVbo) gl.deleteBuffer(this.gridVbo);
+    if (this.seamGuideVbo) gl.deleteBuffer(this.seamGuideVbo);
     if (this.meshProgram) gl.deleteProgram(this.meshProgram);
     if (this.gridProgram) gl.deleteProgram(this.gridProgram);
+    if (this.seamProgram) gl.deleteProgram(this.seamProgram);
   }
 }
 
@@ -1222,7 +1443,7 @@ export class GarmentViewer3D {
   }
 
   /**
-   * Crea el esqueleto DOM del visor con HUD y toolbar
+   * Crea el esqueleto DOM del visor con HUD, toolbar y slider de despiece
    */
   initDom() {
     this.container.innerHTML = '';
@@ -1254,6 +1475,12 @@ export class GarmentViewer3D {
       <button type="button" class="viewer3d-btn" id="v3dBtnReset" title="Restablecer Vista y Cámara">
         <span>🎯</span> <span class="btn-text">Reset</span>
       </button>
+      <div class="viewer3d-separator"></div>
+      <div class="viewer3d-slider-container">
+        <label for="v3dExplodeSlider">🧩 Despiece:</label>
+        <input type="range" id="v3dExplodeSlider" min="0" max="100" value="35" class="viewer3d-slider" title="Desplazamiento de Despiece para Guía de Ensamble" />
+        <span id="v3dExplodeVal">35%</span>
+      </div>
       <div class="viewer3d-separator"></div>
       <select class="viewer3d-select" id="v3dFabricSelect" title="Previsualizar Textura Textil PBR">
         <option value="default">🧵 Tela Original</option>
@@ -1308,6 +1535,8 @@ export class GarmentViewer3D {
     this.btnRotate = this.toolbarEl.querySelector('#v3dBtnRotate');
     this.btnWireframe = this.toolbarEl.querySelector('#v3dBtnWireframe');
     this.btnReset = this.toolbarEl.querySelector('#v3dBtnReset');
+    this.sliderExplode = this.toolbarEl.querySelector('#v3dExplodeSlider');
+    this.valExplode = this.toolbarEl.querySelector('#v3dExplodeVal');
     this.selectFabric = this.toolbarEl.querySelector('#v3dFabricSelect');
     this.btnColor = this.toolbarEl.querySelector('#v3dColorBtn');
     this.inputColor = this.toolbarEl.querySelector('#v3dColorInput');
@@ -1319,6 +1548,10 @@ export class GarmentViewer3D {
     this.btnRotate?.addEventListener('click', () => this.toggleAutoRotate());
     this.btnWireframe?.addEventListener('click', () => this.toggleWireframe());
     this.btnReset?.addEventListener('click', () => this.resetView());
+    this.sliderExplode?.addEventListener('input', (e) => {
+      const val = Number(e.target.value);
+      this.setExplodeFactor(val / 100);
+    });
     this.selectFabric?.addEventListener('change', (e) => this.applyFabricPreset(e.target.value));
     this.inputColor?.addEventListener('input', (e) => {
       this.applyCustomColor(e.target.value);
@@ -1503,6 +1736,35 @@ export class GarmentViewer3D {
 
   /**
    * Actualiza el tema del visor (Dark / Light)
+   */
+  /**
+   * Ajusta el factor de despiece interactivo (0.0 Ensamblado a 1.0 Totalmente Despiezado)
+   */
+  setExplodeFactor(factor) {
+    const clamped = Math.max(0.0, Math.min(1.0, Number(factor) || 0.0));
+    if (this.nativeEngine) {
+      this.nativeEngine.explodeFactor = clamped;
+    }
+    if (this.sliderExplode) {
+      const pct = Math.round(clamped * 100);
+      if (Number(this.sliderExplode.value) !== pct) {
+        this.sliderExplode.value = String(pct);
+      }
+    }
+    if (this.valExplode) {
+      this.valExplode.textContent = `${Math.round(clamped * 100)}%`;
+    }
+  }
+
+  /**
+   * Obtiene el factor actual de despiece
+   */
+  getExplodeFactor() {
+    return this.nativeEngine ? this.nativeEngine.explodeFactor : 0.35;
+  }
+
+  /**
+   * Cambia el tema de color (light / dark)
    */
   setTheme(theme) {
     this.theme = theme;

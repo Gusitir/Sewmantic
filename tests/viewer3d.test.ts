@@ -412,6 +412,62 @@ describe('Visor 3D WebGL, Streaming .GLB y Empaquetado Comercial 3D (T-24)', () 
       expect(parsedKimono.material.name).toContain('Silk');
       expect(parsedKimono.primitives.length).toBeGreaterThanOrEqual(1);
     });
+
+    it('parseGlbBuffer y getFallbackExplodeOffset asignan vectores explodeOffset [dx, dy, dz] válidos (T-31)', async () => {
+      const { parseGlbBuffer: parseFn, getFallbackExplodeOffset } = await import('../src/server/public/viewer3d.js');
+
+      // 1. Validar función de fallback heurístico
+      expect(getFallbackExplodeOffset('front_facing')).toEqual([0, 0, 0.05]);
+      expect(getFallbackExplodeOffset('back_neck_facing')).toEqual([0, 0, -0.05]);
+      expect(getFallbackExplodeOffset('armhole_facing')).toEqual([0.08, 0, 0.04]);
+      expect(getFallbackExplodeOffset('front_panel')).toEqual([0, 0, 0.12]);
+      expect(getFallbackExplodeOffset('back_panel')).toEqual([0, 0, -0.12]);
+      expect(getFallbackExplodeOffset('left_sleeve')).toEqual([0.25, 0, 0]);
+      expect(getFallbackExplodeOffset('front_leg')).toEqual([0, -0.15, 0.08]);
+      expect(getFallbackExplodeOffset('back_leg')).toEqual([0, -0.15, -0.08]);
+
+      // 2. Validar que un modelo generado por blender_bridge contiene explodeOffset en cada primitiva
+      const vestDna: PatternDna = {
+        concept_name: 'pirate_vest_with_facings',
+        garment_category: 'top',
+        base_block: 'menswear_torso',
+        ease: { chest_ease_mm: 60, waist_ease_mm: 40 },
+        modifications: {
+          neckline: { type: 'v_neck', depth_mm: 120 },
+          sleeves: { type: 'sleeveless' },
+        },
+        tech_specs: { fabric_type: 'linen' },
+      };
+
+      const vestResult = await generate3DGarmentModel({
+        dna: vestDna,
+        fabric: 'linen',
+      });
+
+      const parsedVest = await parseFn(vestResult.glbBuffer);
+      expect(parsedVest.primitives).toBeDefined();
+      expect(parsedVest.primitives.length).toBeGreaterThan(0);
+
+      for (const prim of parsedVest.primitives) {
+        expect(prim.explodeOffset).toBeDefined();
+        expect(Array.isArray(prim.explodeOffset)).toBe(true);
+        expect(prim.explodeOffset.length).toBe(3);
+        expect(typeof prim.explodeOffset[0]).toBe('number');
+        expect(typeof prim.explodeOffset[1]).toBe('number');
+        expect(typeof prim.explodeOffset[2]).toBe('number');
+      }
+    });
+
+    it('viewer3d.js expone GarmentViewer3D con setExplodeFactor y getExplodeFactor (T-31)', async () => {
+      const { GarmentViewer3D } = await import('../src/server/public/viewer3d.js');
+      expect(GarmentViewer3D).toBeDefined();
+      expect(typeof GarmentViewer3D).toBe('function');
+
+      // Verificar que los métodos de control de despiece existan en el prototipo
+      expect(typeof GarmentViewer3D.prototype.setExplodeFactor).toBe('function');
+      expect(typeof GarmentViewer3D.prototype.getExplodeFactor).toBe('function');
+    });
   });
 });
+
 

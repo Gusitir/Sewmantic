@@ -327,6 +327,16 @@ function validateGlb(buffer, filePath, label, options = {}) {
     console.log(`  ✓ Primitivas glTF independientes verificadas (${primCount} sub-mallas con shader asignado)`);
   }
 
+  // Invariante de Despiece 3D (T-31): Verificar metadatos de explodeOffset en las primitivas
+  if (gltfObj.meshes && gltfObj.meshes[0]?.primitives) {
+    for (let p = 0; p < gltfObj.meshes[0].primitives.length; p++) {
+      const prim = gltfObj.meshes[0].primitives[p];
+      if (prim.extras && prim.extras.explodeOffset) {
+        console.log(`  ✓ Primitiva [${p}] "${prim.extras.name || prim.extras.partType}": explodeOffset = [${prim.extras.explodeOffset.join(', ')}]`);
+      }
+    }
+  }
+
   // Invariante 6: Chunk 1 BIN
   const chunk1Offset = 20 + chunk0Length;
   if (chunk1Offset < buffer.length) {
