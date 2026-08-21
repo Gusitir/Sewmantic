@@ -130,6 +130,7 @@ export type PocketType =
   | 'patch'
   | 'seam'
   | 'cargo'
+  | 'cargo_bellows'
   | 'flap'
   | 'hidden'
   | 'none'
@@ -144,8 +145,11 @@ export interface PocketMod {
   height_mm?: number;
   placement_y_mm?: number;
   placement_x_mm?: number;
+  bellows_depth_mm?: number;
   flap?: boolean;
+  flap_height_mm?: number;
   zip?: boolean;
+  count?: number;
 }
 
 /**

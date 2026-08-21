@@ -660,6 +660,59 @@ export const MOCK_PRESETS: Record<string, PatternDna> = {
     notions: ["8x botones nacarados 12mm", "0.5m entretela cuello y puños"],
     estimated_fabric_meters: 1.6,
   },
+
+  tactical_utility_vest: {
+    concept_name: "tactical_cargo_utility_vest",
+    description: "Chaleco táctico militar / safari con cuello alzado, cremallera frontal y bolsillos cargo 3D con fuelle",
+    base_block: "menswear_torso",
+    ease: {
+      chest_ease_mm: 75,
+      waist_ease_mm: 70,
+      hip_ease_mm: 75,
+      shoulder_ease_mm: 20,
+    },
+    modifications: {
+      neckline: {
+        type: "stand_collar",
+        collar_height_mm: 50,
+      },
+      sleeves: {
+        type: "sleeveless",
+      },
+      hem: {
+        type: "straight",
+        allowance_mm: 25,
+      },
+      closure: {
+        type: "buttons",
+        overlap_mm: 20,
+        button_count: 5,
+        button_diameter_mm: 18,
+      },
+      pocket: {
+        type: "cargo_bellows",
+        width_mm: 140,
+        height_mm: 160,
+        bellows_depth_mm: 25,
+        flap: true,
+        flap_height_mm: 50,
+      },
+    },
+    sizing: {
+      size: "M",
+      target_layers: ["XS", "S", "M", "L", "XL", "2XL", "3XL"],
+    },
+    tech_specs: {
+      notions: ["5x Broches de presión metálicos 15mm", "1x Cremallera separadora 55cm", "1x Entretela termoadhesiva cuello"],
+      estimated_fabric_meters: 1.4,
+      seam_allowance_mm: 10,
+      hem_allowance_mm: 25,
+      fabric_type: "cotton_ripstop_olive_green",
+      fabric_width_mm: 1500,
+    },
+    notions: ["5x Broches de presión metálicos 15mm", "1x Cremallera separadora 55cm"],
+    estimated_fabric_meters: 1.4,
+  },
 };
 
 /**
@@ -682,6 +735,12 @@ export class MockAiProvider implements IAiProvider {
 
     if (bp && bp !== "auto" && bp !== "none") {
       switch (bp) {
+        case "utility_vest":
+        case "utility":
+        case "outerwear":
+        case "tactical_vest":
+          selectedPreset = MOCK_PRESETS.tactical_utility_vest;
+          break;
         case "wahid":
           selectedPreset = MOCK_PRESETS.pirate_vest;
           break;

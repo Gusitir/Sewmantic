@@ -787,6 +787,174 @@ export function generateShirtCollarPieces(options: {
 }
 
 /**
+ * Genera el juego completo de piezas de moldería para un Bolsillo Cargo 3D con Fuelle y Solapa
+ */
+export function generateCargoPocketSet(options?: {
+  width_mm?: number;
+  height_mm?: number;
+  bellows_depth_mm?: number;
+  flap_height_mm?: number;
+  hasFlap?: boolean;
+  seamAllowance?: number;
+  hemAllowance?: number;
+}): {
+  body: PatternPart;
+  bellows: PatternPart;
+  flap?: PatternPart;
+} {
+  const {
+    width_mm = 140,
+    height_mm = 160,
+    bellows_depth_mm = 25,
+    flap_height_mm = 50,
+    hasFlap = true,
+    seamAllowance = 10,
+    hemAllowance = 20,
+  } = options ?? {};
+
+  // 1. Cuerpo Principal del Bolsillo
+  const p_tl = createPoint(0, 0, 'body_tl');
+  const p_tr = createPoint(width_mm, 0, 'body_tr');
+  const p_br = createPoint(width_mm, height_mm, 'body_br');
+  const p_bl = createPoint(0, height_mm, 'body_bl');
+
+  const bodyOutline = [p_tl, p_tr, p_br, p_bl];
+  const bodyBounds = computeBounds(bodyOutline);
+  const bodyArea = computePolygonArea(bodyOutline);
+  const bodyPathD = `M 0 0 L ${width_mm} 0 L ${width_mm} ${height_mm} L 0 ${height_mm} Z`;
+
+  const bodyPart: PatternPart = {
+    name: 'cargo_pocket_body',
+    label: 'CUERPO BOLSILLO CARGO 3D / CARGO POCKET BODY',
+    cutCount: 2,
+    onFold: false,
+    points: {
+      tl: p_tl,
+      tr: p_tr,
+      br: p_br,
+      bl: p_bl,
+    },
+    pathD: bodyPathD,
+    outline: bodyOutline,
+    bounds: bodyBounds,
+    width_mm: bodyBounds.width,
+    height_mm: bodyBounds.height,
+    area_mm2: bodyArea,
+    grainline: {
+      start: createPoint(width_mm / 2, height_mm * 0.8),
+      end: createPoint(width_mm / 2, height_mm * 0.2),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches: [
+      { point: createPoint(0, height_mm), type: 'single', angle_deg: 90, label: 'Piquete Esquina Izquierda' },
+      { point: createPoint(width_mm, height_mm), type: 'single', angle_deg: 90, label: 'Piquete Esquina Derecha' },
+    ],
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: hemAllowance,
+  };
+
+  // 2. Fuelle Perimetral en Tira (3 lados: lateral izq + base + lateral der)
+  const bellowsLen = 2 * height_mm + width_mm;
+  const bellowsWidth = bellows_depth_mm * 2;
+
+  const b_tl = createPoint(0, 0, 'bellows_tl');
+  const b_tr = createPoint(bellowsLen, 0, 'bellows_tr');
+  const b_br = createPoint(bellowsLen, bellowsWidth, 'bellows_br');
+  const b_bl = createPoint(0, bellowsWidth, 'bellows_bl');
+
+  const bellowsOutline = [b_tl, b_tr, b_br, b_bl];
+  const bellowsBounds = computeBounds(bellowsOutline);
+  const bellowsArea = computePolygonArea(bellowsOutline);
+  const bellowsPathD = `M 0 0 L ${bellowsLen} 0 L ${bellowsLen} ${bellowsWidth} L 0 ${bellowsWidth} Z`;
+
+  const bellowsPart: PatternPart = {
+    name: 'cargo_pocket_bellows',
+    label: 'FUELLE PERIMETRAL BOLSILLO CARGO / POCKET BELLOWS',
+    cutCount: 2,
+    onFold: false,
+    points: {
+      tl: b_tl,
+      tr: b_tr,
+      br: b_br,
+      bl: b_bl,
+    },
+    pathD: bellowsPathD,
+    outline: bellowsOutline,
+    bounds: bellowsBounds,
+    width_mm: bellowsBounds.width,
+    height_mm: bellowsBounds.height,
+    area_mm2: bellowsArea,
+    grainline: {
+      start: createPoint(bellowsLen * 0.2, bellowsWidth / 2),
+      end: createPoint(bellowsLen * 0.8, bellowsWidth / 2),
+      label: 'GRAINLINE / HILO DE TELA',
+    },
+    notches: [
+      { point: createPoint(height_mm, 0), type: 'single', angle_deg: 90, label: 'Piquete Esquina Izquierda Fuelle' },
+      { point: createPoint(height_mm + width_mm, 0), type: 'single', angle_deg: 90, label: 'Piquete Esquina Derecha Fuelle' },
+    ],
+    seamAllowance_mm: seamAllowance,
+    hemAllowance_mm: 0,
+  };
+
+  // 3. Solapa con Broches (Pocket Flap)
+  let flapPart: PatternPart | undefined;
+  if (hasFlap) {
+    const flapW = width_mm + 10;
+    const flapDrop = flap_height_mm;
+    const flapPointRise = 12;
+
+    const f_tl = createPoint(0, 0, 'flap_tl');
+    const f_tr = createPoint(flapW, 0, 'flap_tr');
+    const f_br = createPoint(flapW, flapDrop - flapPointRise, 'flap_br');
+    const f_mid = createPoint(flapW / 2, flapDrop, 'flap_mid');
+    const f_bl = createPoint(0, flapDrop - flapPointRise, 'flap_bl');
+
+    const flapOutline = [f_tl, f_tr, f_br, f_mid, f_bl];
+    const flapBounds = computeBounds(flapOutline);
+    const flapArea = computePolygonArea(flapOutline);
+    const flapPathD = `M 0 0 L ${flapW} 0 L ${flapW} ${flapDrop - flapPointRise} L ${flapW / 2} ${flapDrop} L 0 ${flapDrop - flapPointRise} Z`;
+
+    flapPart = {
+      name: 'cargo_pocket_flap',
+      label: 'SOLAPA BOLSILLO CARGO / POCKET FLAP',
+      cutCount: 4,
+      onFold: false,
+      requiresInterfacing: true,
+      points: {
+        tl: f_tl,
+        tr: f_tr,
+        br: f_br,
+        mid: f_mid,
+        bl: f_bl,
+      },
+      pathD: flapPathD,
+      outline: flapOutline,
+      bounds: flapBounds,
+      width_mm: flapBounds.width,
+      height_mm: flapBounds.height,
+      area_mm2: flapArea,
+      grainline: {
+        start: createPoint(flapW / 2, flapDrop * 0.2),
+        end: createPoint(flapW / 2, flapDrop * 0.8),
+        label: 'GRAINLINE / HILO DE TELA',
+      },
+      notches: [
+        { point: createPoint(flapW / 2, 0), type: 'single', angle_deg: 90, label: 'Piquete Centro Solapa' },
+      ],
+      seamAllowance_mm: seamAllowance,
+      hemAllowance_mm: 0,
+    };
+  }
+
+  return {
+    body: bodyPart,
+    bellows: bellowsPart,
+    flap: flapPart,
+  };
+}
+
+/**
  * Determina si el ADN corresponde a un conjunto completo de 2 piezas (Top + Bottom / Set)
  */
 export function isSetGarment(dna: PatternDna): boolean {
@@ -3656,49 +3824,82 @@ export function modifyPattern(
   if (isPocketNeeded && pocketMod?.type !== 'none') {
     const pType = pocketMod?.type ?? (isHoodieBlock ? 'kangaroo' : 'patch');
 
-    const pocketBlock = generatePocketBlock(size, {
-      type: pType === 'patch' ? 'patch' : 'kangaroo',
-      width_mm: pocketMod?.width_mm,
-      height_mm: pocketMod?.height_mm,
-      hem_allowance_mm: hemAllowance,
-      measurements,
-    });
-
-    const pocketPart = pocketBlock.pocket;
-    pocketPart.seamAllowance_mm = seamAllowance;
-    pocketPart.hemAllowance_mm = hemAllowance;
-    parts.pocket = pocketPart;
-
-    // Agregar piquetes de referencia en el delantero para posicionamiento del bolsillo
-    if (pType === 'kangaroo') {
-      const pocketH = pocketPart.height_mm;
-      const placementY = frontLength - pocketH - (ribHeightDelta > 0 ? 0 : 25);
-      const topW = pocketPart.points.top_outer ? pocketPart.points.top_outer.x : pocketPart.width_mm / 4;
-
-      frontPart.notches.push({
-        point: createPoint(0, placementY),
-        type: 'single',
-        label: 'Piquete Referencia Centro Bolsillo Canguro',
+    if (pType === 'cargo_bellows' || pType === 'cargo') {
+      const cargoSet = generateCargoPocketSet({
+        width_mm: pocketMod?.width_mm ?? 140,
+        height_mm: pocketMod?.height_mm ?? 160,
+        bellows_depth_mm: pocketMod?.bellows_depth_mm ?? 25,
+        flap_height_mm: pocketMod?.flap_height_mm ?? 50,
+        hasFlap: pocketMod?.flap !== false,
+        seamAllowance,
+        hemAllowance,
       });
-      frontPart.notches.push({
-        point: createPoint(topW, placementY),
-        type: 'single',
-        label: 'Piquete Referencia Extremo Superior Bolsillo',
-      });
-    } else if (pType === 'patch') {
-      const posX = pocketMod?.placement_x_mm ?? quarterChest * 0.42;
-      const posY = pocketMod?.placement_y_mm ?? armholeDepth + 35;
+
+      parts.cargo_pocket_body = cargoSet.body;
+      parts.cargo_pocket_bellows = cargoSet.bellows;
+      if (cargoSet.flap) {
+        parts.cargo_pocket_flap = cargoSet.flap;
+      }
+      parts.pocket = cargoSet.body;
+
+      const posX = pocketMod?.placement_x_mm ?? quarterChest * 0.35;
+      const posY = pocketMod?.placement_y_mm ?? armholeDepth + 40;
 
       frontPart.notches.push({
         point: createPoint(posX, posY),
         type: 'single',
-        label: 'Piquete Referencia Superior Izquierdo Bolsillo Parche',
+        label: 'Piquete Referencia Superior Izquierdo Bolsillo Cargo 3D',
       });
       frontPart.notches.push({
-        point: createPoint(posX + pocketPart.width_mm, posY),
+        point: createPoint(posX + cargoSet.body.width_mm, posY),
         type: 'single',
-        label: 'Piquete Referencia Superior Derecho Bolsillo Parche',
+        label: 'Piquete Referencia Superior Derecho Bolsillo Cargo 3D',
       });
+    } else {
+      const pocketBlock = generatePocketBlock(size, {
+        type: pType === 'patch' ? 'patch' : 'kangaroo',
+        width_mm: pocketMod?.width_mm,
+        height_mm: pocketMod?.height_mm,
+        hem_allowance_mm: hemAllowance,
+        measurements,
+      });
+
+      const pocketPart = pocketBlock.pocket;
+      pocketPart.seamAllowance_mm = seamAllowance;
+      pocketPart.hemAllowance_mm = hemAllowance;
+      parts.pocket = pocketPart;
+
+      // Agregar piquetes de referencia en el delantero para posicionamiento del bolsillo
+      if (pType === 'kangaroo') {
+        const pocketH = pocketPart.height_mm;
+        const placementY = frontLength - pocketH - (ribHeightDelta > 0 ? 0 : 25);
+        const topW = pocketPart.points.top_outer ? pocketPart.points.top_outer.x : pocketPart.width_mm / 4;
+
+        frontPart.notches.push({
+          point: createPoint(0, placementY),
+          type: 'single',
+          label: 'Piquete Referencia Centro Bolsillo Canguro',
+        });
+        frontPart.notches.push({
+          point: createPoint(topW, placementY),
+          type: 'single',
+          label: 'Piquete Referencia Extremo Superior Bolsillo',
+        });
+      } else if (pType === 'patch') {
+        const posX = pocketMod?.placement_x_mm ?? quarterChest * 0.42;
+        const posY = pocketMod?.placement_y_mm ?? armholeDepth + 35;
+
+        frontPart.notches.push({
+          point: createPoint(posX, posY),
+          type: 'single',
+          label: 'Piquete Referencia Superior Izquierdo Bolsillo Parche',
+        });
+        frontPart.notches.push({
+          point: createPoint(posX + pocketPart.width_mm, posY),
+          type: 'single',
+          label: 'Piquete Referencia Superior Derecho Bolsillo Parche',
+        });
+      }
     }
   }
 

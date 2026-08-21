@@ -388,6 +388,30 @@ ${rules}
           `Enforce this exact anatomical foundation in your output JSON.`
         );
 
+      case "utility_vest":
+      case "utility":
+      case "outerwear":
+      case "tactical_vest":
+        return (
+          `\n\n[FREESEWING BASE BLUEPRINT ANCHOR: UTILITY VEST / OUTERWEAR (🦺 Chaleco Táctico / Safari / Cargo)]\n` +
+          `You MUST act strictly as a PURE PARAMETRIC MODIFIER of a Tactical Utility Vest / Outerwear Jacket.\n` +
+          `Anatomical Structure of Utility Vest:\n` +
+          `- Front Torso: Straight-cut utility front panels with central zipper or snap placket, clean sleeveless armholes, and straight hem (bajo recto horizontal).\n` +
+          `- Back Torso: Relaxed straight-cut back panel.\n` +
+          `- Neckline & Collar: High stand/mandarin collar (cuello chimenea alzado) wrapping comfortably around the neck.\n` +
+          `- Pockets: Multi-pocket 3D cargo setup with bellows (fuelle) and protective flaps (solapas con broches).\n` +
+          `Admitted Modifications & Rules:\n` +
+          `- Set 'base_block': 'menswear_torso' (or 'outerwear_jacket' / 'utility_vest').\n` +
+          `- Set 'garment_category': 'top'.\n` +
+          `- Set 'ease': { 'chest_ease_mm': 60-120 }.\n` +
+          `- Set 'sleeves': { 'type': 'sleeveless' }.\n` +
+          `- Set 'neckline': { 'type': 'stand_collar', 'collar_height_mm': 40-60 }.\n` +
+          `- Set 'hem': { 'type': 'straight', 'allowance_mm': 25 }.\n` +
+          `- Set 'closure': { 'type': 'zipper' | 'buttons', 'overlap_mm': 15-25 }.\n` +
+          `- Set 'pocket': { 'type': 'cargo_bellows', 'width_mm': 120-160, 'height_mm': 140-180, 'bellows_depth_mm': 20-35, 'flap': true }.\n` +
+          `Enforce this exact anatomical foundation in your output JSON.`
+        );
+
       default:
         return (
           `\n\n[FREESEWING BASE BLUEPRINT ANCHOR: ${key.toUpperCase()}]\n` +

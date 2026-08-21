@@ -261,6 +261,7 @@ export const PocketModSchema = z.object({
       "patch",
       "seam",
       "cargo",
+      "cargo_bellows",
       "flap",
       "hidden",
       "none",
@@ -292,8 +293,24 @@ export const PocketModSchema = z.object({
     .min(0, "Pocket placement X cannot be negative")
     .max(1000, "Pocket placement X exceeds maximum limit")
     .optional(),
+  bellows_depth_mm: z
+    .number()
+    .min(5, "Bellows depth must be at least 5mm")
+    .max(100, "Bellows depth exceeds maximum limit (100mm)")
+    .optional(),
   flap: z.boolean().optional(),
+  flap_height_mm: z
+    .number()
+    .min(10, "Flap height must be at least 10mm")
+    .max(150, "Flap height exceeds maximum limit (150mm)")
+    .optional(),
   zip: z.boolean().optional(),
+  count: z
+    .number()
+    .int()
+    .min(1, "Pocket count must be at least 1")
+    .max(10, "Pocket count cannot exceed 10")
+    .optional(),
 });
 
 /**
