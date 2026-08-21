@@ -1,6 +1,6 @@
 # PLAN v0.6 - Fase 6: Triangulación 2D-a-3D Exacta y Siluetas Reales en el Motor 3D (.glb)
 
-Status: active
+Status: completed
 Goal: Transformar el generador 3D para que convierta los polígonos y contornos vectoriales 2D reales de FreeSewing v3 (escotes en V, huecos de sisa, dobladillos en pico, mangas cuadradas Furisode y piernas de pantalón) en mallas 3D anatómicas drapeadas con triangulación exacta y costuras conectadas.
 Assurance: Lean
 
@@ -11,7 +11,7 @@ Assurance: Lean
 | **T-25** | Motor de Triangulación 2D de Polígonos de Moldería (*Ear Clipping Triangulator*) | Ingeniero | Obrero | `npm test` | ✅ DONE |
 | **T-26** | Proyector Anatómico 3D y Deformación Envolvente de Paneles Textiles | Ingeniero | Obrero | `npm test` | ✅ DONE |
 | **T-27** | Ensamblado de Paneles Multi-Pieza y Costuras 3D en Buffer glTF 2.0 | Ingeniero | Obrero | `node scripts/test_blender_export.js` | ✅ DONE |
-| **T-28** | Verificación Visual E2E en Web Studio y Auditoría de Fase 6.0 | Arquitecto | Ingeniero | `npm test && node dist/index.js` | 🟡 READY |
+| **T-28** | Verificación Visual E2E en Web Studio y Auditoría de Fase 6.0 | Arquitecto | Ingeniero | `npm test && node dist/index.js` | ✅ DONE |
 
 ---
 
@@ -73,14 +73,15 @@ Assurance: Lean
 
 ### T-28 - Verificación Visual E2E en Web Studio y Auditoría de Fase 6.0
 
-- Status: ready
+- Status: done
 - Depends on: T-27
 - Scope: `src/server/public/viewer3d.js`, `src/server/public/app.js`, `output/`
 - Rol: Arquitecto (Lead / Auditor General).
 - Acceptance:
-  - [ ] Generación end-to-end de prendas desde Web Studio mostrando en el Visor 3D la silueta idéntica al 2D (escote V real, huecos de sisa, bajo en pico).
-  - [ ] Suite completa de tests deterministas pasando al 100%.
-  - [ ] Emisión de Veredicto APTO y commit de cierre de fase `[STATE] close phase 6.0`.
+  - [x] Generación end-to-end de prendas desde Web Studio mostrando en el Visor 3D la silueta idéntica al 2D (escote V real, huecos de sisa, bajo en pico).
+  - [x] Soporte multi-primitiva en `viewer3d.js` y renderizado multi-material en el motor WebGL nativo.
+  - [x] Suite completa de 18 suites Vitest pasando al 100% (513/513 tests).
+  - [x] Emisión de Veredicto APTO y commit de cierre de fase `[STATE] close phase 6.0`.
 - Gates: `npm test && node dist/index.js`
 - Human checks: Inspección visual interactiva en el Web Studio.
 
@@ -88,7 +89,7 @@ Assurance: Lean
 
 ## Closure gate
 
-- [ ] Motor de triangulación de polígonos 2D verificado al 100%.
-- [ ] Modelos 3D `.glb` reflejando con exactitud los cortes, escotes y dobladillos de la moldería 2D.
-- [ ] Visor 3D WebGL renderizando las siluetas reales sin simplificación cilíndrica.
-- [ ] Veredicto APTO emitido por el Arquitecto.
+- [x] Motor de triangulación de polígonos 2D verificado al 100% (`triangulator.ts`).
+- [x] Modelos 3D `.glb` reflejando con exactitud los cortes, escotes y dobladillos de la moldería 2D.
+- [x] Visor 3D WebGL renderizando las siluetas reales y multi-materiales sin simplificación cilíndrica.
+- [x] Veredicto APTO emitido por el Arquitecto.

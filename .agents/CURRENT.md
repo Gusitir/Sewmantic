@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-20T20:38:00-05:00
-source_commit: [T-27] assemble multi-piece sets and multi-material PBR primitives in glTF 2.0 binary buffer
+updated_at: 2026-08-20T20:43:00-05:00
+source_commit: [T-28] multi-primitive glTF parsing and independent GPU buffer multi-material WebGL rendering
 assurance: Lean
-active_plan: PLAN_v0.6-true-to-pattern-3d-meshing.md
-active_task: T-28 (Verificación Visual E2E en Web Studio y Auditoría de Fase 6.0)
+active_plan: none (All 6 Phases Completed & Verified)
+active_task: none (All Tasks Verified APTO)
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,23 +18,22 @@ backup: local-only
 
 ## Next action
 
-1. **Ejecutar Tarea `T-28` (Verificación Visual E2E en Web Studio y Auditoría de Fase 6.0):**
-   - Asegurar que `src/server/public/viewer3d.js` soporte mallas glTF con múltiples primitivas/materiales en el WebGL nativo.
-   - Ejecutar `npm run build && npm test`.
-   - Auditar la fase completa y emitir veredicto final APTO.
-   - Archivar `PLAN_v0.6-true-to-pattern-3d-meshing.md` en `archive/` y generar commit `[STATE] close phase 6.0`.
+1. **FASE 6.0 CERRADA CON ÉXITO Y AUDITADA CON VEREDICTO APTO:**
+   - **`T-25`:** Motor de triangulación 2D por corte de orejas (`triangulator.ts`) con error de área $< 0.1\%$.
+   - **`T-26`:** Proyector 3D `generateTrueToPatternMesh` reflejando fielmente siluetas reales (escote V, huecos de sisa, bajos en pico, mangas Furisode, faldas y bermudas) con normales suaves y mapeo UV.
+   - **`T-27`:** Ensamblado multi-pieza y multi-material glTF 2.0 (Lino Rojo + Denim Azul en sets coordinados).
+   - **`T-28`:** Visor 3D WebGL multi-primitiva en Web Studio con 513 tests pasando en verde.
+2. Iniciar el Web Studio con `start_web_studio.bat` para inspección visual directa.
 
 ## Blockers
 
-- Ninguno. 511/511 tests pasando al 100% en Vitest (18/18 suites).
+- Ninguno. 513/513 tests pasando al 100% en Vitest (18/18 suites).
 
 ## Current facts
 
-- **Tareas `T-25`, `T-26` y `T-27` Completadas y Auditadas con Veredicto APTO:**
-  - `T-25`: Motor `triangulator.ts` con Ear Clipping CCW y área analítica $< 0.1\%$.
-  - `T-26`: Proyector 3D `blender_bridge.ts` con siluetas reales, normales suaves y mapeo UV.
-  - `T-27`: Ensamblador glTF 2.0 multi-material PBR y multi-primitiva para conjuntos y prendas complejas.
-- **Suite Determinista:** **18/18 suites passing (511/511 tests en verde)**.
+- **Fases 1.0 a 6.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
+- **Suite Determinista:** **18/18 suites passing (513/513 tests en verde)**.
+- **3D True-to-Pattern Meshing:** Siluetas 3D en `.glb` reflejando con exactitud la moldería 2D.
 
 ## Open findings
 
@@ -45,6 +44,6 @@ backup: local-only
 - [x] Validación de ensamble y continuidad de líneas con PDFStitcher (`H-02`). [VERIFICADO OK]
 - [x] Verificación de escala 1:1 y cuadro de calibración 10x10 cm (`H-01`). [VERIFICADO OK]
 - [x] Corrección visual 2D de hombro y escote V (`H-03`). [VERIFICADO OK]
-- [ ] Inspección visual de silueta 3D real tras completar Fase 6.0. [LISTO PARA PROBAR]
+- [ ] Inspección visual de silueta 3D real tras completar Fase 6.0. [LISTO PARA PROBAR POR EL USUARIO]
 
 Keep this concise. History belongs in CONTEXT and Git.

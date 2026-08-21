@@ -2,17 +2,17 @@
 
 - `AGENTS.md`: roles (Arquitecto, Ingeniero, Obrero), modo LEAN, reglas de aseguramiento y entorno.
 - `APPCORE.md`: propósito, invariantes textiles inmutables, pipeline de FreeSewing v3, arquitectura y contrato de datos ADN.
-- `CURRENT.md`: estado activo del proyecto, jerarquía de subagentes y siguiente acción inmediata (`T-25`).
+- `CURRENT.md`: estado activo del proyecto, jerarquía de subagentes y siguiente acción inmediata.
 - `CONTEXT.md`: registro cronológico inmutable de decisiones, auditorías y eventos.
-- `PLAN.md`: puntero al plan activo (`PLAN_v0.6-true-to-pattern-3d-meshing.md`).
-- `PLAN_v0.6-true-to-pattern-3d-meshing.md`: hito activo (Fase 6: Triangulación 2D-a-3D Exacta y Siluetas Reales en el Motor 3D .glb).
-- `TESTING.md`: matriz de pruebas automatizadas (17 suites Vitest), pruebas humanas y verificación de APIs.
+- `PLAN.md`: puntero al estado de planes del proyecto.
+- `TESTING.md`: matriz de pruebas automatizadas (18 suites Vitest, 513 tests), pruebas humanas y verificación de APIs.
 - `archive/`: directorio para planes cerrados e histórico archivado:
   - `archive/PLAN_v0.1-mvp.md`: Fase 1.0 (MVP Geometría Base, Tiling y PDFs paginados).
   - `archive/PLAN_v0.2-features.md`: Fase 2.0 (Slopers de Pantalón, Medidas a Medida y Empaquetador Etsy).
   - `archive/PLAN_v0.3-web-ui.md`: Fase 3.0 (Servidor REST, Visor 2D y Conjuntos de 2 Piezas).
   - `archive/PLAN_v0.4-fireworks-multimodal.md`: Fase 4.0 (Integración Multimodal Fireworks AI, Diagnóstico Transparente y Generación por Imagen).
   - `archive/PLAN_v0.5-womenswear-and-3d-blender.md`: Fase 5.0 (Womenswear Bodice & Skirt Slopers, Anime Dresses/Kimonos & Headless Blender 3D Bridge / WebGL Viewer).
+  - `archive/PLAN_v0.6-true-to-pattern-3d-meshing.md`: Fase 6.0 (True-to-Pattern 3D Meshing, 2D Ear-Clipping Triangulation, Smooth Normals & Multi-Material glTF).
 
 ## Important product paths
 
@@ -28,4 +28,4 @@
 - `src/server/`: Servidor HTTP REST y frontend Web Studio (HTML, CSS, JS, Visor 2D, Visor 3D WebGL).
 - `output/`: PDFs, SVGs, Modelos .glb 3D, Fichas técnicas y paquetes comerciales ZIP generados.
 
-Last reindexed: 2026-08-20 at phase-6-kickoff.
+Last reindexed: 2026-08-20 at phase-6-closure.
