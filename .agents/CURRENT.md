@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-20T20:20:00-05:00
-source_commit: [STATE] record 2D geometry and 3D WebGL viewer fixes in CURRENT.md
+updated_at: 2026-08-20T20:26:00-05:00
+source_commit: [T-25] implement robust 2D ear clipping polygon triangulator for apparel pattern geometry
 assurance: Lean
 active_plan: PLAN_v0.6-true-to-pattern-3d-meshing.md
-active_task: T-25 (Motor de Triangulación 2D de Polígonos de Moldería)
+active_task: T-26 (Proyector Anatómico 3D y Deformación Envolvente de Paneles Textiles)
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,21 +18,23 @@ backup: local-only
 
 ## Next action
 
-1. **FASE 6.0 PLANIFICADA E INICIADA:**
-   - **`T-25` (READY):** Implementar el motor de triangulación 2D de polígonos (*Ear-Clipping Triangulator*) en `src/engine/triangulator.ts` y tests en `tests/triangulator.test.ts`.
-   - **`T-26` (QUEUED):** Proyector anatómico 3D de paneles textiles en `src/engine/blender_bridge.ts` para mapear los polígonos triangulados reales en superficies 3D envolventes.
-   - **`T-27` (QUEUED):** Ensamblado de piezas y costuras en buffer binario `.glb`.
-   - **`T-28` (QUEUED):** Verificación visual E2E en Web Studio.
+1. **Despachar Tarea `T-26` al Ingeniero (Proyector Anatómico 3D y Deformación Envolvente de Paneles Textiles):**
+   - Integrar `triangulatePolygon` en `src/engine/blender_bridge.ts` para tomar el `outline: Point2D[]` real de cada pieza (`front`, `back`, `sleeve`, `front_leg`, `back_leg`, `furisode_sleeve`, `skirt`).
+   - Aplicar curvatura 3D envolvente anatómica ($x, y, z$) respetando exactamente el escote en V, huecos de sisa y puntas de dobladillo.
+   - Calcular normales suaves de vértice y mapeo UV métrico en `src/engine/blender_bridge.ts`.
+2. **Proceder con `T-27` & `T-28`:** Ensamblado de piezas multi-panel en `.glb` y verificación visual E2E en Web Studio.
 
 ## Blockers
 
-- Ninguno. 474/474 tests pasando al 100% en Vitest (17/17 suites).
+- Ninguno. 499/499 tests pasando al 100% en Vitest (18/18 suites).
 
 ## Current facts
 
+- **Tarea `T-25` Completada y Auditada con Veredicto APTO:**
+  - Motor `triangulator.ts` con algoritmo de Ear Clipping, orientación CCW y validación analítica de área ($< 0.1\%$).
+  - 25 pruebas unitarias en `tests/triangulator.test.ts`.
 - **Fases 1.0 a 5.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Fase 6.0 Activa:** Triangulación 2D-a-3D exacta y siluetas reales en el motor 3D.
-- **Suite Determinista:** **17/17 suites passing (474/474 tests en verde)**.
+- **Suite Determinista:** **18/18 suites passing (499/499 tests en verde)**.
 
 ## Open findings
 

@@ -8,8 +8,8 @@ Assurance: Lean
 
 | Tarea | Descripción | Rol Principal | Rol Secundario | Puerta Determinista | Estado |
 |---|---|---|---|---|:---:|
-| **T-25** | Motor de Triangulación 2D de Polígonos de Moldería (*Ear Clipping Triangulator*) | Ingeniero | Obrero | `npm test` | 🟡 READY |
-| **T-26** | Proyector Anatómico 3D y Deformación Envolvente de Paneles Textiles | Ingeniero | Obrero | `npm test` | ⚪ QUEUED |
+| **T-25** | Motor de Triangulación 2D de Polígonos de Moldería (*Ear Clipping Triangulator*) | Ingeniero | Obrero | `npm test` | ✅ DONE |
+| **T-26** | Proyector Anatómico 3D y Deformación Envolvente de Paneles Textiles | Ingeniero | Obrero | `npm test` | 🟡 READY |
 | **T-27** | Ensamblado de Paneles Multi-Pieza y Costuras 3D en Buffer glTF 2.0 | Ingeniero | Obrero | `node scripts/test_blender_export.js` | ⚪ QUEUED |
 | **T-28** | Verificación Visual E2E en Web Studio y Auditoría de Fase 6.0 | Arquitecto | Ingeniero | `npm test && node dist/index.js` | ⚪ QUEUED |
 
@@ -19,15 +19,15 @@ Assurance: Lean
 
 ### T-25 - Motor de Triangulación 2D de Polígonos de Moldería (*Ear Clipping Triangulator*)
 
-- Status: ready
+- Status: done
 - Depends on: T-24
 - Scope: `src/engine/triangulator.ts`, `tests/triangulator.test.ts`
 - Rol: Ingeniero (Geometría computacional y triangulación de polígonos cóncavos con agujeros/pinzas).
 - Acceptance:
-  - [ ] Implementar un algoritmo determinista de triangulación por corte de orejas (*Ear Clipping*) optimizado para contornos textiles 2D (`outline: Point2D[]`).
-  - [ ] Soportar polígonos cóncavos complejos (escotes profundos en V, dobladillos con puntas múltiples, sisas curvas).
-  - [ ] Evitar auto-intersecciones y garantizar índices de caras normales con orientación coherente (front-facing CCW).
-  - [ ] Suite de pruebas unitarias en `tests/triangulator.test.ts` validando área total triangulada $\approx$ área del polígono 2D.
+  - [x] Implementar un algoritmo determinista de triangulación por corte de orejas (*Ear Clipping*) optimizado para contornos textiles 2D (`outline: Point2D[]`).
+  - [x] Soportar polígonos cóncavos complejos (escotes profundos en V, dobladillos con puntas múltiples, sisas curvas).
+  - [x] Evitar auto-intersecciones y garantizar índices de caras normales con orientación coherente (front-facing CCW).
+  - [x] Suite de pruebas unitarias en `tests/triangulator.test.ts` validando área total triangulada $\approx$ área del polígono 2D ($\Delta < 0.1\%$).
 - Gates: `npm test`
 - Human checks: none
 - Risk triggers: Polígonos colineales o vértices duplicados que bloqueen el ear clipping.
@@ -37,7 +37,7 @@ Assurance: Lean
 
 ### T-26 - Proyector Anatómico 3D y Deformación Envolvente de Paneles Textiles
 
-- Status: queued
+- Status: ready
 - Depends on: T-25
 - Scope: `src/engine/blender_bridge.ts`, `tests/blender.test.ts`
 - Rol: Ingeniero (Gráficos 3D y proyección espacial de piezas).
