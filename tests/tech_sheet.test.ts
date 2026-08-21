@@ -257,6 +257,69 @@ describe('Tech Pack Generator: Assembly Sequence & Notch Guidance', () => {
     expect(sleeveStep?.notchGuidance).toContain('piquetes simples');
     expect(sleeveStep?.notchGuidance).toContain('piquetes dobles');
   });
+
+  it('generates structured 4-step assembly sequence for vest (straw pirate adventurer vest / wahid)', () => {
+    const vestDna: PatternDna = {
+      concept_name: 'straw_pirate_adventurer_vest',
+      base_block: 'menswear_torso_fitted',
+      ease: {
+        chest_ease_mm: 50,
+        waist_ease_mm: 40,
+        hip_ease_mm: 35,
+      },
+      modifications: {
+        neckline: { type: 'v_neck', depth_mm: 130 },
+        sleeves: { type: 'sleeveless' },
+        hem: { type: 'curved_tail', drop_mm: 45 },
+      },
+      tech_specs: {
+        notions: ['3x botones dorados 22mm', 'entretela termoadhesiva'],
+        estimated_fabric_meters: 0.85,
+        fabric_type: 'Rustic Red Linen',
+      },
+    };
+
+    const techSheet = generateTechSheet(vestDna, modifyPatternMultiSize(vestDna));
+    expect(techSheet.assemblySequence.length).toBe(4);
+
+    const [step1, step2, step3, step4] = techSheet.assemblySequence;
+
+    // Paso 1: Preparación y entretelado térmico de vistas interiores (delantera, cuello, sisa)
+    expect(step1.stepNumber).toBe(1);
+    expect(step1.title).toContain('Preparación y entretelado térmico de vistas interiores');
+    expect(step1.instructions).toContain('vistas interiores');
+    expect(step1.instructions).toContain('entretela');
+
+    // Paso 2: Confección de botonadura frontal y ojales en las marcas del cruce (+20mm)
+    expect(step2.stepNumber).toBe(2);
+    expect(step2.title).toContain('botonadura frontal y ojales');
+    expect(step2.instructions).toContain('+20mm');
+    expect(step2.instructions).toContain('marcas del cruce');
+
+    // Paso 3: Ensamble y pespunte de hombros y costados alineando los piquetes pareados
+    expect(step3.stepNumber).toBe(3);
+    expect(step3.title).toContain('hombros y costados alineando los piquetes pareados');
+    expect(step3.instructions).toContain('piquetes pareados');
+    expect(step3.notchGuidance).toContain('piquetes pareados');
+
+    // Paso 4: Remate de dobladillos (recto, cola o doble pico) y planchado final
+    expect(step4.stepNumber).toBe(4);
+    expect(step4.title).toContain('Remate de dobladillos');
+    expect(step4.title).toContain('planchado final');
+    expect(step4.instructions).toContain('doble pico');
+
+    // Verificación en Markdown y JSON
+    const md = generateTechSheetMarkdown(techSheet);
+    expect(md).toContain('## 4. GUÍA DE CONFECCIÓN Y ENSAMBLE PASO A PASO');
+    expect(md).toContain('Preparación y entretelado térmico de vistas interiores');
+    expect(md).toContain('cruce (+20mm)');
+    expect(md).toContain('piquetes pareados');
+    expect(md).toContain('Remate de dobladillos');
+
+    const json = JSON.parse(generateTechSheetJson(techSheet)) as TechSheetData;
+    expect(json.assemblySequence.length).toBe(4);
+    expect(json.assemblySequence[0].title).toContain('vistas interiores');
+  });
 });
 
 describe('Tech Pack Generator: Finished Garment Measurements (POM Table)', () => {
@@ -337,7 +400,7 @@ describe('Tech Pack Generator: Export Formats (Markdown, JSON, PDF)', () => {
     expect(md).toContain('## 1. CONSUMO DE TELA Y RENDIMIENTO TEXTIL');
     expect(md).toContain('## 2. LISTA DETALLADA DE PIEZAS DE CORTE');
     expect(md).toContain('## 3. LISTA DE AVÍOS Y MERCERÍA (BILL OF MATERIALS - BOM)');
-    expect(md).toContain('## 4. SECUENCIA DE CONFECCIÓN Y ENSAMBLADO PASO A PASO');
+    expect(md).toContain('## 4. GUÍA DE CONFECCIÓN Y ENSAMBLE PASO A PASO');
     expect(md).toContain('## 5. TABLA DE MEDIDAS TERMINADAS DE LA PRENDA (POINTS OF MEASUREMENT - POM)');
     expect(md).toContain('POM-01');
     expect(md).toContain('15%');

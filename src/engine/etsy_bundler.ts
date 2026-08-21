@@ -266,7 +266,11 @@ Level: Intermediate / Confident Beginner
 Included Sizes: Multi-size graded layers from XS through 3XL
 Seam Allowance: ${seamAllowance} mm (3/8") included on all construction seams | Hem Allowance: ${hemAllowance} mm (1") included on hems
 
-Create your own high-end streetwear and cosplay garment with this precision parametric sewing pattern! Engineered with CAD mathematical curves, exact grainlines, assembly notches, and balanced ease for a comfortable, contemporary streetwear silhouette.
+Create your own high-end streetwear, tailored, and cosplay garments with this precision parametric sewing pattern! Engineered with CAD mathematical curves, exact grainlines, and professional industrial features:
+• Interfaced Inner Facings (Vistas con entretela térmica): Tailoring-grade structured neckline, front placket, and armhole facings.
+• Buttonhole & Overlap Marks (Marcas de ojales y cruce +20mm): Factory-precision alignment marks for buttons and buttonholes.
+• Paired Assembly Notches (Piquetes pareados de control): Single notches on front and double notches on back for zero-error seam matching.
+• 3D Exploded Visual Guide & Model (Guía Visual 3D Despiezada): Interactive 3D .GLB garment model with PBR textures and exploded piece assembly reference.
 
 ---
 
@@ -276,9 +280,9 @@ Your instant digital download includes an organized ZIP archive containing:
 2. 02_Print_At_Home_US_Letter: Multi-page tiled PDF formatted for US Letter paper (8.5" x 11").
 3. 03_Copy_Shop_Plotter_A0: Single-sheet continuous A0 wide-format PDF for commercial copy shops & plotters (no taping required).
 4. 04_Vector_Layers_SVG: Multi-size layered SVG vector file for Adobe Illustrator, CLO3D, Blender, or laser cutting.
-5. 05_Sewing_Guide_And_TechPack: Complete industrial Tech Pack (PDF, Markdown & JSON) with step-by-step assembly order, Bill of Materials (BOM), and finished garment measurements.
+5. 05_Sewing_Guide_And_TechPack: Complete industrial Tech Pack & Step-by-Step Sewing Guide (PDF, Markdown & JSON) with paired notch guidance, BOM, and finished garment POM measurements.
 6. 06_Dna_Parameters: Full parametric DNA specification in JSON format.
-7. 07_3D_Interactive_Model: 3D interactive model (.GLB / glTF 2.0) with PBR textile textures for real-time 3D viewing, AR, gaming, and metaverse avatar fitting.
+7. 07_3D_Interactive_Model: 3D interactive model (.GLB / glTF 2.0) with PBR textile textures and Exploded 3D Visual Guide for real-time 3D viewing, AR, gaming, and avatar fitting.
 8. README_Etsy_Printing_Instructions.pdf: Visual step-by-step customer printing, tiling, and scale calibration guide.
 
 ---
@@ -383,51 +387,51 @@ export async function generateEtsyPrintingGuidePdf(dna?: PatternDna, conceptSlug
   // ==========================================
   // 1. Header banner
   doc.save();
-  doc.rect(margin, margin, contentW, 46).fillAndStroke('#1e3a8a', '#1e3a8a');
+  doc.rect(margin, margin, contentW, 44).fillAndStroke('#1e3a8a', '#1e3a8a');
   doc
-    .fontSize(13)
+    .fontSize(12)
     .font('Helvetica-Bold')
     .fillColor('#ffffff')
-    .text('ETSY CUSTOMER PRINTING & ASSEMBLY GUIDE', margin + 12, margin + 10, {
+    .text('ETSY CUSTOMER PRINTING & ASSEMBLY GUIDE', margin + 12, margin + 9, {
       width: contentW - 24,
     });
   doc
-    .fontSize(8.5)
+    .fontSize(8)
     .font('Helvetica')
     .fillColor('#bfdbfe')
     .text(
       `PATTERN: ${formatConceptTitle(conceptSlug).toUpperCase()}  |  SIZES: XS - 3XL  |  SCALE 100% 1:1`,
       margin + 12,
-      margin + 28
+      margin + 26
     );
   doc.restore();
 
   // 2. Banner de instrucción crítica
-  const ruleY = margin + 56;
+  const ruleY = margin + 50;
   doc.save();
-  doc.rect(margin, ruleY, contentW, 44).fillAndStroke('#fef2f2', '#dc2626');
+  doc.rect(margin, ruleY, contentW, 38).fillAndStroke('#fef2f2', '#dc2626');
   doc
-    .fontSize(10)
+    .fontSize(9.5)
     .font('Helvetica-Bold')
     .fillColor('#dc2626')
-    .text('CRITICAL PRINTING RULE: DO NOT SCALE / ACTUAL SIZE (100%)', margin + 12, ruleY + 8, {
+    .text('CRITICAL PRINTING RULE: DO NOT SCALE / ACTUAL SIZE (100%)', margin + 12, ruleY + 6, {
       width: contentW - 24,
     });
   doc
-    .fontSize(7.5)
+    .fontSize(7)
     .font('Helvetica')
     .fillColor('#374151')
     .text(
       'Always open your PDF files in Adobe Acrobat Reader and select "Actual Size" or "Scale 100%". NEVER select "Fit to Page" or "Shrink oversized pages".',
       margin + 12,
-      ruleY + 23,
+      ruleY + 20,
       { width: contentW - 24 }
     );
   doc.restore();
 
   // 3. Cuadro de Calibración 10x10 cm centrado
   const calibX = (pageWidth - CALIBRATION_BOX_PT) / 2;
-  const calibY = ruleY + 54;
+  const calibY = ruleY + 44;
   drawCalibrationBoxPdf(doc, calibX, calibY, {
     showWarning: true,
     showSubdivisions: true,
@@ -436,35 +440,58 @@ export async function generateEtsyPrintingGuidePdf(dna?: PatternDna, conceptSlug
   });
 
   // 4. Tarjeta de pasos de verificación rápida
-  const stepsY = calibY + CALIBRATION_BOX_PT + 25;
-  const stepsH = 175;
+  const stepsY = calibY + CALIBRATION_BOX_PT + 12;
+  const stepsH = 150;
   doc.save();
   doc.rect(margin, stepsY, contentW, stepsH).fillAndStroke('#f8fafc', '#cbd5e1');
   doc
-    .fontSize(10)
+    .fontSize(9)
     .font('Helvetica-Bold')
     .fillColor('#0f172a')
-    .text('HOW TO PRINT & ASSEMBLE YOUR PATTERN (STEP-BY-STEP):', margin + 14, stepsY + 12);
+    .text('HOW TO PRINT & ASSEMBLE YOUR PATTERN (STEP-BY-STEP):', margin + 12, stepsY + 8);
 
   const guideSteps = [
     '1. TEST PRINT: Print Page 1 only. Measure the black square above with a physical ruler (must be exactly 10.0 cm / 100 mm).',
     '2. IMPERIAL CHECK: The blue dashed frame must measure exactly 4.0 inches (101.6 mm). If correct, proceed to print all pages.',
-    '3. PAPER FORMAT: Use A4 files for standard international A4 paper or US Letter files for North American printers.',
-    '4. TRIMMING: Cut away the white margin on the RIGHT and BOTTOM borders of each printed sheet along the marked lines.',
-    '5. TILING & TAPING: Align the circular registration marks and grid numbers (A1 to A2, B1 to B2), then tape pages firmly.',
-    '6. CUTTING FABRIC: Cut your chosen size outline. All seam allowances (10 mm / 3/8") and hem allowances (25 mm) are included.',
-    '7. A0 COPY SHOP OPTION: Take the 03_Copy_Shop_Plotter_A0 file to any print shop to print on a single continuous wide-format sheet.',
+    '3. PAPER FORMAT: Use A4 files for international paper or US Letter files for North American printers (Actual Size 100%).',
+    '4. TRIMMING & TILING: Trim RIGHT/BOTTOM margins along borders, match circular registration marks (A1, A2...), and tape firmly.',
+    '5. PAIRED NOTCHES: Match single notches on front pieces and double notches on back pieces for perfect seam alignment.',
+    '6. INTERFACED FACINGS & BUTTONHOLES: Apply thermal interfacing to inner facings and transfer all buttonhole marks (+20mm overlap).',
+    '7. 3D EXPLODED VISUAL GUIDE: Inspect the 3D interactive model (.GLB) in 07_3D_Interactive_Model for exploded part verification.',
+    '8. A0 COPY SHOP OPTION: Take 03_Copy_Shop_Plotter_A0 to any commercial print shop to print on a continuous wide-format sheet.',
   ];
 
-  doc.fontSize(7.5).font('Helvetica').fillColor('#334155');
-  let currentY = stepsY + 28;
+  doc.fontSize(6.5).font('Helvetica').fillColor('#334155');
+  let currentY = stepsY + 22;
   for (const step of guideSteps) {
-    doc.text(step, margin + 14, currentY, { width: contentW - 28 });
-    currentY += 19;
+    doc.text(step, margin + 12, currentY, { width: contentW - 24 });
+    currentY += 15;
   }
   doc.restore();
 
-  // 5. Pie de página
+  // 5. Banner de Características Industriales Profesionales
+  const featY = stepsY + stepsH + 8;
+  const featH = 34;
+  doc.save();
+  doc.rect(margin, featY, contentW, featH).fillAndStroke('#eff6ff', '#3b82f6');
+  doc
+    .fontSize(7.5)
+    .font('Helvetica-Bold')
+    .fillColor('#1d4ed8')
+    .text('PROFESSIONAL INDUSTRIAL FEATURES INCLUDED:', margin + 10, featY + 5);
+  doc
+    .fontSize(6.5)
+    .font('Helvetica')
+    .fillColor('#1e40af')
+    .text(
+      '• Vistas con entretela térmica  • Marcas de ojales (+20mm cruce)  • Piquetes pareados de control  • Guía Visual 3D Despiezada (.GLB)',
+      margin + 10,
+      featY + 18,
+      { width: contentW - 20 }
+    );
+  doc.restore();
+
+  // 6. Pie de página
   doc.save();
   const footerY = pageHeight - margin - 18;
   doc

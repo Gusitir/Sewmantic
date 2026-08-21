@@ -641,6 +641,80 @@ function buildAssemblySequence(dna: PatternDna): AssemblyStep[] {
     return steps;
   }
 
+  const isVest =
+    !isSet &&
+    (dna.base_block.toLowerCase().includes('vest') ||
+      dna.base_block.toLowerCase().includes('wahid') ||
+      dna.concept_name.toLowerCase().includes('vest') ||
+      dna.concept_name.toLowerCase().includes('chaleco') ||
+      dna.concept_name.toLowerCase().includes('waistcoat') ||
+      (dna.modifications.sleeves?.type === 'sleeveless' &&
+        dna.modifications.neckline?.type === 'v_neck' &&
+        !dna.modifications.hood));
+
+  if (isVest) {
+    // Secuencia estructurada de 4 pasos para chaleco / prendas con vistas y cruce
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Paso 1: Preparación y entretelado térmico de vistas interiores (delantera, cuello, sisa)',
+      operation: 'Termofijado y Fusionado de Vistas Interiores',
+      machineType: 'Prensa Térmica / Plancha Industrial (140°C, 3 bar, 12s)',
+      stitchType: 'N/A (Termofijado)',
+      instructions:
+        'Paso 1: Preparación y entretelado térmico de vistas interiores (delantera, cuello, sisa). ' +
+        'Fusionar entretela termoadhesiva tejida semi-rígida (60 g/m²) en las vistas del delantero, vistas de escote/cuello y vistas de sisa para aportar soporte y estabilidad dimensional. ' +
+        'Marcar piquetes de referencia en centros, hombros y márgenes de costura.',
+      notchGuidance: 'Comprobar rigurosamente la coincidencia de piquetes entre vistas interiores y piezas principales.',
+      criticalNotes: 'Asegurar que la entretela no sobrepase los márgenes de costura para evitar rigidez excesiva en el ensamble.',
+    });
+
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Paso 2: Confección de botonadura frontal y ojales en las marcas del cruce (+20mm)',
+      operation: 'Montaje de Vistas, Confección de Cruce Frontal y Ojalado',
+      machineType: 'Máquina Recta (ISO 301) + Ojaladora Industrial + Botonera',
+      stitchType: 'Costura Recta 3.0 mm + Ojal de Sastre',
+      instructions:
+        'Paso 2: Confección de botonadura frontal y ojales en las marcas del cruce (+20mm). ' +
+        'Encarar las vistas delanteras con los delanteros derecho con derecho y coser a 10 mm a lo largo del centro delantero y el escote en V. ' +
+        'Picar el ángulo del escote en V a 1 mm de la costura, volcar las vistas hacia el interior y asentar con plancha a vapor. ' +
+        'Ejecutar los ojales en el delantero derecho sobre las marcas del cruce (+20mm) y coser los botones en el delantero izquierdo alineados con las marcas de cruce.',
+      notchGuidance: 'Alinear rigurosamente las marcas del cruce (+20mm) y los piquetes de centro delantero.',
+      criticalNotes: 'Mantener la simetría milimétrica en el cruce de +20mm para garantizar un calce plano y sin tensiones.',
+    });
+
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Paso 3: Ensamble y pespunte de hombros y costados alineando los piquetes pareados',
+      operation: 'Unión de Hombros, Remate de Sisas y Cierre de Costados',
+      machineType: 'Máquina Recta (ISO 301) + Overlock 4 Hilos (ISO 514)',
+      stitchType: 'Costura Recta 3.0 mm + Sobrehilado de Seguridad',
+      instructions:
+        'Paso 3: Ensamble y pespunte de hombros y costados alineando los piquetes pareados. ' +
+        'Encarar delantero y espalda derecho con derecho, unir hombros intercalando cinta estabilizadora y fijar vistas de sisa. ' +
+        'Cerrar costuras laterales alineando los piquetes pareados (piquetes simples en delantero y dobles en espalda). ' +
+        'Aplicar pespunte de carga interior o sobrecostura decorativa según especificación.',
+      notchGuidance: 'Alinear con precisión los piquetes pareados en costados y sisas (simple en delantero, doble en espalda).',
+      criticalNotes: 'La tolerancia máxima permitida de desfase en la alineación de piquetes pareados es de ±1 mm.',
+    });
+
+    steps.push({
+      stepNumber: stepNum++,
+      title: 'Paso 4: Remate de dobladillos (recto, cola o doble pico) y planchado final',
+      operation: 'Dobladillado Inferior, Control Dimensional POM y Planchado Final',
+      machineType: 'Máquina Recta (ISO 301) / Mesa de Planchado Industrial con Caldera',
+      stitchType: 'Pespunte al tono 2.5 - 3.0 mm',
+      instructions:
+        'Paso 4: Remate de dobladillos (recto, cola o doble pico) y planchado final. ' +
+        'Volcar el dobladillo inferior según el diseño del patrón (dobladillo recto, bajo en cola curva o doble pico frontal característico) y pespuntear al tono a 20-25 mm del borde. ' +
+        'Realizar inspección de control de calidad auditando los puntos clave de la tabla de medidas terminadas (POM), limpieza de hilachas y planchado final con vapor y horma.',
+      notchGuidance: 'Verificar la perfecta simetría de los picos o curva del bajo respecto a la línea central.',
+      criticalNotes: 'Las medidas de la prenda terminada deben cumplir estrictamente las tolerancias de la tabla POM.',
+    });
+
+    return steps;
+  }
+
   const hasHood =
     dna.modifications.hood !== undefined ||
     dna.modifications.neckline?.type === 'crossover_hood' ||
@@ -1749,8 +1823,8 @@ export function generateTechSheetMarkdown(data: TechSheetData): string {
   });
   lines.push(``);
 
-  // 4. Secuencia de Confección Paso a Paso
-  lines.push(`## 4. SECUENCIA DE CONFECCIÓN Y ENSAMBLADO PASO A PASO`);
+  // 4. Guía de Confección y Ensamble Paso a Paso
+  lines.push(`## 4. GUÍA DE CONFECCIÓN Y ENSAMBLE PASO A PASO`);
   assemblySequence.forEach((step) => {
     lines.push(`### Paso ${step.stepNumber}: ${step.title}`);
     lines.push(`- **Operación:** ${step.operation}`);
@@ -2208,11 +2282,11 @@ export async function generateTechSheetPdf(data: TechSheetData): Promise<Buffer>
   currentY += 18;
 
   // ==========================================
-  // SECCIÓN 4: SECUENCIA DE CONFECCIÓN PASO A PASO
+  // SECCIÓN 4: GUÍA DE CONFECCIÓN Y ENSAMBLE PASO A PASO
   // ==========================================
   checkPageBreak(120);
   doc.save();
-  doc.fontSize(10).font('Helvetica-Bold').fillColor('#1e293b').text('4. SECUENCIA DE CONFECCIÓN Y ENSAMBLADO INDUSTRIAL', margin, currentY);
+  doc.fontSize(10).font('Helvetica-Bold').fillColor('#1e293b').text('4. GUÍA DE CONFECCIÓN Y ENSAMBLE PASO A PASO', margin, currentY);
   doc.restore();
   currentY += 15;
 

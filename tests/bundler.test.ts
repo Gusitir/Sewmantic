@@ -155,7 +155,7 @@ describe('Etsy Bundler - Generador de Metadatos Comerciales y Reglas de Etsy', (
     expect(sku2).toMatch(/^PAT-AI-PNT-[A-Z0-9-]+$/);
   });
 
-  it('genera una descripción comercial estructurada en las 6 secciones requeridas', () => {
+  it('genera una descripción comercial estructurada en las 6 secciones requeridas destacando características industriales', () => {
     const desc = generateEtsyDescription('straw_pirate_adventurer_vest', mockDna);
 
     expect(desc).toContain('OVERVIEW');
@@ -172,6 +172,12 @@ describe('Etsy Bundler - Generador de Metadatos Comerciales y Reglas de Etsy', (
     expect(desc).toContain('25 mm (1")');
     expect(desc).toContain('Actual Size');
     expect(desc).toContain('DIGITAL DOWNLOAD');
+
+    // Características industriales profesionales
+    expect(desc).toContain('Vistas con entretela');
+    expect(desc).toContain('Marcas de ojales y cruce +20mm');
+    expect(desc).toContain('Piquetes pareados de control');
+    expect(desc).toContain('Guía Visual 3D Despiezada');
   });
 
   it('genera el objeto de metadatos completo y conforme al esquema Etsy', () => {
@@ -190,7 +196,7 @@ describe('Etsy Bundler - Generador de Metadatos Comerciales y Reglas de Etsy', (
 });
 
 describe('Etsy Customer Printing Guide PDF', () => {
-  it('genera un buffer PDF válido para la guía de impresión y ensamble', async () => {
+  it('genera un buffer PDF válido para la guía de impresión y ensamble destacando características industriales', async () => {
     const buffer = await generateEtsyPrintingGuidePdf(undefined, 'straw_pirate_vest');
     expect(Buffer.isBuffer(buffer)).toBe(true);
     expect(buffer.length).toBeGreaterThan(2000);

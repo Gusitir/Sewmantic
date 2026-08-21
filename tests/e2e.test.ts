@@ -148,7 +148,7 @@ describe('Pipeline End-to-End y Generación de Entregables (E2E)', () => {
     expect(mdContent).toContain('## 1. CONSUMO DE TELA');
     expect(mdContent).toContain('## 2. LISTA DETALLADA DE PIEZAS DE CORTE');
     expect(mdContent).toContain('## 3. LISTA DE AVÍOS Y MERCERÍA (BILL OF MATERIALS - BOM)');
-    expect(mdContent).toContain('## 4. SECUENCIA DE CONFECCIÓN Y ENSAMBLADO PASO A PASO');
+    expect(mdContent).toContain('## 4. GUÍA DE CONFECCIÓN Y ENSAMBLE PASO A PASO');
     expect(mdContent).toContain('## 5. TABLA DE MEDIDAS TERMINADAS DE LA PRENDA (POINTS OF MEASUREMENT - POM)');
 
     // 7. Verificar ADN JSON
