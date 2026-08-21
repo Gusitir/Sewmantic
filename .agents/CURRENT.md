@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-20T22:03:00-05:00
-source_commit: [T-31] implement 3D exploded assembly guide view, interactive slider and seam guide lines
+updated_at: 2026-08-20T22:08:00-05:00
+source_commit: [T-32] add industrial step-by-step confection guide to techpack and enrich Etsy commercial bundle
 assurance: Lean
-active_plan: PLAN_v0.7-industrial-blueprints-and-3d-assembly.md
-active_task: T-32 (Ficha Técnica de Confección Paso a Paso & Auditoría de Fase 7.0)
+active_plan: none (All 7 Phases Completed & Verified APTO)
+active_task: none (All Tasks Verified APTO)
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,23 +18,22 @@ backup: local-only
 
 ## Next action
 
-1. **Ejecutar Tarea `T-32` (Ficha Técnica de Confección Paso a Paso & Auditoría de Fase 7.0):**
-   - Actualizar `src/engine/tech_sheet.ts` para que incluya en la Ficha Técnica (PDF, Markdown, JSON) la guía de armado paso a paso (1. Entretelado de vistas, 2. Ojales y botonadura, 3. Hombros y costados, 4. Remate de sisas y bajo).
-   - Ejecutar `npm run build && npm test`.
-   - Auditar la fase completa y emitir veredicto final APTO.
-   - Archivar `PLAN_v0.7-industrial-blueprints-and-3d-assembly.md` en `archive/` y generar commit `[STATE] close phase 7.0`.
+1. **FASE 7.0 CERRADA CON ÉXITO Y AUDITADA CON VEREDICTO APTO:**
+   - **`T-29`:** Moldería industrial con cruces de botonadura (+20 mm), marcas vectoriales de botones/ojales, vistas interiores con entretela (`front_facing`, `armhole_facing`, `back_neck_facing`) y piquetes pareados de correspondencia en hombros y costados.
+   - **`T-30`:** Selector visual interactivo de los 7 bloques base de FreeSewing (`Wahid`, `Simon`, `Brian`, `Bella`, `Paco`, `Sandy`, `Shin`) e inyección contextual al LLM (Qwen 3.8 Max como modificador anatómico puro).
+   - **`T-31`:** Guía Visual de Ensamble y Doblado 3D Despiezada (*Exploded Assembly View*) con slider interactivo 0-100%, vectores de traslación anatómica y líneas punteadas de costura en WebGL.
+   - **`T-32`:** Ficha técnica con secuencia de 4 pasos de confección industrial, descripción y guía comercial para Etsy.
+2. Iniciar el Web Studio con `start_web_studio.bat` para inspección en vivo de los patrones industriales y el visor 3D despiezado.
 
 ## Blockers
 
-- Ninguno. 536/536 tests pasando al 100% en Vitest (19/19 suites).
+- Ninguno. 537/537 tests pasando al 100% en Vitest (19/19 suites).
 
 ## Current facts
 
-- **Tareas `T-29`, `T-30` y `T-31` Completadas y Auditadas con Veredicto APTO:**
-  - `T-29`: Moldería industrial (cruces $+20\text{ mm}$, marcas de ojales/botones, vistas interiores con entretela `front_facing`, `armhole_facing`, `back_neck_facing` y piquetes pareados).
-  - `T-30`: Selector de los 7 bloques base FreeSewing (`Wahid`, `Simon`, `Brian`, `Bella`, `Paco`, `Sandy`, `Shin`) e inyección contextual al LLM.
-  - `T-31`: Guía Visual de Ensamble 3D Despiezada (*Exploded Assembly View*) con slider interactivo 0-100%, vectores de traslación anatómica y líneas de guía de costura en WebGL.
-- **Suite Determinista:** **19/19 suites passing (536/536 tests en verde)**.
+- **Fases 1.0 a 7.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
+- **Suite Determinista:** **19/19 suites passing (537/537 tests en verde)**.
+- **Moldería Industrial:** Cruces de botonadura, vistas interiores, marcas de ojales y despiece 3D interactivo.
 
 ## Open findings
 
@@ -45,6 +44,6 @@ backup: local-only
 - [x] Validación de ensamble y continuidad de líneas con PDFStitcher (`H-02`). [VERIFICADO OK]
 - [x] Verificación de escala 1:1 y cuadro de calibración 10x10 cm (`H-01`). [VERIFICADO OK]
 - [x] Corrección visual 2D de hombro y escote V (`H-03`). [VERIFICADO OK]
-- [ ] Inspección de cruces de botones, vistas y despiece 3D tras Fase 7.0. [LISTO PARA PROBAR]
+- [ ] Inspección visual de cruces de botones, vistas interiores y despiece 3D en Web Studio. [LISTO PARA PROBAR POR EL USUARIO]
 
 Keep this concise. History belongs in CONTEXT and Git.

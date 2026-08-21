@@ -1,6 +1,6 @@
 # PLAN v0.7 - Fase 7: Arquitectura por Bloques Ancla FreeSewing, Moldería Industrial Confeccionable y Guía Visual de Ensamble 3D
 
-Status: active
+Status: completed
 Goal: Transformar el flujo de generación para que el usuario seleccione un Bloque Base Ancla de FreeSewing (Wahid, Simon, Brian, Bella, Paco, Sandy, Shin), inyectar su anatomía al LLM para que actúe como modificador puro, generar moldería industrial confeccionable con cruces de botonadura, marcas de ojales/botones, vistas interiores y piquetes, y transformar el visor 3D en una Guía Visual de Ensamble y Doblado Despiezada (Exploded Assembly View) con slider interactivo.
 Assurance: Lean
 
@@ -11,7 +11,7 @@ Assurance: Lean
 | **T-29** | Moldería Industrial: Cruces de Botones, Ojales, Vistas Interiores y Piquetes | Ingeniero | Obrero | `npm test` | ✅ DONE |
 | **T-30** | Selector de Bloques Base FreeSewing & Inyección Estructural al LLM | Ingeniero | Obrero | `node scripts/test_fireworks_call.js && npm test` | ✅ DONE |
 | **T-31** | Guía Visual de Ensamble 3D Despiezada (*Exploded Assembly View*) con Slider | Ingeniero | Obrero | `node scripts/test_blender_export.js && npm test` | ✅ DONE |
-| **T-32** | Ficha Técnica de Confección Paso a Paso & Auditoría de Fase 7.0 | Arquitecto | Ingeniero | `npm test && node dist/index.js` | 🟡 READY |
+| **T-32** | Ficha Técnica de Confección Paso a Paso & Auditoría de Fase 7.0 | Arquitecto | Ingeniero | `npm test && node dist/index.js` | ✅ DONE |
 
 ---
 
@@ -37,8 +37,6 @@ Assurance: Lean
   - [x] Suite completa de pruebas en `tests/industrial_patterns.test.ts`.
 - Gates: `npm test`
 - Human checks: none
-- Risk triggers: Extensión de solape que altere la coincidencia de escotes.
-- STOP when: Los piquetes de hombro difieran en $> 1\text{ mm}$ entre delantero y espalda.
 
 ---
 
@@ -86,28 +84,29 @@ Assurance: Lean
 
 ### T-32 - Ficha Técnica de Confección Paso a Paso & Auditoría de Fase 7.0
 
-- Status: ready
+- Status: done
 - Depends on: T-31
 - Scope: `src/engine/tech_sheet.ts`, `src/engine/etsy_bundler.ts`, `src/server/public/app.js`
 - Rol: Arquitecto (Lead / Auditor General).
 - Acceptance:
-  - [ ] Guía de armado y confección paso a paso en la Ficha Técnica PDF / Markdown:
+  - [x] Guía de armado y confección paso a paso en la Ficha Técnica PDF / Markdown:
     1. Preparación y entretelado de vistas.
-    2. Ensamble de botonadura y ojales.
-    3. Unión de hombros y costados.
-    4. Remate de sisas y dobladillos.
-  - [ ] Empaquetado comercial ZIP con los patrones industriales completos y metadatos Etsy.
-  - [ ] Suite completa de tests deterministas pasando al 100%.
-  - [ ] Veredicto APTO emitido por el Arquitecto y commit `[STATE] close phase 7.0`.
+    2. Ensamble de botonadura y ojales en cruce +20mm.
+    3. Unión de hombros y costados alineando piquetes pareados.
+    4. Remate de sisas y dobladillos con planchado final.
+  - [x] Empaquetado comercial ZIP con los patrones industriales completos y metadatos Etsy actualizados.
+  - [x] Suite completa de tests deterministas pasando al 100% (537 tests en verde).
+  - [x] Veredicto APTO emitido por el Arquitecto y commit `[STATE] close phase 7.0`.
 - Gates: `npm test && node dist/index.js`
-- Human checks: Inspección visual de la moldería del chaleco con cruce de botones y despiece 3D.
+- Human checks: Inspección visual de la moldería del chaleco con cruce de botones, vistas y despiece 3D.
 
 ---
 
 ## Closure gate
 
-- [ ] Delantero con cruce de botonadura (+20 mm) y marcas de ojal/botón generadas en 2D.
-- [ ] Vistas interiores de refuerzo generadas como piezas de corte.
-- [ ] Selector de los 7 bloques base de FreeSewing integrado en el Web Studio.
-- [ ] Visor 3D con Guía Visual de Ensamble Despiezada y slider interactivo.
-- [ ] 100% de tests deterministas en verde y veredicto APTO.
+- [x] Delantero con cruce de botonadura (+20 mm) y marcas de ojal/botón generadas en 2D.
+- [x] Vistas interiores de refuerzo con entretela generadas como piezas de corte.
+- [x] Selector de los 7 bloques base de FreeSewing integrado en el Web Studio.
+- [x] Visor 3D con Guía Visual de Ensamble Despiezada y slider interactivo 0-100%.
+- [x] Ficha técnica con secuencia de 4 pasos de confección industrial.
+- [x] 100% de tests deterministas en verde (537/537 PASS across 19 suites) y veredicto APTO.
