@@ -194,15 +194,181 @@ ${rules}
   }
 
   /**
-   * Construye el prompt del usuario integrando la descripción y posibles referencias visuales
+   * Genera el contexto estructural anatómico de la prenda base ancla FreeSewing
+   * Ordena al modelo de lenguaje actuar como un MODIFICADOR PURO de dicha base.
+   * @param blueprint Identificador del bloque base FreeSewing ('wahid', 'simon', 'brian', 'bella', 'paco', 'sandy', 'shin', o 'auto'/undefined)
+   */
+  public static buildBlueprintContext(blueprint?: string): string {
+    if (!blueprint || blueprint.trim().length === 0) {
+      return "";
+    }
+
+    const key = blueprint.toLowerCase().trim();
+    if (key === "auto" || key === "none") {
+      return "";
+    }
+
+    switch (key) {
+      case "wahid":
+        return (
+          `\n\n[FREESEWING BASE BLUEPRINT ANCHOR: WAHID (🦺 Chaleco Sastre / Cosplay Vest)]\n` +
+          `You MUST act strictly as a PURE PARAMETRIC MODIFIER of the FreeSewing 'Wahid' sloper.\n` +
+          `Anatomical Structure of Wahid:\n` +
+          `- Front Torso: Tailored front panels with front button placket overlap (cruce de botones), deep V-neck and classic angled pointed hem peaks (bajo en pico / curved_tail).\n` +
+          `- Back Torso: Fitted tailored back panel.\n` +
+          `- Armholes & Sleeves: Sleeveless armholes with curved armhole facings (armhole_facing).\n` +
+          `- Neckline & Facings: Deep V-neckline with interfaced front neckline facings (front_facing) and back neck facing.\n` +
+          `- Closure: Front button placket with 3 to 6 buttons and buttonholes.\n` +
+          `Admitted Modifications & Rules:\n` +
+          `- Set 'base_block': 'menswear_torso_fitted' (or 'wahid' / 'vest_sloper').\n` +
+          `- Set 'garment_category': 'top'.\n` +
+          `- Set 'sleeves': { 'type': 'sleeveless' }.\n` +
+          `- Set 'neckline': { 'type': 'v_neck', 'depth_mm': 90-160, 'width_mm': 25-45 }.\n` +
+          `- Set 'hem': { 'type': 'curved_tail', 'drop_mm': 35-65 } (pointed vest front hem).\n` +
+          `- Set 'closure': { 'type': 'buttons', 'button_count': 3-6, 'overlap_mm': 20-30 }.\n` +
+          `- Optional pockets: welt (bolsillo de ojal/ribete) or patch pockets.\n` +
+          `Enforce this exact anatomical foundation in your output JSON.`
+        );
+
+      case "simon":
+        return (
+          `\n\n[FREESEWING BASE BLUEPRINT ANCHOR: SIMON (👔 Camisa Clásica / Casual Shirt)]\n` +
+          `You MUST act strictly as a PURE PARAMETRIC MODIFIER of the FreeSewing 'Simon' sloper.\n` +
+          `Anatomical Structure of Simon:\n` +
+          `- Front Torso: Front panels with full-length button placket (tapeta de botones).\n` +
+          `- Back Torso: Back panel with shoulder yoke (canesú de espalda).\n` +
+          `- Collar: Two-piece structured shirt collar with collar stand (pie de cuello) and collar leaf (pala de cuello).\n` +
+          `- Sleeves: Set-in shirt sleeves with cuff placket (sardineta) and buttoned cuffs (puños).\n` +
+          `- Hem: Curved shirt tail hem.\n` +
+          `Admitted Modifications & Rules:\n` +
+          `- Set 'base_block': 'menswear_torso' (or 'simon').\n` +
+          `- Set 'garment_category': 'top'.\n` +
+          `- Set 'neckline': { 'type': 'collar', 'collar_height_mm': 30-45 }.\n` +
+          `- Set 'sleeves': { 'type': 'set_in', 'length_type': 'full', 'cuff_width_mm': 50-70 }.\n` +
+          `- Set 'hem': { 'type': 'curved_tail', 'drop_mm': 25-45 }.\n` +
+          `- Set 'closure': { 'type': 'buttons', 'button_count': 6-8, 'overlap_mm': 20-30 }.\n` +
+          `- Optional pockets: patch chest pocket.\n` +
+          `Enforce this exact anatomical foundation in your output JSON.`
+        );
+
+      case "brian":
+        return (
+          `\n\n[FREESEWING BASE BLUEPRINT ANCHOR: BRIAN (👕 Camiseta / Hoodie / Streetwear Sweatshirt)]\n` +
+          `You MUST act strictly as a PURE PARAMETRIC MODIFIER of the FreeSewing 'Brian' sloper.\n` +
+          `Anatomical Structure of Brian:\n` +
+          `- Torso: Relaxed, boxy, or oversized torso with generous chest ease (80-220mm).\n` +
+          `- Sleeves: Drop shoulder or set-in sleeves with ribbed cuffs.\n` +
+          `- Neckline & Hood: Crew neckline with rib neckband OR integrated crossover/standard hood (capucha cruzada o estándar).\n` +
+          `- Hem & Pocket: Straight or ribbed hem with optional front kangaroo pocket (bolsillo canguro).\n` +
+          `Admitted Modifications & Rules:\n` +
+          `- Set 'base_block': 'menswear_torso_oversize' (or 'hoodie_sloper' / 'tshirt_sloper' / 'brian').\n` +
+          `- Set 'garment_category': 'top'.\n` +
+          `- Set 'ease': { 'chest_ease_mm': 100-220, 'bicep_ease_mm': 50-90 }.\n` +
+          `- Set 'sleeves': { 'type': 'drop_shoulder' | 'set_in', 'drop_mm': 40-80, 'length_type': 'full' | 'short' }.\n` +
+          `- Optional hood: { 'type': 'crossover' | 'standard', 'height_mm': 350-400 }.\n` +
+          `- Optional pocket: { 'type': 'kangaroo' }.\n` +
+          `Enforce this exact anatomical foundation in your output JSON.`
+        );
+
+      case "bella":
+        return (
+          `\n\n[FREESEWING BASE BLUEPRINT ANCHOR: BELLA (👗 Corpiño / Top / Vestido Femenino)]\n` +
+          `You MUST act strictly as a PURE PARAMETRIC MODIFIER of the FreeSewing 'Bella' sloper.\n` +
+          `Anatomical Structure of Bella:\n` +
+          `- Bodice: Fitted anatomical female bodice with bust darts and waist shaping darts (pinzas de busto y entalle).\n` +
+          `- Neckline: Feminine necklines (sweetheart / escote corazón, scoop, v-neck, square).\n` +
+          `- Garment Type: Fitted top, bodice, corset, or complete dress with coordinated skirt (A-line, pleated, flared).\n` +
+          `Admitted Modifications & Rules:\n` +
+          `- Set 'base_block': 'womenswear_torso_fitted' (or 'womenswear_bodice' / 'dress_sloper' / 'bella').\n` +
+          `- Set 'garment_category': 'dress' or 'top'.\n` +
+          `- Set 'ease': { 'chest_ease_mm': 20-50, 'waist_ease_mm': 15-40 }.\n` +
+          `- Set 'neckline': { 'type': 'sweetheart' | 'scoop' | 'v_neck' | 'square' }.\n` +
+          `- Optional dress details: 'dress_details': { 'silhouette': 'a_line' | 'straight' | 'pleated', 'skirt_length_mm': 400-900, 'waist_seam': true }.\n` +
+          `Enforce this exact anatomical foundation in your output JSON.`
+        );
+
+      case "paco":
+        return (
+          `\n\n[FREESEWING BASE BLUEPRINT ANCHOR: PACO (👖 Pantalón / Bermuda / Shorts)]\n` +
+          `You MUST act strictly as a PURE PARAMETRIC MODIFIER of the FreeSewing 'Paco' sloper.\n` +
+          `Anatomical Structure of Paco:\n` +
+          `- Front Leg: Front trouser leg with front crotch curve and pocket openings.\n` +
+          `- Back Leg: Back trouser leg with extended back crotch fork for anatomical fit.\n` +
+          `- Waistband: Separate waistband (fitted with belt loops or elastic/drawstring).\n` +
+          `- Hem: Hem with rolled cuffs (dobladillo vuelto), straight hem, or fringed.\n` +
+          `Admitted Modifications & Rules:\n` +
+          `- Set 'base_block': 'pants_sloper' (or 'paco').\n` +
+          `- Set 'garment_category': 'bottom'.\n` +
+          `- Set 'trouser_legs': { 'type': 'straight' | 'wide_baggy' | 'slim', 'length_type': 'shorts' | 'bermuda' | 'full', 'inseam_mm': 200-850 }.\n` +
+          `- Set 'trouser_hem': { 'type': 'cuffed' | 'straight' | 'fringed_pirate' | 'raw', 'cuff_height_mm': 30-50 }.\n` +
+          `- Set 'waistband': { 'type': 'fitted' | 'elastic', 'height_mm': 35-50 }.\n` +
+          `- Optional pockets: 'trouser_pockets': jeans 5-pocket, slash, or cargo.\n` +
+          `Enforce this exact anatomical foundation in your output JSON.`
+        );
+
+      case "sandy":
+        return (
+          `\n\n[FREESEWING BASE BLUEPRINT ANCHOR: SANDY (🥻 Falda / Skirt)]\n` +
+          `You MUST act strictly as a PURE PARAMETRIC MODIFIER of the FreeSewing 'Sandy' sloper.\n` +
+          `Anatomical Structure of Sandy:\n` +
+          `- Front Skirt: Front skirt panel with waist contouring.\n` +
+          `- Back Skirt: Back skirt panel with waist darts and zipper opening.\n` +
+          `- Waistband: Separate fitted waistband or internal waist facing.\n` +
+          `- Silhouette: A-line / flared, straight / pencil, pleated, or circle.\n` +
+          `Admitted Modifications & Rules:\n` +
+          `- Set 'base_block': 'skirt_sloper' (or 'sandy').\n` +
+          `- Set 'garment_category': 'bottom'.\n` +
+          `- Set 'hem': { 'type': 'flared' | 'straight' | 'asymmetric', 'allowance_mm': 20-30 }.\n` +
+          `- Set 'waistband': { 'type': 'fitted' | 'elastic', 'height_mm': 30-45 }.\n` +
+          `Enforce this exact anatomical foundation in your output JSON.`
+        );
+
+      case "shin":
+        return (
+          `\n\n[FREESEWING BASE BLUEPRINT ANCHOR: SHIN (👘 Kimono / Haori Anime)]\n` +
+          `You MUST act strictly as a PURE PARAMETRIC MODIFIER of the FreeSewing 'Shin' sloper.\n` +
+          `Anatomical Structure of Shin:\n` +
+          `- Front Panels: Straight vertical front panels (maemigoro) with front overlap.\n` +
+          `- Back Panel: Straight continuous back panel (ushiro migoro) without curved armholes.\n` +
+          `- Sleeves: Traditional wide rectangular Furisode sleeves (sode).\n` +
+          `- Collar: Continuous flat band collar / neckband (eri).\n` +
+          `Admitted Modifications & Rules:\n` +
+          `- Set 'base_block': 'haori_sloper' (or 'kimono_sloper' / 'shin').\n` +
+          `- Set 'garment_category': 'haori' or 'kimono'.\n` +
+          `- Set 'ease': { 'chest_ease_mm': 150-250, 'shoulder_ease_mm': 40-80 }.\n` +
+          `- Set 'sleeves': { 'type': 'kimono', 'length_type': 'full' }.\n` +
+          `- Set 'kimono_details': { 'sleeve_style': 'furisode_square', 'collar_width_mm': 50-80, 'obi_belt': true }.\n` +
+          `Enforce this exact anatomical foundation in your output JSON.`
+        );
+
+      default:
+        return (
+          `\n\n[FREESEWING BASE BLUEPRINT ANCHOR: ${key.toUpperCase()}]\n` +
+          `You MUST act strictly as a PURE PARAMETRIC MODIFIER of the base block '${key}'. Enforce this sloper anatomy and set 'base_block': '${key}' in your output JSON.`
+        );
+    }
+  }
+
+  /**
+   * Construye el prompt del usuario integrando la descripción, posibles referencias visuales y contexto de base ancla
    * @param userPrompt Descripción textual o requerimientos de la prenda
    * @param imagePath Ruta opcional a una imagen de referencia
+   * @param blueprint Bloque base ancla FreeSewing seleccionado
    */
-  public static buildUserPrompt(userPrompt: string, imagePath?: string): string {
+  public static buildUserPrompt(
+    userPrompt: string,
+    imagePath?: string,
+    blueprint?: string
+  ): string {
     let promptText = `Please generate the parametric pattern DNA (PatternDna) for the following garment concept:\n\n${userPrompt.trim()}`;
 
     if (imagePath && imagePath.trim().length > 0) {
       promptText += `\n\n[Visual Image Reference: ${imagePath.trim()}]\nAnalyze the garment silhouette, proportions, neckline, sleeve type, pockets, and hem style from the image reference and incorporate them into the parametric modifications.`;
+    }
+
+    const blueprintContext = this.buildBlueprintContext(blueprint);
+    if (blueprintContext && blueprintContext.trim().length > 0) {
+      promptText += blueprintContext;
     }
 
     promptText += `\n\nReturn strictly the JSON object.`;
@@ -213,10 +379,15 @@ ${rules}
    * Construye el prompt completo consolidado (System + User), ideal para interfaces CLI (Agy, OpenCode)
    * @param userPrompt Requerimientos del usuario
    * @param imagePath Ruta opcional a imagen de referencia
+   * @param blueprint Bloque base ancla FreeSewing seleccionado
    */
-  public static buildFullPrompt(userPrompt: string, imagePath?: string): string {
+  public static buildFullPrompt(
+    userPrompt: string,
+    imagePath?: string,
+    blueprint?: string
+  ): string {
     const systemPrompt = this.buildSystemPrompt();
-    const userMessage = this.buildUserPrompt(userPrompt, imagePath);
+    const userMessage = this.buildUserPrompt(userPrompt, imagePath, blueprint);
 
     return `${systemPrompt}\n\n====================\nUSER REQUEST:\n${userMessage}`;
   }

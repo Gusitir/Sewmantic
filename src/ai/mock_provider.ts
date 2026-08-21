@@ -530,6 +530,136 @@ export const MOCK_PRESETS: Record<string, PatternDna> = {
     ],
     estimated_fabric_meters: 3.2,
   },
+  pirate_shorts: {
+    concept_name: "straw_pirate_denim_shorts",
+    description: "Anime pirate captain denim bermuda shorts with rolled cuffs and knee length",
+    base_block: "pants_sloper",
+    garment_category: "bottom",
+    ease: {
+      chest_ease_mm: 0,
+      waist_ease_mm: 25,
+      hip_ease_mm: 45,
+      crotch_ease_mm: 20,
+      knee_ease_mm: 60,
+    },
+    modifications: {
+      trouser_legs: {
+        type: "straight",
+        length_type: "shorts",
+      },
+      trouser_hem: {
+        type: "cuffed",
+        cuff_height_mm: 35,
+      },
+      waistband: {
+        type: "fitted",
+        height_mm: 40,
+      },
+    },
+    sizing: {
+      size: "M",
+      waist_circ_mm: 820,
+      hip_circ_mm: 980,
+      target_layers: ["S", "M", "L", "XL", "2XL"],
+    },
+    tech_specs: {
+      notions: ["1x botón metálico jeans 17mm", "1x cremallera metálica 15cm", "hilo torzal contrastante"],
+      estimated_fabric_meters: 1.1,
+      seam_allowance_mm: 10,
+      hem_allowance_mm: 25,
+      fabric_type: "denim_12oz_blue",
+      fabric_width_mm: 1500,
+    },
+    notions: ["1x botón metálico jeans 17mm", "1x cremallera metálica 15cm", "hilo torzal contrastante"],
+    estimated_fabric_meters: 1.1,
+  },
+
+  sandy_skirt: {
+    concept_name: "sandy_flared_skirt",
+    description: "A-line flared skirt with fitted waistband and invisible zip",
+    base_block: "skirt_sloper",
+    garment_category: "bottom",
+    ease: {
+      chest_ease_mm: 0,
+      waist_ease_mm: 20,
+      hip_ease_mm: 60,
+    },
+    modifications: {
+      hem: {
+        type: "flared",
+        allowance_mm: 25,
+      },
+      waistband: {
+        type: "fitted",
+        height_mm: 40,
+      },
+    },
+    sizing: {
+      size: "M",
+      waist_circ_mm: 700,
+      hip_circ_mm: 960,
+      target_layers: ["XS", "S", "M", "L", "XL", "2XL", "3XL"],
+    },
+    tech_specs: {
+      notions: ["1x cremallera invisible 20cm", "hilo poliéster"],
+      estimated_fabric_meters: 1.2,
+      seam_allowance_mm: 10,
+      hem_allowance_mm: 25,
+      fabric_type: "cotton_twill",
+      fabric_width_mm: 1500,
+    },
+    notions: ["1x cremallera invisible 20cm", "hilo poliéster"],
+    estimated_fabric_meters: 1.2,
+  },
+
+  simon_shirt: {
+    concept_name: "simon_classic_shirt",
+    description: "Classic button-down shirt with collar and cuffs",
+    base_block: "menswear_torso",
+    garment_category: "top",
+    ease: {
+      chest_ease_mm: 60,
+      waist_ease_mm: 50,
+      hip_ease_mm: 45,
+      shoulder_ease_mm: 10,
+      bicep_ease_mm: 35,
+    },
+    modifications: {
+      neckline: {
+        type: "collar",
+        collar_height_mm: 38,
+      },
+      sleeves: {
+        type: "set_in",
+        length_type: "full",
+        cuff_width_mm: 60,
+      },
+      hem: {
+        type: "curved_tail",
+        drop_mm: 30,
+      },
+      closure: {
+        type: "buttons",
+        button_count: 7,
+        overlap_mm: 25,
+      },
+    },
+    sizing: {
+      size: "M",
+      chest_circ_mm: 1000,
+      target_layers: ["S", "M", "L", "XL", "2XL"],
+    },
+    tech_specs: {
+      notions: ["8x botones nacarados 12mm", "0.5m entretela cuello y puños"],
+      estimated_fabric_meters: 1.6,
+      seam_allowance_mm: 10,
+      hem_allowance_mm: 15,
+      fabric_type: "cotton_poplin",
+      fabric_width_mm: 1500,
+    },
+    notions: ["8x botones nacarados 12mm", "0.5m entretela cuello y puños"],
+    estimated_fabric_meters: 1.6,
+  },
 };
 
 /**
@@ -540,18 +670,54 @@ export class MockAiProvider implements IAiProvider {
     return "mock";
   }
 
-  public async generatePatternDna(prompt: string, _imagePath?: string): Promise<PatternDna> {
+  public async generatePatternDna(
+    prompt: string,
+    _imagePath?: string,
+    blueprint?: string
+  ): Promise<PatternDna> {
     const query = (prompt || "").toLowerCase();
+    const bp = (blueprint || "").toLowerCase().trim();
 
     let selectedPreset: PatternDna;
 
-    if (
+    if (bp && bp !== "auto" && bp !== "none") {
+      switch (bp) {
+        case "wahid":
+          selectedPreset = MOCK_PRESETS.pirate_vest;
+          break;
+        case "simon":
+          selectedPreset = MOCK_PRESETS.simon_shirt;
+          break;
+        case "brian":
+          selectedPreset =
+            query.includes("tshirt") || query.includes("camiseta") || query.includes("remera")
+              ? MOCK_PRESETS.tshirt
+              : MOCK_PRESETS.hoodie;
+          break;
+        case "bella":
+          selectedPreset = MOCK_PRESETS.anime_water_goddess_dress;
+          break;
+        case "paco":
+          selectedPreset = MOCK_PRESETS.pirate_shorts;
+          break;
+        case "sandy":
+          selectedPreset = MOCK_PRESETS.sandy_skirt;
+          break;
+        case "shin":
+          selectedPreset = MOCK_PRESETS.demon_slayer_haori_kimono;
+          break;
+        default:
+          selectedPreset = MOCK_PRESETS.vest;
+          break;
+      }
+    } else if (
       query.includes("demon_slayer") ||
       query.includes("demon slayer") ||
       query.includes("tanjiro") ||
       query.includes("haori") ||
       query.includes("furisode") ||
-      query.includes("demon_slayer_haori_kimono")
+      query.includes("demon_slayer_haori_kimono") ||
+      query.includes("shin")
     ) {
       selectedPreset = MOCK_PRESETS.demon_slayer_haori_kimono;
     } else if (
@@ -559,7 +725,8 @@ export class MockAiProvider implements IAiProvider {
       query.includes("water goddess") ||
       query.includes("aqua") ||
       query.includes("diosa del agua") ||
-      query.includes("anime_water_goddess_dress")
+      query.includes("anime_water_goddess_dress") ||
+      query.includes("bella")
     ) {
       selectedPreset = MOCK_PRESETS.anime_water_goddess_dress;
     } else if (
@@ -576,6 +743,27 @@ export class MockAiProvider implements IAiProvider {
     ) {
       selectedPreset = MOCK_PRESETS.straw_pirate_full_set;
     } else if (
+      query.includes("paco") ||
+      query.includes("short") ||
+      query.includes("bermuda") ||
+      query.includes("pantalon") ||
+      query.includes("pantalón")
+    ) {
+      selectedPreset = MOCK_PRESETS.pirate_shorts;
+    } else if (
+      query.includes("sandy") ||
+      query.includes("falda") ||
+      query.includes("skirt")
+    ) {
+      selectedPreset = MOCK_PRESETS.sandy_skirt;
+    } else if (
+      query.includes("simon") ||
+      query.includes("camisa") ||
+      query.includes("shirt")
+    ) {
+      selectedPreset = MOCK_PRESETS.simon_shirt;
+    } else if (
+      query.includes("wahid") ||
       query.includes("luffy") ||
       query.includes("lufi") ||
       query.includes("pirata") ||
@@ -585,6 +773,7 @@ export class MockAiProvider implements IAiProvider {
     ) {
       selectedPreset = MOCK_PRESETS.pirate_vest;
     } else if (
+      query.includes("brian") ||
       query.includes("hoodie") ||
       query.includes("sudadera") ||
       query.includes("capucha") ||

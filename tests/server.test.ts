@@ -59,6 +59,13 @@ describe('Servidor API REST Local y Endpoints del Motor (HTTP Native)', () => {
     expect(data.supportedProviders).toContain('api');
     expect(data.standardSizes).toEqual(['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL']);
     expect(data.supportedBlocks).toContain('menswear_torso_oversize');
+    expect(data.supportedBlocks).toContain('wahid');
+    expect(data.supportedBlocks).toContain('simon');
+    expect(data.supportedBlocks).toContain('brian');
+    expect(data.supportedBlocks).toContain('bella');
+    expect(data.supportedBlocks).toContain('paco');
+    expect(data.supportedBlocks).toContain('sandy');
+    expect(data.supportedBlocks).toContain('shin');
     expect(data.engine).toContain('FreeSewing v3');
   });
 
@@ -133,6 +140,71 @@ describe('Servidor API REST Local y Endpoints del Motor (HTTP Native)', () => {
     expect(fs.existsSync(data.files.etsyBundleZip)).toBe(true);
   });
 
+  it('POST /api/generate - respeta el parámetro base_block / blueprint (Wahid -> Chaleco)', async () => {
+    const payload = {
+      prompt: 'Chaleco de sastre clásico entallado',
+      provider: 'mock',
+      base_block: 'wahid',
+      sizes: ['M', 'L'],
+    };
+
+    const res = await fetch(`${baseUrl}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.conceptSlug).toBe('straw_pirate_adventurer_vest');
+    expect(data.dna.base_block).toBe('menswear_torso_fitted');
+    expect(data.dna.modifications.sleeves?.type).toBe('sleeveless');
+  });
+
+  it('POST /api/generate - respeta el parámetro base_block / blueprint (Paco -> Bermuda)', async () => {
+    const payload = {
+      prompt: 'Bermuda vaquera con vuelta',
+      provider: 'mock',
+      blueprint: 'paco',
+      sizes: ['M'],
+    };
+
+    const res = await fetch(`${baseUrl}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.conceptSlug).toBe('straw_pirate_denim_shorts');
+    expect(data.dna.base_block).toBe('pants_sloper');
+  });
+
+  it('POST /api/generate - respeta el parámetro base_block / blueprint (Sandy -> Falda)', async () => {
+    const payload = {
+      prompt: 'Falda evasé midi',
+      provider: 'mock',
+      base_block: 'sandy',
+      sizes: ['S', 'M'],
+    };
+
+    const res = await fetch(`${baseUrl}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.conceptSlug).toBe('sandy_flared_skirt');
+    expect(data.dna.base_block).toBe('skirt_sloper');
+    expect(data.dna.garment_category).toBe('bottom');
+  });
+
   // ==========================================
   // 5. ENDPOINT: GET /api/patterns
   // ==========================================
@@ -144,7 +216,8 @@ describe('Servidor API REST Local y Endpoints del Motor (HTTP Native)', () => {
     expect(data.count).toBeGreaterThanOrEqual(1);
     expect(Array.isArray(data.patterns)).toBe(true);
 
-    const pattern = data.patterns[0];
+    const pattern = data.patterns.find((p: any) => p.concept_slug === 'streetwear_oversize_hoodie');
+    expect(pattern).toBeDefined();
     expect(pattern.concept_slug).toBe('streetwear_oversize_hoodie');
     expect(pattern.hasSvg).toBe(true);
     expect(pattern.hasTechpack).toBe(true);

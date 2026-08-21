@@ -361,6 +361,13 @@ export async function handleGetStatus(
       'skirt_sloper',
       'kimono_sloper',
       'haori_sloper',
+      'wahid',
+      'simon',
+      'brian',
+      'bella',
+      'paco',
+      'sandy',
+      'shin',
     ],
     engine: 'FreeSewing v3 Parametric Slopers',
     outputDirectory: ctx.outputDir,
@@ -892,6 +899,9 @@ export async function handlePostGenerate(
   const {
     prompt,
     provider,
+    base_block,
+    blueprint,
+    selected_base_block,
     measurements,
     customMeasurements,
     target_layers,
@@ -902,6 +912,10 @@ export async function handlePostGenerate(
     fabricWidth_mm,
     directDna,
   } = body;
+
+  const rawBlueprint = base_block || blueprint || selected_base_block;
+  const effectiveBlueprint =
+    rawBlueprint && rawBlueprint !== 'auto' ? String(rawBlueprint).trim() : undefined;
 
   const rawImagePath = imagePath || body.image || body.imageData;
   const defaultImagePrompt =
@@ -936,6 +950,7 @@ export async function handlePostGenerate(
   if (!finalDirectDna && (!provider || provider === 'mock')) {
     const q = effectivePrompt.toLowerCase();
     if (
+      effectiveBlueprint === 'paco' ||
       q.includes('short') ||
       q.includes('bermuda') ||
       q.includes('pantalon corto') ||
@@ -958,13 +973,15 @@ export async function handlePostGenerate(
 
   const timestamp = new Date().toISOString();
   console.log(
-    `[${timestamp}] [API INCOMING /generate] Prompt: ${effectivePrompt || (finalDirectDna ? '(directDna)' : '')} | Provider: ${effectiveProvider} | Imagen adjunta: ${hasAttachedImage ? 'SÍ' : 'NO'} | Tallas: ${sizesDisplay}`
+    `[${timestamp}] [API INCOMING /generate] Prompt: ${effectivePrompt || (finalDirectDna ? '(directDna)' : '')} | Blueprint: ${effectiveBlueprint || 'auto'} | Provider: ${effectiveProvider} | Imagen adjunta: ${hasAttachedImage ? 'SÍ' : 'NO'} | Tallas: ${sizesDisplay}`
   );
 
   try {
     const pipelineReq: PipelineRequest = {
       prompt: effectivePrompt,
       provider: effectiveProvider,
+      base_block: effectiveBlueprint,
+      blueprint: effectiveBlueprint,
       outputDir: body.outputDir || ctx.outputDir,
       sizes: requestedSizes,
       customMeasurements: inputMeasurements,

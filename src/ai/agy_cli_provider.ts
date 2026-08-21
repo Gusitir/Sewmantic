@@ -34,8 +34,12 @@ export class AgyCliProvider implements IAiProvider {
   /**
    * Ejecuta el CLI agy con el prompt construido y extrae el PatternDna del resultado
    */
-  public async generatePatternDna(prompt: string, imagePath?: string): Promise<PatternDna> {
-    const fullPrompt = PromptBuilder.buildFullPrompt(prompt, imagePath);
+  public async generatePatternDna(
+    prompt: string,
+    imagePath?: string,
+    blueprint?: string
+  ): Promise<PatternDna> {
+    const fullPrompt = PromptBuilder.buildFullPrompt(prompt, imagePath, blueprint);
     const args = ["--print", "--model", this.model];
 
     try {

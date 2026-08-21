@@ -205,11 +205,12 @@ export class DirectApiProvider implements IAiProvider {
   }
 
   /**
-   * Genera el ADN Paramétrico a partir de un prompt descriptivo y una imagen opcional
+   * Genera el ADN Paramétrico a partir de un prompt descriptivo, una imagen opcional y una base ancla blueprint
    */
   public async generatePatternDna(
     prompt: string,
-    imagePath?: string
+    imagePath?: string,
+    blueprint?: string
   ): Promise<PatternDna> {
     if (!this.apiKey || this.apiKey.trim().length === 0) {
       throw new Error(
@@ -258,7 +259,7 @@ export class DirectApiProvider implements IAiProvider {
     }
 
     const systemPrompt = PromptBuilder.buildSystemPrompt();
-    const userPrompt = PromptBuilder.buildUserPrompt(effectivePrompt, undefined);
+    const userPrompt = PromptBuilder.buildUserPrompt(effectivePrompt, undefined, blueprint);
 
     const isCompletionsMode = this.baseUrl.endsWith("/completions");
     const endpoint = isCompletionsMode

@@ -83,6 +83,71 @@ describe("AI Provider Subsystem & Factory (Fireworks AI & Direct API)", () => {
       expect(fullPrompt).toContain("USER REQUEST:");
       expect(fullPrompt).toContain("Camiseta oversize con cuello mock");
     });
+
+    it("debe generar el contexto anatómico adecuado en buildBlueprintContext para cada sloper base FreeSewing", () => {
+      // 1. auto / undefined / empty
+      expect(PromptBuilder.buildBlueprintContext(undefined)).toBe("");
+      expect(PromptBuilder.buildBlueprintContext("")).toBe("");
+      expect(PromptBuilder.buildBlueprintContext("auto")).toBe("");
+
+      // 2. wahid
+      const wahidContext = PromptBuilder.buildBlueprintContext("wahid");
+      expect(wahidContext).toContain("WAHID");
+      expect(wahidContext).toContain("PURE PARAMETRIC MODIFIER");
+      expect(wahidContext).toContain("cruce de botones");
+      expect(wahidContext).toContain("armhole_facing");
+      expect(wahidContext).toContain("v_neck");
+      expect(wahidContext).toContain("curved_tail");
+
+      // 3. simon
+      const simonContext = PromptBuilder.buildBlueprintContext("simon");
+      expect(simonContext).toContain("SIMON");
+      expect(simonContext).toContain("PURE PARAMETRIC MODIFIER");
+      expect(simonContext).toContain("collar stand");
+      expect(simonContext).toContain("set_in");
+      expect(simonContext).toContain("cuff");
+
+      // 4. brian
+      const brianContext = PromptBuilder.buildBlueprintContext("brian");
+      expect(brianContext).toContain("BRIAN");
+      expect(brianContext).toContain("menswear_torso_oversize");
+      expect(brianContext).toContain("crossover");
+
+      // 5. bella
+      const bellaContext = PromptBuilder.buildBlueprintContext("bella");
+      expect(bellaContext).toContain("BELLA");
+      expect(bellaContext).toContain("womenswear_torso_fitted");
+      expect(bellaContext).toContain("sweetheart");
+
+      // 6. paco
+      const pacoContext = PromptBuilder.buildBlueprintContext("paco");
+      expect(pacoContext).toContain("PACO");
+      expect(pacoContext).toContain("pants_sloper");
+      expect(pacoContext).toContain("cuffed");
+
+      // 7. sandy
+      const sandyContext = PromptBuilder.buildBlueprintContext("sandy");
+      expect(sandyContext).toContain("SANDY");
+      expect(sandyContext).toContain("skirt_sloper");
+      expect(sandyContext).toContain("flared");
+
+      // 8. shin
+      const shinContext = PromptBuilder.buildBlueprintContext("shin");
+      expect(shinContext).toContain("SHIN");
+      expect(shinContext).toContain("haori_sloper");
+      expect(shinContext).toContain("furisode_square");
+    });
+
+    it("debe inyectar la directiva del blueprint en buildUserPrompt y buildFullPrompt", () => {
+      const userPrompt = PromptBuilder.buildUserPrompt("Chaleco cosplay", undefined, "wahid");
+      expect(userPrompt).toContain("Chaleco cosplay");
+      expect(userPrompt).toContain("[FREESEWING BASE BLUEPRINT ANCHOR: WAHID");
+      expect(userPrompt).toContain("PURE PARAMETRIC MODIFIER");
+
+      const fullPrompt = PromptBuilder.buildFullPrompt("Pantalón anime", undefined, "paco");
+      expect(fullPrompt).toContain("Pantalón anime");
+      expect(fullPrompt).toContain("[FREESEWING BASE BLUEPRINT ANCHOR: PACO");
+    });
   });
 
   describe("2. MockAiProvider (Determinista Offline)", () => {
@@ -138,6 +203,42 @@ describe("AI Provider Subsystem & Factory (Fireworks AI & Direct API)", () => {
 
       const dna2 = await mockProvider.generatePatternDna("hoodie");
       expect(dna2.ease.chest_ease_mm).toBe(150);
+    });
+
+    it("debe respetar el bloque base ancla (blueprint) explícito en MockAiProvider", async () => {
+      // 1. Wahid -> Chaleco
+      const wahidDna = await mockProvider.generatePatternDna("Prenda personalizada", undefined, "wahid");
+      expect(wahidDna.concept_name).toBe("straw_pirate_adventurer_vest");
+      expect(wahidDna.modifications.sleeves?.type).toBe("sleeveless");
+
+      // 2. Paco -> Bermuda/Pantalón
+      const pacoDna = await mockProvider.generatePatternDna("Prenda personalizada", undefined, "paco");
+      expect(pacoDna.base_block).toBe("pants_sloper");
+      expect(pacoDna.garment_category).toBe("bottom");
+
+      // 3. Sandy -> Falda
+      const sandyDna = await mockProvider.generatePatternDna("Prenda personalizada", undefined, "sandy");
+      expect(sandyDna.base_block).toBe("skirt_sloper");
+      expect(sandyDna.garment_category).toBe("bottom");
+
+      // 4. Shin -> Haori/Kimono
+      const shinDna = await mockProvider.generatePatternDna("Prenda personalizada", undefined, "shin");
+      expect(shinDna.base_block).toBe("haori_sloper");
+      expect(shinDna.garment_category).toBe("haori");
+
+      // 5. Simon -> Camisa
+      const simonDna = await mockProvider.generatePatternDna("Prenda personalizada", undefined, "simon");
+      expect(simonDna.base_block).toBe("menswear_torso");
+      expect(simonDna.modifications.neckline?.type).toBe("collar");
+
+      // 6. Bella -> Vestido
+      const bellaDna = await mockProvider.generatePatternDna("Prenda personalizada", undefined, "bella");
+      expect(bellaDna.base_block).toBe("dress_sloper");
+      expect(bellaDna.garment_category).toBe("dress");
+
+      // 7. Brian -> Torso oversize
+      const brianDna = await mockProvider.generatePatternDna("Prenda personalizada", undefined, "brian");
+      expect(brianDna.base_block).toBe("menswear_torso_oversize");
     });
   });
 
@@ -605,6 +706,55 @@ Bloque base: menswear_torso_oversize.
       await expect(provider.generatePatternDna("Test")).rejects.toThrow(
         /No content returned in API completion choices/
       );
+    });
+
+    it("debe inyectar el bloque ancla blueprint en el mensaje enviado a la API", async () => {
+      const provider = new DirectApiProvider({
+        apiKey: "fw-test-secret-key",
+        baseUrl: "https://api.fireworks.ai/inference/v1",
+        model: "accounts/fireworks/models/qwen3p8-max",
+      });
+
+      const mockResponseData = {
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                concept_name: "custom_tailored_vest",
+                base_block: "menswear_torso_fitted",
+                ease: { chest_ease_mm: 40 },
+                modifications: {
+                  sleeves: { type: "sleeveless" },
+                  neckline: { type: "v_neck", depth_mm: 120 },
+                  hem: { type: "curved_tail", drop_mm: 40 },
+                  closure: { type: "buttons", button_count: 4 },
+                },
+              }),
+            },
+          },
+        ],
+      };
+
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => mockResponseData,
+      } as Response);
+
+      const result = await provider.generatePatternDna(
+        "Chaleco elegante de gala",
+        undefined,
+        "wahid"
+      );
+
+      expect(result.concept_name).toBe("custom_tailored_vest");
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+      const [, options] = fetchSpy.mock.calls[0];
+      const requestBody = JSON.parse(options?.body as string);
+      const userMessage = requestBody.messages[1].content;
+      expect(userMessage).toContain("Chaleco elegante de gala");
+      expect(userMessage).toContain("[FREESEWING BASE BLUEPRINT ANCHOR: WAHID");
+      expect(userMessage).toContain("PURE PARAMETRIC MODIFIER");
     });
 
     it("debe lanzar un error claro cuando la API responde con un código de error HTTP", async () => {

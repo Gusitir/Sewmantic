@@ -144,6 +144,9 @@ export interface PipelineRequest {
   prompt: string;
   /** Ruta opcional a una imagen de referencia o boceto */
   imagePath?: string;
+  /** Bloque base ancla o blueprint de FreeSewing (wahid, simon, brian, bella, paco, sandy, shin, etc.) */
+  base_block?: string;
+  blueprint?: string;
   /** Proveedor de IA ('mock', 'agy', 'opencode', 'api' / 'direct_api'). Por defecto AI_PROVIDER o 'agy' */
   provider?: string;
   /** Configuración técnica opcional del proveedor de IA */
@@ -215,6 +218,8 @@ export async function generatePatternPipeline(
   const {
     prompt,
     imagePath,
+    base_block,
+    blueprint,
     provider: providerName,
     providerConfig,
     outputDir = 'output',
@@ -223,6 +228,8 @@ export async function generatePatternPipeline(
     directDna,
     customMeasurements: inputCustomMeasurements,
   } = request;
+
+  const effectiveBlueprint = blueprint || base_block;
 
   // ==========================================
   // 1. OBTENCIÓN DE ADN PARAMÉTRICO
@@ -236,7 +243,7 @@ export async function generatePatternPipeline(
       throw new Error('Pipeline request requires a non-empty prompt');
     }
     const aiProvider = AiProviderFactory.create(providerName, providerConfig);
-    rawDna = await aiProvider.generatePatternDna(prompt, imagePath);
+    rawDna = await aiProvider.generatePatternDna(prompt, imagePath, effectiveBlueprint);
   }
 
   // ==========================================

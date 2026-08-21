@@ -34,8 +34,12 @@ export class OpenCodeCliProvider implements IAiProvider {
   /**
    * Ejecuta el CLI opencode con el prompt consolidado y extrae el PatternDna
    */
-  public async generatePatternDna(prompt: string, imagePath?: string): Promise<PatternDna> {
-    const fullPrompt = PromptBuilder.buildFullPrompt(prompt, imagePath);
+  public async generatePatternDna(
+    prompt: string,
+    imagePath?: string,
+    blueprint?: string
+  ): Promise<PatternDna> {
+    const fullPrompt = PromptBuilder.buildFullPrompt(prompt, imagePath, blueprint);
     const args = ["run", "--model", this.model];
 
     try {

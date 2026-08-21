@@ -41,6 +41,7 @@ const providerBadge = document.getElementById('providerBadge');
 // Elementos del formulario generador
 const generateForm = document.getElementById('generateForm');
 const promptInput = document.getElementById('promptInput');
+const baseBlockSelect = document.getElementById('baseBlockSelect');
 const providerSelect = document.getElementById('providerSelect');
 const generateBtn = document.getElementById('generateBtn');
 const generateBtnText = document.getElementById('generateBtnText');
@@ -416,6 +417,23 @@ async function loadPresetsCatalog() {
 
           if (promptInput) {
             promptInput.value = p.description || p.name;
+          }
+
+          // Sincronizar selector de base ancla según preset si aplica
+          if (baseBlockSelect) {
+            if (p.id === 'vest' || p.id === 'pirate_vest') {
+              baseBlockSelect.value = 'wahid';
+            } else if (p.id === 'tshirt' || p.id === 'hoodie') {
+              baseBlockSelect.value = 'brian';
+            } else if (p.id === 'dress' || p.id === 'anime_water_goddess_dress') {
+              baseBlockSelect.value = 'bella';
+            } else if (p.id === 'pirate_shorts') {
+              baseBlockSelect.value = 'paco';
+            } else if (p.id === 'demon_slayer_haori_kimono') {
+              baseBlockSelect.value = 'shin';
+            } else {
+              baseBlockSelect.value = 'auto';
+            }
           }
 
           if (p.target_layers && p.target_layers.length > 0) {
@@ -975,6 +993,7 @@ function initGenerateForm() {
     const prompt = rawPrompt || (imagePath ? defaultImagePrompt : '');
 
     const provider = providerSelect?.value || 'api';
+    const baseBlock = baseBlockSelect?.value || 'auto';
     const sizes = state.selectedSizes;
     const customMeasurements = state.customMeasurements;
 
@@ -993,6 +1012,8 @@ function initGenerateForm() {
         body: JSON.stringify({
           prompt,
           provider,
+          base_block: baseBlock,
+          blueprint: baseBlock,
           sizes,
           customMeasurements,
           imagePath,

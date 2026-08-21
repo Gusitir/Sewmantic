@@ -31,12 +31,17 @@ export interface ProcessResult {
  */
 export interface IAiProvider {
   /**
-   * Genera el ADN Paramétrico a partir de un prompt descriptivo y una ruta opcional de imagen de referencia
+   * Genera el ADN Paramétrico a partir de un prompt descriptivo, una ruta opcional de imagen y un bloque base blueprint opcional
    * @param prompt Instrucciones o descripción de la prenda deseada
    * @param imagePath Ruta absoluta o relativa al archivo de imagen de referencia (opcional)
+   * @param blueprint Bloque base ancla FreeSewing seleccionado ('wahid', 'simon', 'brian', 'bella', 'paco', 'sandy', 'shin', etc.)
    * @returns Promesa con el objeto PatternDna validado según el esquema Zod
    */
-  generatePatternDna(prompt: string, imagePath?: string): Promise<PatternDna>;
+  generatePatternDna(
+    prompt: string,
+    imagePath?: string,
+    blueprint?: string
+  ): Promise<PatternDna>;
 
   /**
    * Retorna el nombre identificador único del proveedor
