@@ -5,7 +5,8 @@
  *
  * Convierte patrones paramétricos 2D en geometría 3D anatómica con curvatura realista,
  * mapeo UV, normales suaves y materiales PBR textiles (Lino, Denim, Algodón, Seda, etc.).
- * Soporta generación binaria directa glTF 2.0 (.glb) y ejecución headless con Blender CLI.
+ * Soporta ensamblado multi-pieza (Top + Bottom / Conjuntos coordinados de 2 piezas) y multi-material
+ * en glTF 2.0 binario (.glb) nativo y ejecución headless con Blender CLI.
  */
 
 import fs from 'node:fs';
@@ -151,6 +152,7 @@ export interface Garment3DOptions {
   concept_name?: string;
   size?: StandardSize;
   fabric?: string | FabricSpec;
+  materials?: FabricPBR[];
   color?: string | [number, number, number] | [number, number, number, number];
   roughness?: number;
   metallic?: number;
@@ -176,6 +178,12 @@ export interface Garment3DResult {
     roughness: number;
     metallic: number;
   };
+  materials?: Array<{
+    name: string;
+    baseColor: [number, number, number, number];
+    roughness: number;
+    metallic: number;
+  }>;
   filePath?: string;
   isBlenderGenerated: boolean;
 }
@@ -221,6 +229,24 @@ export function parseColorToRgba(
   if (namedColors[str]) {
     return namedColors[str];
   }
+
+  // Búsqueda por subcadena / palabras clave en descripciones compuestas
+  if (str.includes('vermilion') || str.includes('bermellon') || str.includes('bermellón')) return namedColors.vermilion;
+  if (str.includes('red') || str.includes('rojo') || str.includes('escarlata') || str.includes('carmesi') || str.includes('carmesí')) return namedColors.red;
+  if (str.includes('navy') || str.includes('marino')) return namedColors.navy;
+  if (str.includes('indigo') || str.includes('índigo')) return namedColors.indigo;
+  if (str.includes('blue') || str.includes('azul')) return namedColors.blue;
+  if (str.includes('white') || str.includes('blanco')) return namedColors.white;
+  if (str.includes('black') || str.includes('negro')) return namedColors.black;
+  if (str.includes('charcoal') || str.includes('carbon') || str.includes('carbón')) return namedColors.charcoal;
+  if (str.includes('beige') || str.includes('arena')) return namedColors.beige;
+  if (str.includes('brown') || str.includes('marron') || str.includes('marrón') || str.includes('cafe') || str.includes('café')) return namedColors.brown;
+  if (str.includes('green') || str.includes('verde')) return namedColors.green;
+  if (str.includes('olive') || str.includes('oliva')) return namedColors.olive;
+  if (str.includes('yellow') || str.includes('amarillo')) return namedColors.yellow;
+  if (str.includes('purple') || str.includes('morado') || str.includes('purpura') || str.includes('púrpura')) return namedColors.purple;
+  if (str.includes('pink') || str.includes('rosa')) return namedColors.pink;
+  if (str.includes('gold') || str.includes('dorado') || str.includes('oro')) return namedColors.gold;
 
   if (str.startsWith('#')) {
     const hex = str.slice(1);
@@ -300,6 +326,72 @@ export function resolveFabricPbr(options: Garment3DOptions): FabricPBR {
 }
 
 /**
+ * Resuelve la lista completa de materiales PBR textiles a partir de opciones,
+ * especificaciones de ADN (multi-tela / sub_garments) o presets estándar.
+ */
+export function resolveGarmentMaterials(options: Garment3DOptions): FabricPBR[] {
+  if (options.materials && options.materials.length > 0) {
+    return options.materials;
+  }
+
+  const dna = options.dna;
+  const resultMaterials: FabricPBR[] = [];
+
+  // 1. Caso multi-tela explícito en fabric_details (main_fabric y secondary_fabric)
+  if (dna?.fabric_details) {
+    const mainFab = dna.fabric_details.main_fabric;
+    const secFab = dna.fabric_details.secondary_fabric;
+
+    if (mainFab) {
+      const topPbr = resolveFabricPbr({
+        fabric: mainFab.type || mainFab.name,
+        color: mainFab.color,
+      });
+      resultMaterials.push(topPbr);
+    }
+
+    if (secFab) {
+      const bottomPbr = resolveFabricPbr({
+        fabric: secFab.type || secFab.name,
+        color: secFab.color,
+      });
+      resultMaterials.push(bottomPbr);
+    }
+  }
+
+  // 2. Caso sub-garments (conjunto de 2 piezas top + bottom)
+  if (resultMaterials.length === 0 && dna?.sub_garments) {
+    const topGarment = dna.sub_garments.top;
+    const bottomGarment = dna.sub_garments.bottom;
+
+    if (topGarment) {
+      const topPbr = resolveFabricPbr({
+        dna: topGarment,
+        fabric: topGarment.tech_specs?.fabric_type || topGarment.fabric_details?.main_fabric?.type,
+        color: topGarment.fabric_details?.main_fabric?.color,
+      });
+      resultMaterials.push(topPbr);
+    }
+
+    if (bottomGarment) {
+      const bottomPbr = resolveFabricPbr({
+        dna: bottomGarment,
+        fabric: bottomGarment.tech_specs?.fabric_type || bottomGarment.fabric_details?.main_fabric?.type,
+        color: bottomGarment.fabric_details?.main_fabric?.color,
+      });
+      resultMaterials.push(bottomPbr);
+    }
+  }
+
+  // 3. Caso por defecto o único material
+  if (resultMaterials.length === 0) {
+    resultMaterials.push(resolveFabricPbr(options));
+  }
+
+  return resultMaterials;
+}
+
+/**
  * Busca la ruta del ejecutable de Blender en el sistema
  */
 export function findBlenderExecutable(): string | null {
@@ -362,9 +454,6 @@ export function detectBlenderCli(): { available: boolean; path: string | null } 
 }
 
 /**
- * Representación interna de un panel 3D triangulado
- */
-/**
  * Representación de un panel 3D o malla completa consolidada
  */
 export interface Panel3DMesh {
@@ -373,6 +462,29 @@ export interface Panel3DMesh {
   normals: number[]; // nx, ny, nz
   uvs: number[]; // u, v
   indices: number[]; // triangle indices
+}
+
+/**
+ * Sub-malla o primitiva 3D para soporte multi-material y multi-panel en glTF 2.0
+ */
+export interface GarmentPrimitive3D {
+  name?: string;
+  positions: number[];
+  normals: number[];
+  uvs: number[];
+  indices: number[];
+  vertexCount: number;
+  triangleCount: number;
+  bounds: {
+    minX: number;
+    minY: number;
+    minZ: number;
+    maxX: number;
+    maxY: number;
+    maxZ: number;
+  };
+  materialIndex: number;
+  fabric?: FabricPBR;
 }
 
 /**
@@ -399,16 +511,132 @@ export interface GarmentMesh3D {
     indexOffset: number;
     vertexCount: number;
     indexCount: number;
+    materialIndex?: number;
   }>;
+  primitives?: GarmentPrimitive3D[];
+  materials?: FabricPBR[];
+}
+
+/**
+ * Calcula normales suaves (Smooth Normals) ponderadas por área para una geometría triangulada
+ */
+export function computeSmoothNormals(positions: number[], indices: number[]): number[] {
+  const totalVertices = positions.length / 3;
+  const normAcc = new Float32Array(totalVertices * 3);
+
+  for (let t = 0; t < indices.length; t += 3) {
+    const idx0 = indices[t];
+    const idx1 = indices[t + 1];
+    const idx2 = indices[t + 2];
+
+    const p0x = positions[idx0 * 3];
+    const p0y = positions[idx0 * 3 + 1];
+    const p0z = positions[idx0 * 3 + 2];
+
+    const p1x = positions[idx1 * 3];
+    const p1y = positions[idx1 * 3 + 1];
+    const p1z = positions[idx1 * 3 + 2];
+
+    const p2x = positions[idx2 * 3];
+    const p2y = positions[idx2 * 3 + 1];
+    const p2z = positions[idx2 * 3 + 2];
+
+    // Vectores de arista: E1 = P1 - P0, E2 = P2 - P0
+    const e1x = p1x - p0x;
+    const e1y = p1y - p0y;
+    const e1z = p1z - p0z;
+
+    const e2x = p2x - p0x;
+    const e2y = p2y - p0y;
+    const e2z = p2z - p0z;
+
+    // Producto cruzado E1 x E2 (magnitud proporcional a 2x área)
+    const cpx = e1y * e2z - e1z * e2y;
+    const cpy = e1z * e2x - e1x * e2z;
+    const cpz = e1x * e2y - e1y * e2x;
+
+    normAcc[idx0 * 3] += cpx;
+    normAcc[idx0 * 3 + 1] += cpy;
+    normAcc[idx0 * 3 + 2] += cpz;
+
+    normAcc[idx1 * 3] += cpx;
+    normAcc[idx1 * 3 + 1] += cpy;
+    normAcc[idx1 * 3 + 2] += cpz;
+
+    normAcc[idx2 * 3] += cpx;
+    normAcc[idx2 * 3 + 1] += cpy;
+    normAcc[idx2 * 3 + 2] += cpz;
+  }
+
+  const normals: number[] = new Array(totalVertices * 3);
+  for (let k = 0; k < totalVertices; k++) {
+    const nxVal = normAcc[k * 3];
+    const nyVal = normAcc[k * 3 + 1];
+    const nzVal = normAcc[k * 3 + 2];
+    const len = Math.sqrt(nxVal * nxVal + nyVal * nyVal + nzVal * nzVal);
+
+    if (len > 1e-6) {
+      normals[k * 3] = nxVal / len;
+      normals[k * 3 + 1] = nyVal / len;
+      normals[k * 3 + 2] = nzVal / len;
+    } else {
+      normals[k * 3] = 0;
+      normals[k * 3 + 1] = 0;
+      normals[k * 3 + 2] = 1;
+    }
+  }
+
+  return normals;
+}
+
+/**
+ * Calcula las cotas tridimensionales mínimas y máximas de un conjunto de posiciones
+ */
+export function compute3DBounds(positions: number[]): {
+  minX: number;
+  minY: number;
+  minZ: number;
+  maxX: number;
+  maxY: number;
+  maxZ: number;
+} {
+  const totalVertices = positions.length / 3;
+  let minX = Infinity;
+  let minY = Infinity;
+  let minZ = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let maxZ = -Infinity;
+
+  for (let i = 0; i < totalVertices; i++) {
+    const x = positions[i * 3];
+    const y = positions[i * 3 + 1];
+    const z = positions[i * 3 + 2];
+
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (z < minZ) minZ = z;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+    if (z > maxZ) maxZ = z;
+  }
+
+  if (totalVertices === 0) {
+    minX = minY = minZ = maxX = maxY = maxZ = 0;
+  }
+
+  return { minX, minY, minZ, maxX, maxY, maxZ };
 }
 
 /**
  * Genera la malla 3D anatómica envolvente directa a partir de piezas 2D reales de moldería FreeSewing
  * (True-to-Pattern Meshing) mediante triangulación determinista y proyección espacial paramétrica.
+ * Soporta conjuntos coordinados de 2 piezas (Top + Bottom) y prendas multi-material.
  */
 export function generateTrueToPatternMesh(
   pattern: ModifiedPatternResult,
-  dna?: PatternDna
+  dna?: PatternDna,
+  explicitMaterials?: FabricPBR[]
 ): GarmentMesh3D {
   let resolvedParts = pattern.parts;
   if (!resolvedParts || Object.keys(resolvedParts).length === 0) {
@@ -437,16 +665,55 @@ export function generateTrueToPatternMesh(
     resolvedParts = { front: fallbackPart };
   }
 
-  const combinedPositions: number[] = [];
-  const combinedUvs: number[] = [];
-  const combinedIndices: number[] = [];
-  const panelsSummary: Array<{
-    name: string;
-    vertexOffset: number;
-    indexOffset: number;
-    vertexCount: number;
-    indexCount: number;
-  }> = [];
+  // Resolver materiales para asignación multi-material
+  const materials =
+    explicitMaterials && explicitMaterials.length > 0
+      ? explicitMaterials
+      : dna
+      ? resolveGarmentMaterials({ dna })
+      : [resolveFabricPbr({})];
+  const hasMultipleMaterials = materials.length > 1;
+
+  // Detectar tipología de piezas presentes en el patrón
+  const partNames = Object.keys(resolvedParts);
+  const hasLegs = partNames.some(
+    (p) =>
+      p.toLowerCase().includes('leg') ||
+      p.toLowerCase().includes('pant') ||
+      p.toLowerCase().includes('bermuda') ||
+      p.toLowerCase().includes('trouser') ||
+      p.toLowerCase().includes('shorts')
+  );
+
+  // Almacenamiento agrupado por primitiva / material
+  const primBuckets: Map<
+    number,
+    {
+      positions: number[];
+      uvs: number[];
+      indices: number[];
+      panels: Array<{
+        name: string;
+        vertexOffset: number;
+        indexOffset: number;
+        vertexCount: number;
+        indexCount: number;
+        materialIndex: number;
+      }>;
+    }
+  > = new Map();
+
+  const getBucket = (matIdx: number) => {
+    if (!primBuckets.has(matIdx)) {
+      primBuckets.set(matIdx, {
+        positions: [],
+        uvs: [],
+        indices: [],
+        panels: [],
+      });
+    }
+    return primBuckets.get(matIdx)!;
+  };
 
   // Parámetros antropométricos estándar (en metros)
   const SHOULDER_Y = 1.45;
@@ -503,7 +770,7 @@ export function generateTrueToPatternMesh(
       lowerName.includes('back_bodice') ||
       lowerName.includes('back_dress') ||
       lowerName.includes('back_torso') ||
-      (lowerName.includes('back') && !lowerName.includes('leg') && !lowerName.includes('skirt'));
+      (lowerName.includes('back') && !lowerName.includes('leg') && !lowerName.includes('skirt') && !lowerName.includes('pocket'));
 
     const isFurisodeSleeve = lowerName.includes('furisode');
     const isSleeve = lowerName.includes('sleeve') && !lowerName.includes('furisode');
@@ -519,11 +786,24 @@ export function generateTrueToPatternMesh(
     const isCollar = lowerName.includes('collar');
     const isPocket = lowerName.includes('pocket');
 
+    // Determinar si pertenece a la prenda inferior (Bottom) para asignación de material
+    const isBottomPart =
+      isFrontLeg ||
+      isBackLeg ||
+      lowerName.includes('leg') ||
+      lowerName.includes('pant') ||
+      lowerName.includes('trouser') ||
+      lowerName.includes('bermuda') ||
+      lowerName.includes('shorts') ||
+      (isWaistband && hasLegs) ||
+      (isPocket && hasLegs && !lowerName.includes('vest') && !lowerName.includes('chest')) ||
+      (lowerName.includes('cuff') && hasLegs);
+
+    const materialIndex = isBottomPart && hasMultipleMaterials ? 1 : 0;
+    const bucket = getBucket(materialIndex);
+
     const isFullSpan = minX < -10 && maxX > 10;
     const onFold = part.onFold !== false && !isFullSpan;
-
-    const panelVertexStart = combinedPositions.length / 3;
-    const panelIndexStart = combinedIndices.length;
 
     const panelPositions: number[] = [];
     const panelUvs: number[] = [];
@@ -681,7 +961,7 @@ export function generateTrueToPatternMesh(
         panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
       }
     } else if (isFrontLeg) {
-      // Pierna Frontal Pantalón (Cilindro anatómico envolvente)
+      // Pierna Frontal Pantalón/Bermuda (Cilindro anatómico envolvente)
       for (let k = 0; k < outline.length; k++) {
         const pt = outline[k];
         const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
@@ -718,7 +998,7 @@ export function generateTrueToPatternMesh(
         panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
       }
     } else if (isBackLeg) {
-      // Pierna Trasera Pantalón
+      // Pierna Trasera Pantalón/Bermuda
       for (let k = 0; k < outline.length; k++) {
         const pt = outline[k];
         const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
@@ -875,19 +1155,52 @@ export function generateTrueToPatternMesh(
         }
       }
     } else if (isPocket) {
-      // Bolsillo frontal adosado
-      for (let k = 0; k < outline.length; k++) {
-        const pt = outline[k];
-        const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
-        const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
-        const X = 0.08 + (pt.x - minX) / 1000;
-        const Y = 1.15 - (pt.y - minY) / 1000;
-        const Z = Z_CHEST + 0.035;
+      if (isBottomPart) {
+        // Bolsillo trasero de pantalón/bermuda
+        for (let k = 0; k < outline.length; k++) {
+          const pt = outline[k];
+          const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+          const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+          const X = 0.10 + ((pt.x - minX) / width_mm) * 0.08;
+          const Y = WAIST_Y - 0.10 - (pt.y - minY) / 1000;
+          const Z = -0.11;
 
-        panelPositions.push(X, Y, Z);
-        panelUvs.push(u, v);
+          panelPositions.push(X, Y, Z);
+          panelUvs.push(u, v);
+        }
+        panelIndices.push(...baseIndices);
+
+        // Bolsillo trasero izquierdo
+        const vOffset = outline.length;
+        for (let k = 0; k < outline.length; k++) {
+          const pt = outline[k];
+          const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+          const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+          const X = -0.10 - ((pt.x - minX) / width_mm) * 0.08;
+          const Y = WAIST_Y - 0.10 - (pt.y - minY) / 1000;
+          const Z = -0.11;
+
+          panelPositions.push(X, Y, Z);
+          panelUvs.push(1.0 - u, v);
+        }
+        for (let i = 0; i < baseIndices.length; i += 3) {
+          panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
+        }
+      } else {
+        // Bolsillo frontal de chaleco/torso
+        for (let k = 0; k < outline.length; k++) {
+          const pt = outline[k];
+          const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+          const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+          const X = 0.08 + (pt.x - minX) / 1000;
+          const Y = 1.15 - (pt.y - minY) / 1000;
+          const Z = Z_CHEST + 0.035;
+
+          panelPositions.push(X, Y, Z);
+          panelUvs.push(u, v);
+        }
+        panelIndices.push(...baseIndices);
       }
-      panelIndices.push(...baseIndices);
     } else if (isWaistband) {
       // Cinturón / Pretina toroidal
       for (let k = 0; k < outline.length; k++) {
@@ -918,15 +1231,65 @@ export function generateTrueToPatternMesh(
         panelUvs.push(u, v);
       }
       panelIndices.push(...baseIndices);
+    } else if (lowerName.includes('cuff')) {
+      if (isBottomPart) {
+        // Dobladillo / Puño de pernera (cuff bermuda)
+        for (let k = 0; k < outline.length; k++) {
+          const pt = outline[k];
+          const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+          const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+          const theta = (u - 0.5) * Math.PI;
+          const X = LEG_CENTER_X + 0.085 * Math.sin(theta);
+          const Y = WAIST_Y - 0.48 - (pt.y - minY) / 1000;
+          const Z = 0.085 * Math.cos(theta) + 0.015;
+
+          panelPositions.push(X, Y, Z);
+          panelUvs.push(u, v);
+        }
+        panelIndices.push(...baseIndices);
+
+        // Puño izquierdo espejado
+        const vOffset = outline.length;
+        for (let k = 0; k < outline.length; k++) {
+          const pt = outline[k];
+          const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+          const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+          const theta = (u - 0.5) * Math.PI;
+          const X = -LEG_CENTER_X - 0.085 * Math.sin(theta);
+          const Y = WAIST_Y - 0.48 - (pt.y - minY) / 1000;
+          const Z = 0.085 * Math.cos(theta) + 0.015;
+
+          panelPositions.push(X, Y, Z);
+          panelUvs.push(1.0 - u, v);
+        }
+        for (let i = 0; i < baseIndices.length; i += 3) {
+          panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
+        }
+      } else {
+        // Puño de manga
+        for (let k = 0; k < outline.length; k++) {
+          const pt = outline[k];
+          const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
+          const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
+          const X = 0.23 + (pt.x - minX) / 1000;
+          const Y = SHOULDER_Y - 0.45 - (pt.y - minY) / 1000;
+          const Z = 0.05;
+
+          panelPositions.push(X, Y, Z);
+          panelUvs.push(u, v);
+        }
+        panelIndices.push(...baseIndices);
+      }
     } else {
       // Panel genérico proyectado
+      const baseY = isBottomPart ? WAIST_Y : 1.20;
       for (let k = 0; k < outline.length; k++) {
         const pt = outline[k];
         const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
         const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
         const theta = (u - 0.5) * ((60 * Math.PI) / 180);
         const X = (pt.x - minX) / 1000 - W_half / 2;
-        const Y = 1.20 - (pt.y - minY) / 1000;
+        const Y = baseY - (pt.y - minY) / 1000;
         const Z = 0.05 * Math.cos(theta);
 
         panelPositions.push(X, Y, Z);
@@ -935,186 +1298,312 @@ export function generateTrueToPatternMesh(
       panelIndices.push(...baseIndices);
     }
 
-    // 4. Agregar a los buffers combinados consolidando desplazamientos de vértices
-    const globalVOffset = combinedPositions.length / 3;
-    combinedPositions.push(...panelPositions);
-    combinedUvs.push(...panelUvs);
+    // 4. Agregar al bucket de la primitiva correspondiente
+    const localVOffset = bucket.positions.length / 3;
+    const panelVertexStart = localVOffset;
+    const panelIndexStart = bucket.indices.length;
+
+    bucket.positions.push(...panelPositions);
+    bucket.uvs.push(...panelUvs);
 
     for (let t = 0; t < panelIndices.length; t++) {
-      combinedIndices.push(panelIndices[t] + globalVOffset);
+      bucket.indices.push(panelIndices[t] + localVOffset);
     }
 
-    panelsSummary.push({
+    bucket.panels.push({
       name: partName,
       vertexOffset: panelVertexStart,
       indexOffset: panelIndexStart,
       vertexCount: panelPositions.length / 3,
       indexCount: panelIndices.length,
+      materialIndex,
     });
   }
 
-  // 5. Cálculo de normales suaves analíticas (Smooth Normals) ponderadas por área de cara
-  const totalVertices = combinedPositions.length / 3;
-  const normAcc = new Float32Array(totalVertices * 3);
+  // 5. Construcción de primitivas 3D calculando normales suaves por primitiva
+  const primitives: GarmentPrimitive3D[] = [];
+  const sortedMatIndices = Array.from(primBuckets.keys()).sort((a, b) => a - b);
 
-  for (let t = 0; t < combinedIndices.length; t += 3) {
-    const idx0 = combinedIndices[t];
-    const idx1 = combinedIndices[t + 1];
-    const idx2 = combinedIndices[t + 2];
+  const combinedPositions: number[] = [];
+  const combinedNormals: number[] = [];
+  const combinedUvs: number[] = [];
+  const combinedIndices: number[] = [];
+  const panelsSummary: Array<{
+    name: string;
+    vertexOffset: number;
+    indexOffset: number;
+    vertexCount: number;
+    indexCount: number;
+    materialIndex?: number;
+  }> = [];
 
-    const p0x = combinedPositions[idx0 * 3];
-    const p0y = combinedPositions[idx0 * 3 + 1];
-    const p0z = combinedPositions[idx0 * 3 + 2];
+  for (const matIdx of sortedMatIndices) {
+    const bucket = primBuckets.get(matIdx)!;
+    if (bucket.positions.length === 0) continue;
 
-    const p1x = combinedPositions[idx1 * 3];
-    const p1y = combinedPositions[idx1 * 3 + 1];
-    const p1z = combinedPositions[idx1 * 3 + 2];
+    const primNormals = computeSmoothNormals(bucket.positions, bucket.indices);
+    const primBounds = compute3DBounds(bucket.positions);
 
-    const p2x = combinedPositions[idx2 * 3];
-    const p2y = combinedPositions[idx2 * 3 + 1];
-    const p2z = combinedPositions[idx2 * 3 + 2];
+    const primName =
+      matIdx === 0
+        ? 'Top_Garment_Primitive'
+        : matIdx === 1
+        ? 'Bottom_Garment_Primitive'
+        : `Garment_Primitive_${matIdx}`;
 
-    // Vectores de arista: E1 = P1 - P0, E2 = P2 - P0
-    const e1x = p1x - p0x;
-    const e1y = p1y - p0y;
-    const e1z = p1z - p0z;
+    const primitive: GarmentPrimitive3D = {
+      name: primName,
+      positions: bucket.positions,
+      normals: primNormals,
+      uvs: bucket.uvs,
+      indices: bucket.indices,
+      vertexCount: bucket.positions.length / 3,
+      triangleCount: bucket.indices.length / 3,
+      bounds: primBounds,
+      materialIndex: matIdx,
+      fabric: materials[matIdx] || materials[0],
+    };
+    primitives.push(primitive);
 
-    const e2x = p2x - p0x;
-    const e2y = p2y - p0y;
-    const e2z = p2z - p0z;
+    // Integrar en arrays consolidados globales
+    const globalVOffset = combinedPositions.length / 3;
+    const globalIOffset = combinedIndices.length;
 
-    // Producto cruzado E1 x E2 (magnitud proporcional a 2x área)
-    const cpx = e1y * e2z - e1z * e2y;
-    const cpy = e1z * e2x - e1x * e2z;
-    const cpz = e1x * e2y - e1y * e2x;
+    combinedPositions.push(...bucket.positions);
+    combinedNormals.push(...primNormals);
+    combinedUvs.push(...bucket.uvs);
 
-    normAcc[idx0 * 3] += cpx;
-    normAcc[idx0 * 3 + 1] += cpy;
-    normAcc[idx0 * 3 + 2] += cpz;
+    for (let t = 0; t < bucket.indices.length; t++) {
+      combinedIndices.push(bucket.indices[t] + globalVOffset);
+    }
 
-    normAcc[idx1 * 3] += cpx;
-    normAcc[idx1 * 3 + 1] += cpy;
-    normAcc[idx1 * 3 + 2] += cpz;
-
-    normAcc[idx2 * 3] += cpx;
-    normAcc[idx2 * 3 + 1] += cpy;
-    normAcc[idx2 * 3 + 2] += cpz;
-  }
-
-  const combinedNormals: number[] = new Array(totalVertices * 3);
-  for (let k = 0; k < totalVertices; k++) {
-    const nxVal = normAcc[k * 3];
-    const nyVal = normAcc[k * 3 + 1];
-    const nzVal = normAcc[k * 3 + 2];
-    const len = Math.sqrt(nxVal * nxVal + nyVal * nyVal + nzVal * nzVal);
-
-    if (len > 1e-6) {
-      combinedNormals[k * 3] = nxVal / len;
-      combinedNormals[k * 3 + 1] = nyVal / len;
-      combinedNormals[k * 3 + 2] = nzVal / len;
-    } else {
-      combinedNormals[k * 3] = 0;
-      combinedNormals[k * 3 + 1] = 0;
-      combinedNormals[k * 3 + 2] = 1;
+    for (const p of bucket.panels) {
+      panelsSummary.push({
+        name: p.name,
+        vertexOffset: p.vertexOffset + globalVOffset,
+        indexOffset: p.indexOffset + globalIOffset,
+        vertexCount: p.vertexCount,
+        indexCount: p.indexCount,
+        materialIndex: p.materialIndex,
+      });
     }
   }
 
-  // 6. Cálculo de cotas tridimensionales envolventes
-  let minX = Infinity;
-  let minY = Infinity;
-  let minZ = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  let maxZ = -Infinity;
-
-  for (let i = 0; i < totalVertices; i++) {
-    const x = combinedPositions[i * 3];
-    const y = combinedPositions[i * 3 + 1];
-    const z = combinedPositions[i * 3 + 2];
-
-    if (x < minX) minX = x;
-    if (y < minY) minY = y;
-    if (z < minZ) minZ = z;
-    if (x > maxX) maxX = x;
-    if (y > maxY) maxY = y;
-    if (z > maxZ) maxZ = z;
-  }
-
-  if (totalVertices === 0) {
-    minX = minY = minZ = maxX = maxY = maxZ = 0;
-  }
+  // 6. Cálculo de cotas globales envolventes
+  const overallBounds = compute3DBounds(combinedPositions);
 
   return {
     positions: combinedPositions,
     normals: combinedNormals,
     uvs: combinedUvs,
     indices: combinedIndices,
-    vertexCount: totalVertices,
+    vertexCount: combinedPositions.length / 3,
     triangleCount: combinedIndices.length / 3,
-    bounds: { minX, minY, minZ, maxX, maxY, maxZ },
+    bounds: overallBounds,
     panels: panelsSummary,
+    primitives,
+    materials,
   };
 }
 
 /**
  * Ensambla un buffer binario glTF 2.0 (.glb) estándar a partir de una malla 3D textil
+ * Soporta primitivas múltiples y multi-material PBR independiente.
  */
 export function buildGlbBuffer(
   mesh: GarmentMesh3D,
-  fabric: FabricPBR = FABRIC_PBR_PRESETS.default,
+  fabric: FabricPBR | FabricPBR[] = FABRIC_PBR_PRESETS.default,
   garmentName: string = 'Garment'
 ): { glbBuffer: Buffer; vertexCount: number; triangleCount: number } {
-  const totalVertices = mesh.vertexCount;
-  const totalTriangles = mesh.triangleCount;
-
-  const minX = mesh.bounds?.minX ?? 0;
-  const minY = mesh.bounds?.minY ?? 0;
-  const minZ = mesh.bounds?.minZ ?? 0;
-  const maxX = mesh.bounds?.maxX ?? 0;
-  const maxY = mesh.bounds?.maxY ?? 0;
-  const maxZ = mesh.bounds?.maxZ ?? 0;
-
-  // Creación de buffers tipados binarios
-  const posArray = new Float32Array(mesh.positions);
-  const normArray = new Float32Array(mesh.normals);
-  const uvArray = new Float32Array(mesh.uvs);
-
-  // Usar Uint32Array si excede 65535 vértices, de lo contrario Uint16Array
-  const useUint32 = totalVertices > 65535;
-  const idxArray = useUint32
-    ? new Uint32Array(mesh.indices)
-    : new Uint16Array(mesh.indices);
-
-  const posBuffer = Buffer.from(posArray.buffer);
-  const normBuffer = Buffer.from(normArray.buffer);
-  const uvBuffer = Buffer.from(uvArray.buffer);
-  const idxBuffer = Buffer.from(idxArray.buffer);
-
-  // Alinear cada bufferView a 4 bytes
-  function pad4(buf: Buffer): Buffer {
-    const pad = (4 - (buf.length % 4)) % 4;
-    if (pad === 0) return buf;
-    return Buffer.concat([buf, Buffer.alloc(pad, 0)]);
+  // Resolver lista de materiales
+  let materialsList: FabricPBR[];
+  if (Array.isArray(fabric)) {
+    materialsList = fabric.length > 0 ? fabric : [FABRIC_PBR_PRESETS.default];
+  } else if (mesh.materials && mesh.materials.length > 0) {
+    materialsList = mesh.materials;
+  } else {
+    materialsList = [fabric];
   }
 
-  const paddedPos = pad4(posBuffer);
-  const paddedNorm = pad4(normBuffer);
-  const paddedUv = pad4(uvBuffer);
-  const paddedIdx = pad4(idxBuffer);
+  // Alinear cada bufferView a 4 bytes
+  function pad4(buf: Buffer, padByte = 0): Buffer {
+    const pad = (4 - (buf.length % 4)) % 4;
+    if (pad === 0) return buf;
+    return Buffer.concat([buf, Buffer.alloc(pad, padByte)]);
+  }
 
-  const offsetPos = 0;
-  const lenPos = posBuffer.length;
+  // Determinar si se construyen múltiples primitivas o primitiva única
+  const useMultiPrimitives = Boolean(mesh.primitives && mesh.primitives.length > 1);
 
-  const offsetNorm = offsetPos + paddedPos.length;
-  const lenNorm = normBuffer.length;
+  const primitivesToProcess: GarmentPrimitive3D[] = useMultiPrimitives
+    ? mesh.primitives!
+    : [
+        {
+          name: `${garmentName}_Primitive`,
+          positions: mesh.positions,
+          normals: mesh.normals,
+          uvs: mesh.uvs,
+          indices: mesh.indices,
+          vertexCount: mesh.vertexCount,
+          triangleCount: mesh.triangleCount,
+          bounds: mesh.bounds || compute3DBounds(mesh.positions),
+          materialIndex: 0,
+          fabric: materialsList[0],
+        },
+      ];
 
-  const offsetUv = offsetNorm + paddedNorm.length;
-  const lenUv = uvBuffer.length;
+  const bufferViews: Array<{
+    buffer: number;
+    byteOffset: number;
+    byteLength: number;
+    target?: number;
+  }> = [];
 
-  const offsetIdx = offsetUv + paddedUv.length;
-  const lenIdx = idxBuffer.length;
+  const accessors: Array<{
+    bufferView: number;
+    byteOffset: number;
+    componentType: number;
+    count: number;
+    type: string;
+    max?: number[];
+    min?: number[];
+  }> = [];
 
-  const binChunkData = Buffer.concat([paddedPos, paddedNorm, paddedUv, paddedIdx]);
+  const gltfPrimitives: Array<{
+    attributes: Record<string, number>;
+    indices: number;
+    material: number;
+    mode: number;
+  }> = [];
+
+  const binChunkParts: Buffer[] = [];
+  let currentBinOffset = 0;
+
+  for (let k = 0; k < primitivesToProcess.length; k++) {
+    const prim = primitivesToProcess[k];
+    const primMatIdx =
+      prim.materialIndex !== undefined && prim.materialIndex < materialsList.length
+        ? prim.materialIndex
+        : k < materialsList.length
+        ? k
+        : 0;
+
+    const posArray = new Float32Array(prim.positions);
+    const normArray = new Float32Array(prim.normals);
+    const uvArray = new Float32Array(prim.uvs);
+
+    const useUint32 = prim.vertexCount > 65535;
+    const idxArray = useUint32
+      ? new Uint32Array(prim.indices)
+      : new Uint16Array(prim.indices);
+
+    const posBuffer = Buffer.from(posArray.buffer);
+    const normBuffer = Buffer.from(normArray.buffer);
+    const uvBuffer = Buffer.from(uvArray.buffer);
+    const idxBuffer = Buffer.from(idxArray.buffer);
+
+    const paddedPos = pad4(posBuffer);
+    const paddedNorm = pad4(normBuffer);
+    const paddedUv = pad4(uvBuffer);
+    const paddedIdx = pad4(idxBuffer);
+
+    // BufferView 4k + 0: POSITIONS
+    const offsetPos = currentBinOffset;
+    bufferViews.push({
+      buffer: 0,
+      byteOffset: offsetPos,
+      byteLength: posBuffer.length,
+      target: 34962, // ARRAY_BUFFER
+    });
+    currentBinOffset += paddedPos.length;
+
+    // BufferView 4k + 1: NORMALS
+    const offsetNorm = currentBinOffset;
+    bufferViews.push({
+      buffer: 0,
+      byteOffset: offsetNorm,
+      byteLength: normBuffer.length,
+      target: 34962, // ARRAY_BUFFER
+    });
+    currentBinOffset += paddedNorm.length;
+
+    // BufferView 4k + 2: TEXCOORD_0
+    const offsetUv = currentBinOffset;
+    bufferViews.push({
+      buffer: 0,
+      byteOffset: offsetUv,
+      byteLength: uvBuffer.length,
+      target: 34962, // ARRAY_BUFFER
+    });
+    currentBinOffset += paddedUv.length;
+
+    // BufferView 4k + 3: INDICES
+    const offsetIdx = currentBinOffset;
+    bufferViews.push({
+      buffer: 0,
+      byteOffset: offsetIdx,
+      byteLength: idxBuffer.length,
+      target: 34963, // ELEMENT_ARRAY_BUFFER
+    });
+    currentBinOffset += paddedIdx.length;
+
+    binChunkParts.push(paddedPos, paddedNorm, paddedUv, paddedIdx);
+
+    // Accessor 4k + 0: POSITION
+    const posAccIdx = accessors.length;
+    accessors.push({
+      bufferView: 4 * k + 0,
+      byteOffset: 0,
+      componentType: 5126, // FLOAT
+      count: prim.vertexCount,
+      type: 'VEC3',
+      max: [prim.bounds.maxX, prim.bounds.maxY, prim.bounds.maxZ],
+      min: [prim.bounds.minX, prim.bounds.minY, prim.bounds.minZ],
+    });
+
+    // Accessor 4k + 1: NORMAL
+    const normAccIdx = accessors.length;
+    accessors.push({
+      bufferView: 4 * k + 1,
+      byteOffset: 0,
+      componentType: 5126, // FLOAT
+      count: prim.vertexCount,
+      type: 'VEC3',
+    });
+
+    // Accessor 4k + 2: TEXCOORD_0
+    const uvAccIdx = accessors.length;
+    accessors.push({
+      bufferView: 4 * k + 2,
+      byteOffset: 0,
+      componentType: 5126, // FLOAT
+      count: prim.vertexCount,
+      type: 'VEC2',
+    });
+
+    // Accessor 4k + 3: INDICES
+    const idxAccIdx = accessors.length;
+    accessors.push({
+      bufferView: 4 * k + 3,
+      byteOffset: 0,
+      componentType: useUint32 ? 5125 : 5123, // UNSIGNED_INT / UNSIGNED_SHORT
+      count: prim.indices.length,
+      type: 'SCALAR',
+    });
+
+    gltfPrimitives.push({
+      attributes: {
+        POSITION: posAccIdx,
+        NORMAL: normAccIdx,
+        TEXCOORD_0: uvAccIdx,
+      },
+      indices: idxAccIdx,
+      material: primMatIdx,
+      mode: 4, // TRIANGLES
+    });
+  }
+
+  const binChunkData = Buffer.concat(binChunkParts);
   const totalBinBytes = binChunkData.length;
 
   // Construcción del documento JSON glTF 2.0
@@ -1136,100 +1625,23 @@ export function buildGlbBuffer(
         mesh: 0,
       },
     ],
-    materials: [
-      {
-        name: fabric.name,
-        pbrMetallicRoughness: {
-          baseColorFactor: fabric.baseColor,
-          metallicFactor: fabric.metallic,
-          roughnessFactor: fabric.roughness,
-        },
-        doubleSided: fabric.doubleSided ?? true,
+    materials: materialsList.map((mat) => ({
+      name: mat.name,
+      pbrMetallicRoughness: {
+        baseColorFactor: mat.baseColor,
+        metallicFactor: mat.metallic,
+        roughnessFactor: mat.roughness,
       },
-    ],
+      doubleSided: mat.doubleSided ?? true,
+    })),
     meshes: [
       {
         name: `${garmentName}_Mesh`,
-        primitives: [
-          {
-            attributes: {
-              POSITION: 0,
-              NORMAL: 1,
-              TEXCOORD_0: 2,
-            },
-            indices: 3,
-            material: 0,
-            mode: 4, // TRIANGLES
-          },
-        ],
+        primitives: gltfPrimitives,
       },
     ],
-    accessors: [
-      // 0: POSITION (VEC3, FLOAT)
-      {
-        bufferView: 0,
-        byteOffset: 0,
-        componentType: 5126, // FLOAT
-        count: totalVertices,
-        type: 'VEC3',
-        max: [maxX, maxY, maxZ],
-        min: [minX, minY, minZ],
-      },
-      // 1: NORMAL (VEC3, FLOAT)
-      {
-        bufferView: 1,
-        byteOffset: 0,
-        componentType: 5126, // FLOAT
-        count: totalVertices,
-        type: 'VEC3',
-      },
-      // 2: TEXCOORD_0 (VEC2, FLOAT)
-      {
-        bufferView: 2,
-        byteOffset: 0,
-        componentType: 5126, // FLOAT
-        count: totalVertices,
-        type: 'VEC2',
-      },
-      // 3: INDICES (SCALAR, UNSIGNED_SHORT o UNSIGNED_INT)
-      {
-        bufferView: 3,
-        byteOffset: 0,
-        componentType: useUint32 ? 5125 : 5123,
-        count: mesh.indices.length,
-        type: 'SCALAR',
-      },
-    ],
-    bufferViews: [
-      // 0: POSITIONS
-      {
-        buffer: 0,
-        byteOffset: offsetPos,
-        byteLength: lenPos,
-        target: 34962, // ARRAY_BUFFER
-      },
-      // 1: NORMALS
-      {
-        buffer: 0,
-        byteOffset: offsetNorm,
-        byteLength: lenNorm,
-        target: 34962, // ARRAY_BUFFER
-      },
-      // 2: TEXCOORD_0
-      {
-        buffer: 0,
-        byteOffset: offsetUv,
-        byteLength: lenUv,
-        target: 34962, // ARRAY_BUFFER
-      },
-      // 3: INDICES
-      {
-        buffer: 0,
-        byteOffset: offsetIdx,
-        byteLength: lenIdx,
-        target: 34963, // ELEMENT_ARRAY_BUFFER
-      },
-    ],
+    accessors,
+    bufferViews,
     buffers: [
       {
         byteLength: totalBinBytes,
@@ -1287,8 +1699,8 @@ export function buildGlbBuffer(
 
   return {
     glbBuffer,
-    vertexCount: totalVertices,
-    triangleCount: totalTriangles,
+    vertexCount: mesh.vertexCount,
+    triangleCount: mesh.triangleCount,
   };
 }
 
@@ -1297,7 +1709,7 @@ export function buildGlbBuffer(
  */
 export function buildGltfBinary(
   panelsOrMesh: Panel3DMesh[] | GarmentMesh3D,
-  fabric: FabricPBR = FABRIC_PBR_PRESETS.default,
+  fabric: FabricPBR | FabricPBR[] = FABRIC_PBR_PRESETS.default,
   garmentName: string = 'Garment'
 ): { glbBuffer: Buffer; vertexCount: number; triangleCount: number } {
   if (!Array.isArray(panelsOrMesh)) {
@@ -1324,27 +1736,7 @@ export function buildGltfBinary(
     totalTriangles += panel.indices.length / 3;
   }
 
-  let minX = Infinity;
-  let minY = Infinity;
-  let minZ = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  let maxZ = -Infinity;
-
-  for (let i = 0; i < totalVertices; i++) {
-    const x = combinedPositions[i * 3];
-    const y = combinedPositions[i * 3 + 1];
-    const z = combinedPositions[i * 3 + 2];
-    if (x < minX) minX = x;
-    if (y < minY) minY = y;
-    if (z < minZ) minZ = z;
-    if (x > maxX) maxX = x;
-    if (y > maxY) maxY = y;
-    if (z > maxZ) maxZ = z;
-  }
-  if (totalVertices === 0) {
-    minX = minY = minZ = maxX = maxY = maxZ = 0;
-  }
+  const overallBounds = compute3DBounds(combinedPositions);
 
   const mesh: GarmentMesh3D = {
     positions: combinedPositions,
@@ -1353,7 +1745,7 @@ export function buildGltfBinary(
     indices: combinedIndices,
     vertexCount: totalVertices,
     triangleCount: totalTriangles,
-    bounds: { minX, minY, minZ, maxX, maxY, maxZ },
+    bounds: overallBounds,
   };
 
   return buildGlbBuffer(mesh, fabric, garmentName);
@@ -1366,10 +1758,11 @@ export function exportPatternToGlb(
   pattern: ModifiedPatternResult,
   options: Garment3DOptions = {}
 ): Garment3DResult {
-  const fabricPbr = resolveFabricPbr(options);
+  const materialsList = resolveGarmentMaterials(options);
+  const primaryFabric = materialsList[0] || resolveFabricPbr(options);
   const conceptName = options.concept_name || pattern.concept_name || 'garment';
-  const mesh3D = generateTrueToPatternMesh(pattern, options.dna);
-  const { glbBuffer, vertexCount, triangleCount } = buildGlbBuffer(mesh3D, fabricPbr, conceptName);
+  const mesh3D = generateTrueToPatternMesh(pattern, options.dna, materialsList);
+  const { glbBuffer, vertexCount, triangleCount } = buildGlbBuffer(mesh3D, materialsList, conceptName);
 
   if (options.outputPath) {
     const dir = path.dirname(options.outputPath);
@@ -1386,11 +1779,17 @@ export function exportPatternToGlb(
     triangleCount,
     meshNames: Object.keys(pattern.parts),
     material: {
-      name: fabricPbr.name,
-      baseColor: fabricPbr.baseColor,
-      roughness: fabricPbr.roughness,
-      metallic: fabricPbr.metallic,
+      name: primaryFabric.name,
+      baseColor: primaryFabric.baseColor,
+      roughness: primaryFabric.roughness,
+      metallic: primaryFabric.metallic,
     },
+    materials: materialsList.map((m) => ({
+      name: m.name,
+      baseColor: m.baseColor,
+      roughness: m.roughness,
+      metallic: m.metallic,
+    })),
     filePath: options.outputPath,
     isBlenderGenerated: false,
   };
@@ -1457,7 +1856,7 @@ async function executeBlenderHeadless(
  * Motor Principal de Generación de Mallas y Modelos 3D (.glb)
  *
  * Transforma un ADN paramétrico o piezas 2D en un archivo binario glTF 2.0
- * listo para visores WebGL y empaquetado digital.
+ * listo para visores WebGL y empaquetado digital, soportando siluetas reales y multi-material PBR.
  */
 export async function generate3DGarmentModel(
   options: Garment3DOptions
@@ -1467,7 +1866,8 @@ export async function generate3DGarmentModel(
     options.dna?.concept_name ||
     'parametric_garment';
 
-  const fabricPbr = resolveFabricPbr(options);
+  const materialsList = resolveGarmentMaterials(options);
+  const primaryFabric = materialsList[0] || resolveFabricPbr(options);
 
   // Verificar si se solicitó explícitamente Blender CLI y si está disponible
   let isBlenderGenerated = false;
@@ -1487,7 +1887,7 @@ export async function generate3DGarmentModel(
         blenderExecutable,
         options.dna,
         targetOut,
-        fabricPbr
+        primaryFabric
       );
       isBlenderGenerated = true;
       meshNames = ['Blender_Garment_Mesh'];
@@ -1505,19 +1905,19 @@ export async function generate3DGarmentModel(
   if (!glbBuffer) {
     let resolvedPattern: ModifiedPatternResult;
 
-    if (options.dna) {
-      resolvedPattern = modifyPattern(options.dna, options.size || options.dna.sizing?.size || 'M');
-    } else if (options.parts) {
+    if (options.parts) {
       resolvedPattern = {
         concept_name: conceptName,
         size: options.size || 'M',
-        base_block: 'custom',
+        base_block: options.dna?.base_block || 'custom',
         measurements: {} as any,
         parts: options.parts,
         bounds: { minX: 0, minY: 0, maxX: 500, maxY: 700, width: 500, height: 700 },
         seamAllowance_mm: 10,
         hemAllowance_mm: 20,
       };
+    } else if (options.dna) {
+      resolvedPattern = modifyPattern(options.dna, options.size || options.dna.sizing?.size || 'M');
     } else {
       const fallbackPart: PatternPart = {
         name: 'front_torso',
@@ -1554,8 +1954,8 @@ export async function generate3DGarmentModel(
     }
 
     meshNames = Object.keys(resolvedPattern.parts);
-    const mesh3D = generateTrueToPatternMesh(resolvedPattern, options.dna);
-    const gltfResult = buildGlbBuffer(mesh3D, fabricPbr, conceptName);
+    const mesh3D = generateTrueToPatternMesh(resolvedPattern, options.dna, materialsList);
+    const gltfResult = buildGlbBuffer(mesh3D, materialsList, conceptName);
     glbBuffer = gltfResult.glbBuffer;
     vertexCount = gltfResult.vertexCount;
     triangleCount = gltfResult.triangleCount;
@@ -1578,13 +1978,18 @@ export async function generate3DGarmentModel(
     triangleCount,
     meshNames,
     material: {
-      name: fabricPbr.name,
-      baseColor: fabricPbr.baseColor,
-      roughness: fabricPbr.roughness,
-      metallic: fabricPbr.metallic,
+      name: primaryFabric.name,
+      baseColor: primaryFabric.baseColor,
+      roughness: primaryFabric.roughness,
+      metallic: primaryFabric.metallic,
     },
+    materials: materialsList.map((m) => ({
+      name: m.name,
+      baseColor: m.baseColor,
+      roughness: m.roughness,
+      metallic: m.metallic,
+    })),
     filePath,
     isBlenderGenerated,
   };
 }
-

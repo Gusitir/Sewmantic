@@ -13,7 +13,9 @@ import {
   exportPatternToGlb,
   buildGlbBuffer,
   GarmentMesh3D,
+  GarmentPrimitive3D,
   resolveFabricPbr,
+  resolveGarmentMaterials,
   parseColorToRgba,
   findBlenderExecutable,
   detectBlenderCli,
@@ -23,6 +25,7 @@ import {
   Garment3DResult,
   PatternDna,
   modifyPattern,
+  MOCK_PRESETS,
 } from '../src/index.js';
 
 describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
@@ -628,4 +631,229 @@ describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
       expect(result.glbBuffer.readUInt32LE(8)).toBe(result.glbBuffer.length);
     });
   });
+
+  // =========================================================================
+  // 6. Multi-Piece Assembly, Multi-Material PBR & Coordinated Sets (T-27)
+  // =========================================================================
+  describe('6. Multi-Piece Assembly, Multi-Material PBR & Coordinated Sets (T-27)', () => {
+    const pirateSetDna: PatternDna = MOCK_PRESETS.straw_pirate_full_set;
+
+    it('should resolve multiple PBR materials from fabric_details (main_fabric & secondary_fabric)', () => {
+      const materials = resolveGarmentMaterials({ dna: pirateSetDna });
+
+      expect(materials).toBeDefined();
+      expect(materials.length).toBe(2);
+
+      // Material 0: Lino Rojo (Top / Chaleco)
+      const topMat = materials[0];
+      expect(topMat.name).toBe('Linen_Fabric');
+      expect(topMat.roughness).toBe(0.85);
+      expect(topMat.metallic).toBe(0.0);
+      expect(topMat.baseColor[0]).toBeGreaterThan(0.7); // Red dominant
+      expect(topMat.baseColor[1]).toBeLessThan(0.3);
+
+      // Material 1: Denim Azul (Bottom / Bermuda)
+      const bottomMat = materials[1];
+      expect(bottomMat.name).toBe('Denim_Fabric');
+      expect(bottomMat.roughness).toBe(0.75);
+      expect(bottomMat.metallic).toBe(0.0);
+      expect(bottomMat.baseColor[2]).toBeGreaterThan(0.4); // Blue dominant
+    });
+
+    it('should resolve multiple PBR materials from sub_garments (top & bottom)', () => {
+      const setWithSubGarmentsDna: PatternDna = {
+        concept_name: 'custom_two_piece_sub_garments',
+        garment_category: 'set',
+        base_block: 'two_piece_set',
+        ease: { chest_ease_mm: 60, waist_ease_mm: 40 },
+        modifications: {},
+        sub_garments: {
+          top: {
+            concept_name: 'top_silk_vest',
+            garment_category: 'top',
+            base_block: 'menswear_torso_fitted',
+            ease: { chest_ease_mm: 50 },
+            modifications: {},
+            tech_specs: { fabric_type: 'silk' },
+            fabric_details: {
+              main_fabric: { type: 'silk', color: '#E8D5F2' },
+            },
+          },
+          bottom: {
+            concept_name: 'bottom_leather_pants',
+            garment_category: 'bottom',
+            base_block: 'pants_sloper',
+            ease: { waist_ease_mm: 30 },
+            modifications: {},
+            tech_specs: { fabric_type: 'leather' },
+            fabric_details: {
+              main_fabric: { type: 'leather', color: '#2E1A11' },
+            },
+          },
+        },
+      };
+
+      const materials = resolveGarmentMaterials({ dna: setWithSubGarmentsDna });
+      expect(materials.length).toBe(2);
+      expect(materials[0].name).toBe('Silk_Fabric');
+      expect(materials[1].name).toBe('Leather_Fabric');
+    });
+
+    it('should generate 3D multi-piece mesh with independent primitives for Top and Bottom', () => {
+      const pattern = modifyPattern(pirateSetDna, 'M');
+      expect(pattern.parts.front_torso).toBeDefined();
+      expect(pattern.parts.back_torso).toBeDefined();
+      expect(pattern.parts.front_leg).toBeDefined();
+      expect(pattern.parts.back_leg).toBeDefined();
+
+      const mesh3D = generateTrueToPatternMesh(pattern, pirateSetDna);
+
+      expect(mesh3D.primitives).toBeDefined();
+      expect(mesh3D.primitives!.length).toBe(2);
+
+      const topPrim = mesh3D.primitives![0];
+      const bottomPrim = mesh3D.primitives![1];
+
+      // Primitiva Superior (Chaleco)
+      expect(topPrim.materialIndex).toBe(0);
+      expect(topPrim.name).toBe('Top_Garment_Primitive');
+      expect(topPrim.vertexCount).toBeGreaterThan(30);
+      expect(topPrim.triangleCount).toBeGreaterThan(20);
+
+      // Primitiva Inferior (Bermudas)
+      expect(bottomPrim.materialIndex).toBe(1);
+      expect(bottomPrim.name).toBe('Bottom_Garment_Primitive');
+      expect(bottomPrim.vertexCount).toBeGreaterThan(40);
+      expect(bottomPrim.triangleCount).toBeGreaterThan(30);
+
+      // La suma de vértices de las primitivas debe ser igual al total combinado
+      expect(topPrim.vertexCount + bottomPrim.vertexCount).toBe(mesh3D.vertexCount);
+      expect(topPrim.triangleCount + bottomPrim.triangleCount).toBe(mesh3D.triangleCount);
+    });
+
+    it('should correctly position torso geometry at upper body level and legs at lower body level', () => {
+      const pattern = modifyPattern(pirateSetDna, 'M');
+      const mesh3D = generateTrueToPatternMesh(pattern, pirateSetDna);
+
+      const topPrim = mesh3D.primitives![0];
+      const bottomPrim = mesh3D.primitives![1];
+
+      // 1. Altura del Torso (Chaleco): hombros en Y=1.45m y bajo del chaleco en Y ~ 0.65m a 0.85m
+      expect(topPrim.bounds.maxY).toBeCloseTo(1.45, 1);
+      expect(topPrim.bounds.minY).toBeGreaterThanOrEqual(0.60);
+      expect(topPrim.bounds.minY).toBeLessThan(1.05);
+
+      // 2. Altura de las Piernas (Pantalón / Bermuda): cintura en Y=1.05m y ruedo inferior extendido hacia abajo
+      expect(bottomPrim.bounds.maxY).toBeCloseTo(1.05, 1);
+      expect(bottomPrim.bounds.minY).toBeLessThan(0.75);
+      expect(bottomPrim.bounds.minY).toBeGreaterThanOrEqual(-0.15); // Piernas hasta el tobillo / piso
+
+      // 3. Altura total del conjunto coordinado (desde tobillo/ruedo hasta hombro)
+      const totalHeight = mesh3D.bounds.maxY - mesh3D.bounds.minY;
+      expect(totalHeight).toBeGreaterThan(1.20); // Silueta corporal completa (~1.45m a 1.50m)
+      expect(totalHeight).toBeLessThan(1.65);
+    });
+
+    it('should build glTF 2.0 binary buffer (.glb) with 2 materials, 2 primitives, 8 accessors and 8 bufferViews', () => {
+      const pattern = modifyPattern(pirateSetDna, 'M');
+      const materials = resolveGarmentMaterials({ dna: pirateSetDna });
+      const mesh3D = generateTrueToPatternMesh(pattern, pirateSetDna, materials);
+
+      const { glbBuffer, vertexCount, triangleCount } = buildGlbBuffer(
+        mesh3D,
+        materials,
+        'straw_pirate_full_set'
+      );
+
+      expect(glbBuffer).toBeInstanceOf(Buffer);
+      expect(vertexCount).toBe(mesh3D.vertexCount);
+      expect(triangleCount).toBe(mesh3D.triangleCount);
+
+      // 1. Header glTF 2.0
+      expect(glbBuffer.readUInt32LE(0)).toBe(0x46546c67); // 'glTF'
+      expect(glbBuffer.readUInt32LE(4)).toBe(2);
+      expect(glbBuffer.readUInt32LE(8)).toBe(glbBuffer.length);
+
+      // 2. Chunk 0 JSON
+      const jsonLength = glbBuffer.readUInt32LE(12);
+      const jsonType = glbBuffer.readUInt32LE(16);
+      expect(jsonType).toBe(0x4e4f534a); // 'JSON'
+
+      const gltf = JSON.parse(glbBuffer.subarray(20, 20 + jsonLength).toString('utf-8').trim());
+
+      // 3. Multi-Materiales en glTF
+      expect(gltf.materials).toHaveLength(2);
+      expect(gltf.materials[0].name).toBe('Linen_Fabric');
+      expect(gltf.materials[1].name).toBe('Denim_Fabric');
+      expect(gltf.materials[0].pbrMetallicRoughness.baseColorFactor[0]).toBeGreaterThan(0.7); // Red
+      expect(gltf.materials[1].pbrMetallicRoughness.baseColorFactor[2]).toBeGreaterThan(0.4); // Blue
+
+      // 4. Multi-Primitivas en glTF
+      expect(gltf.meshes).toHaveLength(1);
+      expect(gltf.meshes[0].primitives).toHaveLength(2);
+      expect(gltf.meshes[0].primitives[0].material).toBe(0);
+      expect(gltf.meshes[0].primitives[1].material).toBe(1);
+
+      // 5. Accessors y BufferViews (4 por primitiva x 2 primitivas = 8)
+      expect(gltf.accessors).toHaveLength(8);
+      expect(gltf.bufferViews).toHaveLength(8);
+
+      // 6. Accessor POSITION de la Primitiva 0 (Top)
+      const topPosAcc = gltf.accessors[0];
+      expect(topPosAcc.type).toBe('VEC3');
+      expect(topPosAcc.count).toBe(mesh3D.primitives![0].vertexCount);
+      expect(topPosAcc.min).toBeDefined();
+      expect(topPosAcc.max).toBeDefined();
+      expect(topPosAcc.max[1]).toBeCloseTo(1.45, 1);
+
+      // 7. Accessor POSITION de la Primitiva 1 (Bottom)
+      const bottomPosAcc = gltf.accessors[4];
+      expect(bottomPosAcc.type).toBe('VEC3');
+      expect(bottomPosAcc.count).toBe(mesh3D.primitives![1].vertexCount);
+      expect(bottomPosAcc.min).toBeDefined();
+      expect(bottomPosAcc.max).toBeDefined();
+      expect(bottomPosAcc.min[1]).toBeLessThan(0.75);
+
+      // 8. Chunk 1 BIN
+      const chunk1Offset = 20 + jsonLength;
+      const binType = glbBuffer.readUInt32LE(chunk1Offset + 4);
+      expect(binType).toBe(0x004e4942); // 'BIN\0'
+    });
+
+    it('should generate complete 3D model with generate3DGarmentModel and write .glb file for full set', async () => {
+      const outPath = path.join(testOutputDir, 'straw_pirate_full_set_unit.glb');
+
+      const result: Garment3DResult = await generate3DGarmentModel({
+        dna: pirateSetDna,
+        outputPath: outPath,
+      });
+
+      expect(fs.existsSync(outPath)).toBe(true);
+      expect(result.glbBuffer).toBeDefined();
+      expect(result.byteLength).toBeGreaterThan(1000);
+      expect(result.byteLength).toBeLessThan(5 * 1024 * 1024);
+      expect(result.materials).toBeDefined();
+      expect(result.materials!.length).toBe(2);
+      expect(result.material.name).toBe('Linen_Fabric'); // Compatibilidad
+      expect(result.meshNames).toContain('front_torso');
+      expect(result.meshNames).toContain('front_leg');
+    });
+
+    it('should export multi-material set to .glb via exportPatternToGlb', () => {
+      const pattern = modifyPattern(pirateSetDna, 'L');
+      const outPath = path.join(testOutputDir, 'export_pattern_set_unit.glb');
+
+      const result = exportPatternToGlb(pattern, {
+        dna: pirateSetDna,
+        outputPath: outPath,
+      });
+
+      expect(result).toBeDefined();
+      expect(fs.existsSync(outPath)).toBe(true);
+      expect(result.materials).toHaveLength(2);
+      expect(result.vertexCount).toBeGreaterThan(50);
+      expect(result.triangleCount).toBeGreaterThan(40);
+    });
+  });
 });
+

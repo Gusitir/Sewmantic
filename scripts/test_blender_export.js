@@ -3,12 +3,13 @@
  * Script de prueba aislado para generación y validación de archivos .glb 3D
  * pattern-ai-core
  *
- * Invoca `generate3DGarmentModel` para varias tipologías textiles (chaleco, bermuda, kimono/vestido)
- * y valida los invariantes del estándar oficial glTF 2.0:
+ * Invoca `generate3DGarmentModel` para varias tipologías textiles (chaleco, bermuda, kimono/vestido,
+ * y conjunto coordinado de 2 piezas top + bottom) y valida los invariantes del estándar oficial glTF 2.0:
  * - Existencia del archivo y tamaño (> 0 bytes y < 5 MB).
  * - Magic bytes 'glTF' (0x67, 0x6C, 0x54, 0x46 / uint32 0x46546C67).
  * - Header version == 2.
  * - JSON chunk estructurado con materiales PBR y BIN chunk con atributos geométricos.
+ * - Soporte multi-primitiva y multi-material en conjuntos coordinados de 2 piezas.
  */
 
 import fs from 'node:fs';
@@ -132,6 +133,103 @@ async function runTestBlenderExport() {
 
   validateGlb(kimonoResult.glbBuffer, kimonoGlbPath, 'Kimono Vestido (Seda)');
 
+  // 4. Caso de prueba 4: Conjunto Coordinado de 2 Piezas (Luffy Pirate Full Set - Top + Bottom Multi-Material)
+  console.log('\n---------------------------------------------------------------');
+  console.log('4. Generando Modelo 3D: Conjunto Coordinado 2 Piezas (Set Pirata)');
+  console.log('   Chaleco Lino Rojo (#D62828) + Bermudas Denim Azul (#1E3A8A)');
+  console.log('---------------------------------------------------------------');
+
+  const pirateSetDna = {
+    concept_name: 'straw_pirate_full_set',
+    description: 'Conjunto coordinado cosplay aventurero del Rey de los Piratas: chaleco lino rojo y bermuda denim azul',
+    garment_category: 'set',
+    base_block: 'two_piece_set',
+    ease: {
+      chest_ease_mm: 70,
+      waist_ease_mm: 40,
+      hip_ease_mm: 60,
+      shoulder_ease_mm: 0,
+      crotch_ease_mm: 30,
+      thigh_ease_mm: 70,
+    },
+    modifications: {
+      neckline: { type: 'v_neck', depth_mm: 160 },
+      sleeves: { type: 'sleeveless' },
+      hem: { type: 'curved_tail', drop_mm: 60 },
+      trouser_legs: { type: 'wide_baggy', length_type: 'bermuda' },
+      waistband: { type: 'fitted', height_mm: 40 },
+      trouser_pockets: { back_pockets: true, type: 'patch_jeans' },
+    },
+    fabric_details: {
+      main_fabric: {
+        name: 'Lino Rústico Rojo Carmesí',
+        type: 'linen',
+        color: '#D62828',
+        weight_gsm: 260,
+        width_mm: 1500,
+        estimated_meters: 0.85,
+      },
+      secondary_fabric: {
+        name: 'Denim Azul Índigo Selvedge',
+        type: 'denim',
+        color: '#1E3A8A',
+        weight_gsm: 380,
+        width_mm: 1500,
+        estimated_meters: 1.10,
+      },
+    },
+    sub_garments: {
+      top: {
+        concept_name: 'straw_pirate_adventurer_vest',
+        garment_category: 'top',
+        base_block: 'menswear_torso_fitted',
+        ease: { chest_ease_mm: 50, waist_ease_mm: 40 },
+        modifications: {
+          neckline: { type: 'v_neck', depth_mm: 130 },
+          sleeves: { type: 'sleeveless' },
+          hem: { type: 'curved_tail', drop_mm: 45 },
+        },
+        tech_specs: { fabric_type: 'linen', seam_allowance_mm: 10, hem_allowance_mm: 20 },
+        fabric_details: {
+          main_fabric: { type: 'linen', color: '#D62828' },
+        },
+      },
+      bottom: {
+        concept_name: 'straw_pirate_denim_shorts',
+        garment_category: 'bottom',
+        base_block: 'pants_sloper',
+        ease: { chest_ease_mm: 0, waist_ease_mm: 35, hip_ease_mm: 50 },
+        modifications: {
+          trouser_legs: { type: 'wide_baggy', length_type: 'bermuda' },
+          waistband: { type: 'fitted', height_mm: 40 },
+        },
+        tech_specs: { fabric_type: 'denim', seam_allowance_mm: 12, hem_allowance_mm: 25 },
+        fabric_details: {
+          main_fabric: { type: 'denim', color: '#1E3A8A' },
+        },
+      },
+    },
+    tech_specs: {
+      fabric_type: 'linen & denim',
+      seam_allowance_mm: 10,
+      hem_allowance_mm: 20,
+      estimated_fabric_meters: 1.95,
+      notions: ['3 botones chaleco', '1 botón jeans', 'cremallera YKK'],
+    },
+  };
+
+  const setGlbPath = path.join(outputDir, 'straw_pirate_full_set.glb');
+  const setResult = await generate3DGarmentModel({
+    dna: pirateSetDna,
+    outputPath: setGlbPath,
+  });
+
+  validateGlb(setResult.glbBuffer, setGlbPath, 'Set Pirata Coordinado (2 Piezas / Multi-Material)', {
+    expectMultiMaterial: true,
+    minMaterials: 2,
+    minPrimitives: 2,
+  });
+
   console.log('\n===============================================================');
   console.log('[ÉXITO TOTAL] Todos los modelos 3D (.glb) superaron la validación.');
   console.log('===============================================================\n');
@@ -140,7 +238,7 @@ async function runTestBlenderExport() {
 /**
  * Valida la conformidad estricta de un buffer glTF 2.0 binario (.glb)
  */
-function validateGlb(buffer, filePath, label) {
+function validateGlb(buffer, filePath, label, options = {}) {
   const stat = fs.statSync(filePath);
   const sizeBytes = stat.size;
   const sizeKb = (sizeBytes / 1024).toFixed(2);
@@ -207,9 +305,27 @@ function validateGlb(buffer, filePath, label) {
     throw new Error(`[FAIL] No se encontraron materiales PBR en el glTF`);
   }
 
-  const mat = gltfObj.materials[0];
-  const pbr = mat.pbrMetallicRoughness;
-  console.log(`  ✓ Material PBR: "${mat.name}" [Color: (${pbr.baseColorFactor.map((c) => c.toFixed(2)).join(', ')}), Roughness: ${pbr.roughnessFactor}, Metallic: ${pbr.metallicFactor}]`);
+  for (let i = 0; i < gltfObj.materials.length; i++) {
+    const mat = gltfObj.materials[i];
+    const pbr = mat.pbrMetallicRoughness;
+    console.log(`  ✓ Material PBR [${i}]: "${mat.name}" [Color: (${pbr.baseColorFactor.map((c) => c.toFixed(2)).join(', ')}), Roughness: ${pbr.roughnessFactor}, Metallic: ${pbr.metallicFactor}]`);
+  }
+
+  if (options.expectMultiMaterial) {
+    const minMats = options.minMaterials || 2;
+    if (gltfObj.materials.length < minMats) {
+      throw new Error(`[FAIL] Se esperaban al menos ${minMats} materiales en el conjunto, pero se encontraron ${gltfObj.materials.length}`);
+    }
+    console.log(`  ✓ Soporte Multi-Material verificado (${gltfObj.materials.length} materiales PBR independientes)`);
+  }
+
+  if (options.minPrimitives) {
+    const primCount = gltfObj.meshes[0]?.primitives?.length || 0;
+    if (primCount < options.minPrimitives) {
+      throw new Error(`[FAIL] Se esperaban al menos ${options.minPrimitives} primitivas glTF, pero se encontraron ${primCount}`);
+    }
+    console.log(`  ✓ Primitivas glTF independientes verificadas (${primCount} sub-mallas con shader asignado)`);
+  }
 
   // Invariante 6: Chunk 1 BIN
   const chunk1Offset = 20 + chunk0Length;
