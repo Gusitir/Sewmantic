@@ -2,8 +2,8 @@
 
 This file points to the current active milestone plan for `pattern-ai-core`.
 
-- **Active Plan:** None (All 6 Phases Completed & Verified APTO)
-- **Active Phase:** Standby / Ready for Human Verification (`H-03`) or Phase 7.0 (e.g., Cloth Draping Dynamics / DXF Export)
+- **Active Plan:** [`PLAN_v0.7-industrial-blueprints-and-3d-assembly.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN_v0.7-industrial-blueprints-and-3d-assembly.md)
+- **Active Phase:** Phase 7.0 — FreeSewing Base Blueprints Architecture, Confection-Ready Industrial Patterns (Button Overlaps, Facings, Notches) & Exploded 3D Assembly View
 - **Assurance Profile:** Lean (Default)
 - **Archived Plans:**
   - [`archive/PLAN_v0.1-mvp.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/archive/PLAN_v0.1-mvp.md) (Phase 1.0 — MVP Core Geometry, Tiling, Techpack, 10x10cm calibration)

@@ -52,7 +52,11 @@ suites_passing: 17/17 (468/468 tests PASS)
 - `T-25` (Commit `b315f5b`): Motor de triangulación `triangulator.ts` con Ear-Clipping CCW, validación de área analítica ($< 0.1\%$) y 25 tests unitarios. Veredicto **APTO**.
 - `T-26` (Commit `e8d2380`): Proyector anatómico 3D `generateTrueToPatternMesh` que convierte contornos 2D en siluetas tridimensionales reales (escote V, sisas, picos, mangas Furisode, faldas y pantalones) con normales suaves y mapeo UV. Veredicto **APTO**.
 - `T-27` (Commit `87d39c1`): Ensamblado multi-pieza y multi-material glTF 2.0 (`GarmentPrimitive3D`, `buildGlbBuffer` multi-primitiva, Lino Rojo + Denim Azul en sets) optimizado para WebGL. Veredicto **APTO**.
-- **Estado:** Activo (`PLAN_v0.6-true-to-pattern-3d-meshing.md`). Tarea activa: `T-28`.
+- `T-28` (Commit `67d7e65`): Visor 3D WebGL multi-primitiva en Web Studio y acumulador de geometrías. 513 tests PASS. Veredicto **APTO**. Plan archivado en `archive/PLAN_v0.6-true-to-pattern-3d-meshing.md`.
+
+### 📌 Fase 7.0: Bloques Ancla FreeSewing, Moldería Industrial y Guía Visual 3D (`T-29` a `T-32`)
+- **Objetivo:** Transformación del flujo para seleccionar un Bloque Base Ancla (Wahid, Simon, Brian, Bella, Paco, Sandy, Shin), inyección estructural al LLM para actuar como modificador puro, generación de moldería industrial confeccionable (cruces de botonadura +20mm, marcas de ojales/botones, vistas interiores y piquetes emparejados) y Guía Visual de Ensamble y Doblado 3D Despiezada con slider de armado en WebGL.
+- **Estado:** Activo (`PLAN_v0.7-industrial-blueprints-and-3d-assembly.md`). Tarea activa: `T-29`.
 
 ---
 
@@ -63,6 +67,7 @@ suites_passing: 17/17 (468/468 tests PASS)
 | **H-01** | Impresión física de Página 1 a escala 100%. | Medición con regla: exactamente $10.0\text{ cm} \times 10.0\text{ cm}$. | ✅ [VERIFICADO OK] |
 | **H-02** | Continuidad de ensamble de hojas A4/Letter. | Líneas de corte continuas con PDFStitcher sin saltos ni escalones. | ✅ [VERIFICADO OK] |
 | **H-03** | Verificación visual de patrones 2D y 3D en Web Studio. | Inspección interactiva del visor 2D y rotación 360° del visor 3D WebGL. | 🟡 [LISTO PARA PROBAR POR EL USUARIO] |
+
 
 
 

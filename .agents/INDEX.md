@@ -2,9 +2,10 @@
 
 - `AGENTS.md`: roles (Arquitecto, Ingeniero, Obrero), modo LEAN, reglas de aseguramiento y entorno.
 - `APPCORE.md`: propósito, invariantes textiles inmutables, pipeline de FreeSewing v3, arquitectura y contrato de datos ADN.
-- `CURRENT.md`: estado activo del proyecto, jerarquía de subagentes y siguiente acción inmediata.
+- `CURRENT.md`: estado activo del proyecto, jerarquía de subagentes y siguiente acción inmediata (`T-29`).
 - `CONTEXT.md`: registro cronológico inmutable de decisiones, auditorías y eventos.
-- `PLAN.md`: puntero al estado de planes del proyecto.
+- `PLAN.md`: puntero al plan activo (`PLAN_v0.7-industrial-blueprints-and-3d-assembly.md`).
+- `PLAN_v0.7-industrial-blueprints-and-3d-assembly.md`: hito activo (Fase 7: Arquitectura por Bloques Ancla FreeSewing, Moldería Industrial y Guía Visual de Ensamble 3D).
 - `TESTING.md`: matriz de pruebas automatizadas (18 suites Vitest, 513 tests), pruebas humanas y verificación de APIs.
 - `archive/`: directorio para planes cerrados e histórico archivado:
   - `archive/PLAN_v0.1-mvp.md`: Fase 1.0 (MVP Geometría Base, Tiling y PDFs paginados).
@@ -28,4 +29,4 @@
 - `src/server/`: Servidor HTTP REST y frontend Web Studio (HTML, CSS, JS, Visor 2D, Visor 3D WebGL).
 - `output/`: PDFs, SVGs, Modelos .glb 3D, Fichas técnicas y paquetes comerciales ZIP generados.
 
-Last reindexed: 2026-08-20 at phase-6-closure.
+Last reindexed: 2026-08-20 at phase-7-kickoff.
