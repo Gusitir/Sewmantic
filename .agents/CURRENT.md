@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-20T20:26:00-05:00
-source_commit: [T-25] implement robust 2D ear clipping polygon triangulator for apparel pattern geometry
+updated_at: 2026-08-20T20:32:00-05:00
+source_commit: [T-26] implement true-to-pattern 3D anatomical garment projection, smooth normals and metric UVs
 assurance: Lean
 active_plan: PLAN_v0.6-true-to-pattern-3d-meshing.md
-active_task: T-26 (Proyector Anatómico 3D y Deformación Envolvente de Paneles Textiles)
+active_task: T-27 (Ensamblado de Paneles Multi-Pieza y Costuras 3D en Buffer glTF 2.0)
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,23 +18,22 @@ backup: local-only
 
 ## Next action
 
-1. **Despachar Tarea `T-26` al Ingeniero (Proyector Anatómico 3D y Deformación Envolvente de Paneles Textiles):**
-   - Integrar `triangulatePolygon` en `src/engine/blender_bridge.ts` para tomar el `outline: Point2D[]` real de cada pieza (`front`, `back`, `sleeve`, `front_leg`, `back_leg`, `furisode_sleeve`, `skirt`).
-   - Aplicar curvatura 3D envolvente anatómica ($x, y, z$) respetando exactamente el escote en V, huecos de sisa y puntas de dobladillo.
-   - Calcular normales suaves de vértice y mapeo UV métrico en `src/engine/blender_bridge.ts`.
-2. **Proceder con `T-27` & `T-28`:** Ensamblado de piezas multi-panel en `.glb` y verificación visual E2E en Web Studio.
+1. **Despachar Tarea `T-27` al Ingeniero / Obrero (Ensamblado de Paneles Multi-Pieza y Costuras 3D en Buffer glTF 2.0):**
+   - Asegurar que prendas de 2 piezas (Conjunto Pirata Top + Bottom, Haori + Falda) y prendas compuestas se ensamblen con materiales PBR múltiples o asignación textil coordinada en el buffer binario `.glb`.
+   - Verificar `scripts/test_blender_export.js` y el pipeline end-to-end con `bundle: true`.
+2. **Proceder con `T-28`:** Verificación visual E2E en Web Studio y cierre formal de la Fase 6.0.
 
 ## Blockers
 
-- Ninguno. 499/499 tests pasando al 100% en Vitest (18/18 suites).
+- Ninguno. 504/504 tests pasando al 100% en Vitest (18/18 suites).
 
 ## Current facts
 
-- **Tarea `T-25` Completada y Auditada con Veredicto APTO:**
-  - Motor `triangulator.ts` con algoritmo de Ear Clipping, orientación CCW y validación analítica de área ($< 0.1\%$).
-  - 25 pruebas unitarias en `tests/triangulator.test.ts`.
+- **Tareas `T-25` y `T-26` Completadas y Auditadas con Veredicto APTO:**
+  - `T-25`: Motor `triangulator.ts` con Ear Clipping CCW y área analítica $< 0.1\%$.
+  - `T-26`: Proyector 3D `blender_bridge.ts` que transforma contornos 2D en siluetas 3D reales (escote V, sisas, picos, mangas, pantalones, faldas).
 - **Fases 1.0 a 5.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Suite Determinista:** **18/18 suites passing (499/499 tests en verde)**.
+- **Suite Determinista:** **18/18 suites passing (504/504 tests en verde)**.
 
 ## Open findings
 

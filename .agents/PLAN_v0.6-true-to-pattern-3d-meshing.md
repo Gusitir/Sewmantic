@@ -9,8 +9,8 @@ Assurance: Lean
 | Tarea | Descripción | Rol Principal | Rol Secundario | Puerta Determinista | Estado |
 |---|---|---|---|---|:---:|
 | **T-25** | Motor de Triangulación 2D de Polígonos de Moldería (*Ear Clipping Triangulator*) | Ingeniero | Obrero | `npm test` | ✅ DONE |
-| **T-26** | Proyector Anatómico 3D y Deformación Envolvente de Paneles Textiles | Ingeniero | Obrero | `npm test` | 🟡 READY |
-| **T-27** | Ensamblado de Paneles Multi-Pieza y Costuras 3D en Buffer glTF 2.0 | Ingeniero | Obrero | `node scripts/test_blender_export.js` | ⚪ QUEUED |
+| **T-26** | Proyector Anatómico 3D y Deformación Envolvente de Paneles Textiles | Ingeniero | Obrero | `npm test` | ✅ DONE |
+| **T-27** | Ensamblado de Paneles Multi-Pieza y Costuras 3D en Buffer glTF 2.0 | Ingeniero | Obrero | `node scripts/test_blender_export.js` | 🟡 READY |
 | **T-28** | Verificación Visual E2E en Web Studio y Auditoría de Fase 6.0 | Arquitecto | Ingeniero | `npm test && node dist/index.js` | ⚪ QUEUED |
 
 ---
@@ -37,18 +37,19 @@ Assurance: Lean
 
 ### T-26 - Proyector Anatómico 3D y Deformación Envolvente de Paneles Textiles
 
-- Status: ready
+- Status: done
 - Depends on: T-25
 - Scope: `src/engine/blender_bridge.ts`, `tests/blender.test.ts`
 - Rol: Ingeniero (Gráficos 3D y proyección espacial de piezas).
 - Acceptance:
-  - [ ] Proyectar las coordenadas 2D $(x, y)$ de cada pieza en un espacio 3D $(x, y, z)$ anatómico envolvente:
+  - [x] Proyectar las coordenadas 2D $(x, y)$ de cada pieza en un espacio 3D $(x, y, z)$ anatómico envolvente:
     - Pieza Delantera: curvatura cóncava frontal ($z > 0$, con máxima profundidad en el esternón/pecho y cierre hacia los costados).
     - Pieza Espalda: curvatura dorsal envolvente ($z < 0$, cerrando los costados con el delantero).
     - Mangas / Mangas Furisode: tubo 3D o panel lateral doblado que conecta con la sisa.
     - Piernas de Pantalón: cilindros cónicos que siguen la entrepierna y costados.
-  - [ ] Cálculo analítico de normales de vértice suaves (smooth vertex normals) para sombreado PBR realista sin faceteado plano.
-  - [ ] Mapeo UV paramétrico proporcional a las dimensiones métricas reales en milímetros.
+    - Faldas: cono evasé envolvente.
+  - [x] Cálculo analítico de normales de vértice suaves (smooth vertex normals) para sombreado PBR realista sin faceteado plano.
+  - [x] Mapeo UV paramétrico proporcional a las dimensiones métricas reales en milímetros.
 - Gates: `npm test`
 - Human checks: none
 
@@ -56,7 +57,7 @@ Assurance: Lean
 
 ### T-27 - Ensamblado de Paneles Multi-Pieza y Costuras 3D en Buffer glTF 2.0
 
-- Status: queued
+- Status: ready
 - Depends on: T-26
 - Scope: `src/engine/blender_bridge.ts`, `src/pipeline.ts`, `scripts/test_blender_export.js`
 - Rol: Ingeniero / Obrero (Pipeline de empaquetado binario glTF).

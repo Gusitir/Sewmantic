@@ -50,7 +50,8 @@ suites_passing: 17/17 (468/468 tests PASS)
 ### 📌 Fase 6.0: Triangulación 2D-a-3D Exacta y Siluetas Reales en Motor 3D (`T-25` a `T-28`)
 - **Objetivo:** Implementación del motor de triangulación 2D por corte de orejas (*Ear Clipping*), proyector anatómico envolvente 3D para polígonos complejos (escotes en V, huecos de sisa, dobladillos en pico, mangas Furisode y piernas de pantalón), ensamblado multi-pieza y visualización fotorrealista fiel a la moldería 2D en el Web Studio.
 - `T-25` (Commit `b315f5b`): Motor de triangulación `triangulator.ts` con Ear-Clipping CCW, validación de área analítica ($< 0.1\%$) y 25 tests unitarios. Veredicto **APTO**.
-- **Estado:** Activo (`PLAN_v0.6-true-to-pattern-3d-meshing.md`). Tarea activa: `T-26`.
+- `T-26` (Commit `e8d2380`): Proyector anatómico 3D `generateTrueToPatternMesh` que convierte contornos 2D en siluetas tridimensionales reales (escote V, sisas, picos, mangas Furisode, faldas y pantalones) con normales suaves y mapeo UV. Veredicto **APTO**.
+- **Estado:** Activo (`PLAN_v0.6-true-to-pattern-3d-meshing.md`). Tarea activa: `T-27`.
 
 ---
 
@@ -61,5 +62,6 @@ suites_passing: 17/17 (468/468 tests PASS)
 | **H-01** | Impresión física de Página 1 a escala 100%. | Medición con regla: exactamente $10.0\text{ cm} \times 10.0\text{ cm}$. | ✅ [VERIFICADO OK] |
 | **H-02** | Continuidad de ensamble de hojas A4/Letter. | Líneas de corte continuas con PDFStitcher sin saltos ni escalones. | ✅ [VERIFICADO OK] |
 | **H-03** | Verificación visual de patrones 2D y 3D en Web Studio. | Inspección interactiva del visor 2D y rotación 360° del visor 3D WebGL. | 🟡 [LISTO PARA PROBAR POR EL USUARIO] |
+
 
 
