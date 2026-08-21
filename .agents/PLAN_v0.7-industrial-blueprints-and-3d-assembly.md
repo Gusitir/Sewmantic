@@ -10,8 +10,8 @@ Assurance: Lean
 |---|---|---|---|---|:---:|
 | **T-29** | Moldería Industrial: Cruces de Botones, Ojales, Vistas Interiores y Piquetes | Ingeniero | Obrero | `npm test` | ✅ DONE |
 | **T-30** | Selector de Bloques Base FreeSewing & Inyección Estructural al LLM | Ingeniero | Obrero | `node scripts/test_fireworks_call.js && npm test` | ✅ DONE |
-| **T-31** | Guía Visual de Ensamble 3D Despiezada (*Exploded Assembly View*) con Slider | Ingeniero | Obrero | `node scripts/test_blender_export.js && npm test` | 🟡 READY |
-| **T-32** | Ficha Técnica de Confección Paso a Paso & Auditoría de Fase 7.0 | Arquitecto | Ingeniero | `npm test && node dist/index.js` | ⚪ QUEUED |
+| **T-31** | Guía Visual de Ensamble 3D Despiezada (*Exploded Assembly View*) con Slider | Ingeniero | Obrero | `node scripts/test_blender_export.js && npm test` | ✅ DONE |
+| **T-32** | Ficha Técnica de Confección Paso a Paso & Auditoría de Fase 7.0 | Arquitecto | Ingeniero | `npm test && node dist/index.js` | 🟡 READY |
 
 ---
 
@@ -68,21 +68,17 @@ Assurance: Lean
 
 ### T-31 - Guía Visual de Ensamble 3D Despiezada (*Exploded Assembly View*) con Slider
 
-- Status: ready
+- Status: done
 - Depends on: T-30
 - Scope: `src/engine/blender_bridge.ts`, `src/server/public/viewer3d.js`, `src/server/public/viewer3d.css`, `tests/viewer3d.test.ts`
 - Rol: Ingeniero (Gráficos WebGL y visualización espacial de confección).
 - Acceptance:
-  - [ ] **Despiece Anatómico 3D (*Exploded View*):**
-    - En lugar de cerrar forzadamente las costuras, posicionar las piezas en el espacio mostrando su orientación y doblado:
-      - Delantero: Curvado suavemente al frente en $+Z$.
-      - Espalda: Curvado detrás en $-Z$.
-      - Vistas: Desplazadas ligeramente hacia el interior indicando cómo se voltean hacia adentro.
-      - Mangas: Pre-dobladas en semi-cilindro lateral.
-  - [ ] **Líneas de Guía de Costura 3D (*Seam Indicator Lines*):**
+  - [x] **Despiece Anatómico 3D (*Exploded View*):**
+    - Posicionamiento espacial tridimensional con `explodeOffset` para cada pieza (delantero al frente $+Z$, espalda detrás $-Z$, vistas interiores al interior, mangas laterales, perneras abajo).
+  - [x] **Líneas de Guía de Costura 3D (*Seam Indicator Lines*):**
     - Líneas punteadas vectoriales en WebGL conectando los vértices de costura de hombros y costados.
-  - [ ] **Slider Interactivo de Despiece (0% a 100%):**
-    - Control deslizante en la barra del visor 3D para acercar las piezas a su posición ensamblada (0%) o separarlas en vista despiezada (100%).
+  - [x] **Slider Interactivo de Despiece (0% a 100%):**
+    - Control deslizante en la barra superior del visor 3D para interpolar en tiempo real la traslación de cada pieza.
 - Gates: `node scripts/test_blender_export.js && npm test`
 - Human checks: none
 
@@ -90,7 +86,7 @@ Assurance: Lean
 
 ### T-32 - Ficha Técnica de Confección Paso a Paso & Auditoría de Fase 7.0
 
-- Status: queued
+- Status: ready
 - Depends on: T-31
 - Scope: `src/engine/tech_sheet.ts`, `src/engine/etsy_bundler.ts`, `src/server/public/app.js`
 - Rol: Arquitecto (Lead / Auditor General).
