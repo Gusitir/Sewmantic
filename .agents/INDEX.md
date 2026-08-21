@@ -2,9 +2,10 @@
 
 - `AGENTS.md`: roles (Arquitecto, Ingeniero, Obrero), modo LEAN, reglas de aseguramiento y entorno.
 - `APPCORE.md`: propósito, invariantes textiles inmutables, pipeline de FreeSewing v3, arquitectura y contrato de datos ADN.
-- `CURRENT.md`: estado activo del proyecto, jerarquía de subagentes y siguiente acción inmediata.
+- `CURRENT.md`: estado activo del proyecto, jerarquía de subagentes y siguiente acción inmediata (`T-25`).
 - `CONTEXT.md`: registro cronológico inmutable de decisiones, auditorías y eventos.
-- `PLAN.md`: puntero al estado de planes del proyecto.
+- `PLAN.md`: puntero al plan activo (`PLAN_v0.6-true-to-pattern-3d-meshing.md`).
+- `PLAN_v0.6-true-to-pattern-3d-meshing.md`: hito activo (Fase 6: Triangulación 2D-a-3D Exacta y Siluetas Reales en el Motor 3D .glb).
 - `TESTING.md`: matriz de pruebas automatizadas (17 suites Vitest), pruebas humanas y verificación de APIs.
 - `archive/`: directorio para planes cerrados e histórico archivado:
   - `archive/PLAN_v0.1-mvp.md`: Fase 1.0 (MVP Geometría Base, Tiling y PDFs paginados).
@@ -22,9 +23,9 @@
 - `src/pipeline.ts`: Orquestador principal del pipeline end-to-end (2D + 3D + Bundling).
 - `src/ai/`: Proveedores de IA (`DirectApiProvider` para Fireworks AI con Qwen 3.8 Max, `MockAiProvider`, `PromptBuilder`, `AiProviderFactory`).
 - `src/schema/`: Esquema Zod y validador de ADN paramétrico.
-- `src/engine/`: Motor geométrico FreeSewing v3 (slopers base, modifier, exporter, tech_sheet, etsy_bundler, blender_bridge).
+- `src/engine/`: Motor geométrico FreeSewing v3 (slopers base, modifier, exporter, tech_sheet, etsy_bundler, blender_bridge, triangulator).
 - `src/utils/tiler.ts`: Motor de corte y paginado vectorial A4/Letter con cruces de ensamble.
 - `src/server/`: Servidor HTTP REST y frontend Web Studio (HTML, CSS, JS, Visor 2D, Visor 3D WebGL).
 - `output/`: PDFs, SVGs, Modelos .glb 3D, Fichas técnicas y paquetes comerciales ZIP generados.
 
-Last reindexed: 2026-08-20 at phase-5-closure.
+Last reindexed: 2026-08-20 at phase-6-kickoff.

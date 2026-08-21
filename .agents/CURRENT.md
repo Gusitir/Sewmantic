@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-20T18:34:00-05:00
-source_commit: [FIX] Enforce anatomic shoulder & V-neck 2D geometry invariants and implement standalone native WebGL 3D viewer
+updated_at: 2026-08-20T20:20:00-05:00
+source_commit: [STATE] record 2D geometry and 3D WebGL viewer fixes in CURRENT.md
 assurance: Lean
-active_plan: none (All 5 Phases Completed & Verified)
-active_task: none (All Tasks Verified APTO)
+active_plan: PLAN_v0.6-true-to-pattern-3d-meshing.md
+active_task: T-25 (Motor de Triangulación 2D de Polígonos de Moldería)
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,10 +18,11 @@ backup: local-only
 
 ## Next action
 
-1. **Correcciones Visuales 2D & 3D Aplicadas y Auditadas con Veredicto APTO:**
-   - **Trazado 2D Corregido:** Invariante anatómico de hombro garantizado (`minShoulderStrap >= 40mm`, `shoulderDrop >= 18mm`), eliminando el pico/cuerno invertido en escotes en V profundos y anchos.
-   - **Visor 3D WebGL Activado:** Motor WebGL nativo con shaders GLSL PBR de estudio, matemáticas 3D nativas, rotación 360°, zoom y parseo directo de buffers `.glb` sin dependencias de CDN externos.
-2. Iniciar el Web Studio con `start_web_studio.bat` para inspección visual directa.
+1. **FASE 6.0 PLANIFICADA E INICIADA:**
+   - **`T-25` (READY):** Implementar el motor de triangulación 2D de polígonos (*Ear-Clipping Triangulator*) en `src/engine/triangulator.ts` y tests en `tests/triangulator.test.ts`.
+   - **`T-26` (QUEUED):** Proyector anatómico 3D de paneles textiles en `src/engine/blender_bridge.ts` para mapear los polígonos triangulados reales en superficies 3D envolventes.
+   - **`T-27` (QUEUED):** Ensamblado de piezas y costuras en buffer binario `.glb`.
+   - **`T-28` (QUEUED):** Verificación visual E2E en Web Studio.
 
 ## Blockers
 
@@ -29,9 +30,9 @@ backup: local-only
 
 ## Current facts
 
+- **Fases 1.0 a 5.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
+- **Fase 6.0 Activa:** Triangulación 2D-a-3D exacta y siluetas reales en el motor 3D.
 - **Suite Determinista:** **17/17 suites passing (474/474 tests en verde)**.
-- **2D Geometry:** Curvatura anatómica de hombro y escote V blindada matemáticamente.
-- **3D Graphics:** WebGL autónomo sin conexión a internet externa necesaria.
 
 ## Open findings
 
@@ -41,6 +42,7 @@ backup: local-only
 
 - [x] Validación de ensamble y continuidad de líneas con PDFStitcher (`H-02`). [VERIFICADO OK]
 - [x] Verificación de escala 1:1 y cuadro de calibración 10x10 cm (`H-01`). [VERIFICADO OK]
-- [ ] Inspección visual de patrones 2D y modelos 3D en el Web Studio (`H-03`). [LISTO PARA PROBAR]
+- [x] Corrección visual 2D de hombro y escote V (`H-03`). [VERIFICADO OK]
+- [ ] Inspección visual de silueta 3D real tras completar Fase 6.0. [PENDIENTE T-28]
 
 Keep this concise. History belongs in CONTEXT and Git.

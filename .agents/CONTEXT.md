@@ -47,6 +47,10 @@ suites_passing: 17/17 (468/468 tests PASS)
   - `T-24` (Commit `a0410d7`): Pestaña 'Visor 3D Interactivo' en Web Studio con Three.js 360°, streaming REST `/api/patterns/:concept/glb`, y ampliación del paquete Etsy a 7 carpetas comerciales con modelos `.glb`.
 - **Evidencia & Veredicto:** 468 tests PASS across 17 suites. Veredicto **APTO**. Plan archivado en `archive/PLAN_v0.5-womenswear-and-3d-blender.md`.
 
+### 📌 Fase 6.0: Triangulación 2D-a-3D Exacta y Siluetas Reales en Motor 3D (`T-25` a `T-28`)
+- **Objetivo:** Implementación del motor de triangulación 2D por corte de orejas (*Ear Clipping*), proyector anatómico envolvente 3D para polígonos complejos (escotes en V, huecos de sisa, dobladillos en pico, mangas Furisode y piernas de pantalón), ensamblado multi-pieza y visualización fotorrealista fiel a la moldería 2D en el Web Studio.
+- **Estado:** Activo (`PLAN_v0.6-true-to-pattern-3d-meshing.md`). Tarea activa: `T-25`.
+
 ---
 
 ## 3. Matriz de Paradas Humanas (Stop Conditions)
@@ -56,3 +60,4 @@ suites_passing: 17/17 (468/468 tests PASS)
 | **H-01** | Impresión física de Página 1 a escala 100%. | Medición con regla: exactamente $10.0\text{ cm} \times 10.0\text{ cm}$. | ✅ [VERIFICADO OK] |
 | **H-02** | Continuidad de ensamble de hojas A4/Letter. | Líneas de corte continuas con PDFStitcher sin saltos ni escalones. | ✅ [VERIFICADO OK] |
 | **H-03** | Verificación visual de patrones 2D y 3D en Web Studio. | Inspección interactiva del visor 2D y rotación 360° del visor 3D WebGL. | 🟡 [LISTO PARA PROBAR POR EL USUARIO] |
+
