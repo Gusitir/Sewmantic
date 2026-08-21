@@ -1,11 +1,11 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-20T21:48:00-05:00
-source_commit: [T-29] implement industrial pattern closures, buttonholes, facings and matched seam notches
+updated_at: 2026-08-20T21:55:00-05:00
+source_commit: [T-30] add FreeSewing blueprint selector in Web Studio and structural prompt injection for LLM
 assurance: Lean
 active_plan: PLAN_v0.7-industrial-blueprints-and-3d-assembly.md
-active_task: T-30 (Selector de Bloques Base FreeSewing & Inyección Estructural al LLM)
+active_task: T-31 (Guía Visual de Ensamble 3D Despiezada con Slider)
 last_verdict: APTO
 backup: local-only
 ```
@@ -18,22 +18,24 @@ backup: local-only
 
 ## Next action
 
-1. **Despachar Tarea `T-30` al Ingeniero / Obrero (Selector de Bloques Base FreeSewing & Inyección Estructural al LLM):**
-   - Incorporar en el panel izquierdo del Web Studio el selector de los 7 bloques base de FreeSewing (`Wahid`, `Simon`, `Brian`, `Bella`, `Paco`, `Sandy`, `Shin`).
-   - Inyectar en el `PromptBuilder` de Qwen 3.8 Max la anatomía, piezas base y parámetros modificables específicos del bloque base seleccionado.
-   - Probar con `scripts/test_fireworks_call.js` y tests en `tests/ai_provider.test.ts`.
-2. **Proceder con `T-31` & `T-32`:** Guía Visual de Ensamble 3D Despiezada con slider y Ficha Técnica de Confección.
+1. **Despachar Tarea `T-31` al Ingeniero (Guía Visual de Ensamble 3D Despiezada con Slider):**
+   - Implementar en `src/engine/blender_bridge.ts` y `src/server/public/viewer3d.js` el modo de despiece espacial (*Exploded Assembly View*):
+     - Posicionamiento frontal ($+Z$), dorsal ($-Z$), vistas interiores y mangas laterales semi-cilíndricas.
+     - Líneas 3D vectoriales punteadas de costura (*seam indicators*) en hombros y costados.
+     - Slider interactivo de despiece / armado (0% ensamblado $\leftrightarrow$ 100% despiezado) en el HUD del visor 3D.
+   - Probar con `scripts/test_blender_export.js` y `tests/viewer3d.test.ts`.
+2. **Proceder con `T-32`:** Ficha técnica de confección paso a paso y auditoría final de Fase 7.0.
 
 ## Blockers
 
-- Ninguno. 527/527 tests pasando al 100% en Vitest (19/19 suites).
+- Ninguno. 534/534 tests pasando al 100% en Vitest (19/19 suites).
 
 ## Current facts
 
-- **Tarea `T-29` Completada y Auditada con Veredicto APTO:**
-  - Cruces de botonadura frontal (+20 mm), marcas vectoriales de botones/ojales, piezas de vistas interiores con entretela (`front_facing`, `armhole_facing`, `back_neck_facing`) y piquetes pareados.
-  - 14 tests unitarios en `tests/industrial_patterns.test.ts`.
-- **Suite Determinista:** **19/19 suites passing (527/527 tests en verde)**.
+- **Tareas `T-29` y `T-30` Completadas y Auditadas con Veredicto APTO:**
+  - `T-29`: Moldería industrial (cruces $+20\text{ mm}$, marcas de ojales/botones, vistas interiores con entretela `front_facing`, `armhole_facing`, `back_neck_facing` y piquetes pareados).
+  - `T-30`: Selector de los 7 bloques base FreeSewing (`Wahid`, `Simon`, `Brian`, `Bella`, `Paco`, `Sandy`, `Shin`) e inyección contextual al LLM.
+- **Suite Determinista:** **19/19 suites passing (534/534 tests en verde)**.
 
 ## Open findings
 

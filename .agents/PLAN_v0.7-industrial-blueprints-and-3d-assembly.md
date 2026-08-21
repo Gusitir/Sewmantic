@@ -9,8 +9,8 @@ Assurance: Lean
 | Tarea | Descripción | Rol Principal | Rol Secundario | Puerta Determinista | Estado |
 |---|---|---|---|---|:---:|
 | **T-29** | Moldería Industrial: Cruces de Botones, Ojales, Vistas Interiores y Piquetes | Ingeniero | Obrero | `npm test` | ✅ DONE |
-| **T-30** | Selector de Bloques Base FreeSewing & Inyección Estructural al LLM | Ingeniero | Obrero | `node scripts/test_fireworks_call.js && npm test` | 🟡 READY |
-| **T-31** | Guía Visual de Ensamble 3D Despiezada (*Exploded Assembly View*) con Slider | Ingeniero | Obrero | `node scripts/test_blender_export.js && npm test` | ⚪ QUEUED |
+| **T-30** | Selector de Bloques Base FreeSewing & Inyección Estructural al LLM | Ingeniero | Obrero | `node scripts/test_fireworks_call.js && npm test` | ✅ DONE |
+| **T-31** | Guía Visual de Ensamble 3D Despiezada (*Exploded Assembly View*) con Slider | Ingeniero | Obrero | `node scripts/test_blender_export.js && npm test` | 🟡 READY |
 | **T-32** | Ficha Técnica de Confección Paso a Paso & Auditoría de Fase 7.0 | Arquitecto | Ingeniero | `npm test && node dist/index.js` | ⚪ QUEUED |
 
 ---
@@ -44,12 +44,12 @@ Assurance: Lean
 
 ### T-30 - Selector de Bloques Base FreeSewing & Inyección Estructural al LLM
 
-- Status: ready
+- Status: done
 - Depends on: T-29
 - Scope: `src/server/public/index.html`, `src/server/public/app.js`, `src/ai/prompt_builder.ts`, `src/ai/direct_api_provider.ts`, `src/pipeline.ts`, `tests/ai_provider.test.ts`
 - Rol: Ingeniero / Obrero (Integración Frontend y Pipeline Multimodal).
 - Acceptance:
-  - [ ] **Selector de Bloques Base en Web Studio:**
+  - [x] **Selector de Bloques Base en Web Studio:**
     - Menú interactivo con iconos y descripción de los 7 bloques base de FreeSewing:
       1. `wahid`: Chaleco Sastre / Cosplay Vest (Botonadura, bajo en pico, sin mangas, vistas).
       2. `simon`: Camisa Clásica / Casual (Cuello camisero, pie de cuello, cartera, puños).
@@ -58,9 +58,9 @@ Assurance: Lean
       5. `paco`: Pantalón / Bermuda / Shorts (Tiro anatómico, bragueta, bolsillos).
       6. `sandy`: Falda (Recta, tubo, evasé, tablas).
       7. `shin`: Kimono / Haori Anime (Mangas Furisode cuadradas, cuello continuo).
-  - [ ] **Inyección Contextual al LLM:**
+  - [x] **Inyección Contextual al LLM:**
     - El `PromptBuilder` inyecta a Qwen 3.8 Max la anatomía exacta y lista de parámetros modificables del bloque seleccionado, limitando la respuesta a transformaciones diferenciales sobre la base.
-  - [ ] Pruebas unitarias de inyección y validación Zod.
+  - [x] Pruebas unitarias de inyección y validación Zod.
 - Gates: `node scripts/test_fireworks_call.js && npm test`
 - Human checks: none
 
@@ -68,7 +68,7 @@ Assurance: Lean
 
 ### T-31 - Guía Visual de Ensamble 3D Despiezada (*Exploded Assembly View*) con Slider
 
-- Status: queued
+- Status: ready
 - Depends on: T-30
 - Scope: `src/engine/blender_bridge.ts`, `src/server/public/viewer3d.js`, `src/server/public/viewer3d.css`, `tests/viewer3d.test.ts`
 - Rol: Ingeniero (Gráficos WebGL y visualización espacial de confección).
