@@ -105,6 +105,14 @@ suites_passing: 21/21 (548/548 tests PASS)
 - El hito adopta auditoria Standard para el cierre y conserva `H-03` como barrera humana obligatoria.
 - Siguiente transicion autorizada: el Ingeniero ejecuta `RUN THE LOOP` comenzando por `T-35` y responde al Arquitecto antes de avanzar.
 
+## 2026-08-23 - Fase 9.0 implementada, pendiente H-03
+
+- `T-35` APTO: Ear-Clipping conserva vertices colineales, bloquea diagonales internas invalidas y elimina el fallback en abanico.
+- `T-36` APTO: bolsillos cargo exportan cuerpo, fuelle volumetrico de tres paredes y solapa con espejo x2.
+- `T-37` APTO: cuellos tecnicos usan una unica banda cilindrica de 20 segmentos sin superficies coincidentes.
+- `T-38` APTO: guias de torso, mangas, vistas y piernas usan bounds reales; pantalones sin torso conservan sus guias y el orden de capas es determinista.
+- Puerta final del Arquitecto: `npm run build && npm test` con 21/21 suites y 556/556 tests PASS.
+- STOP: `H-03` requiere inspeccion humana en Web Studio antes de emitir CLOSE y archivar la fase.
 
 
 

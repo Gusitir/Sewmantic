@@ -4,7 +4,7 @@ Guía completa de pruebas automatizadas, semi-automatizadas y verificación huma
 
 ---
 
-## 1. Suite de Pruebas Automatizadas (548/548 PASS — 21 Suites Vitest)
+## 1. Suite de Pruebas Automatizadas (556/556 PASS — 21 Suites Vitest)
 
 Para ejecutar la suite completa de pruebas deterministas:
 ```powershell
@@ -18,9 +18,9 @@ npm test
 | `tests/collars.test.ts` | `src/engine/modifier.ts` | 5 | Módulos de cuellos técnicos: cuello chimenea/alzado (`stand_collar`) con curvatura anatómica y piquetes de hombro/centro, y cuello camisero (`collar_stand` + `collar_fall`) con entretela y validación Zod. |
 | `tests/cargo_pockets.test.ts` | `src/engine/modifier.ts` | 5 | Módulos de bolsillos cargo 3D con fuelle perimetral en tira U (`cargo_pocket_bellows`), cuerpo principal (`cargo_pocket_body`), solapas con broches (`cargo_pocket_flap`), y blueprint ancla `utility_vest`. |
 | `tests/industrial_patterns.test.ts` | `src/engine/modifier.ts` | 15 | Moldería industrial: cruces de botonadura (+20mm), marcas vectoriales de botones y ojales, vistas interiores con entretela (`front_facing`, `armhole_facing`, `back_neck_facing`), piquetes pareados en hombros/costados y bajo en doble pico de chaleco (`hem: pointed`). |
-| `tests/triangulator.test.ts` | `src/engine/triangulator.ts` | 30 | Motor de Triangulación 2D Ear-Clipping; polígonos cóncavos, escotes en V, bajo en pico, mangas, perneras y faldas; área analítica ($\Delta < 0.1\%$) y orientación CCW. |
-| `tests/schema.test.ts` | `src/schema/pattern_schema.ts` | 30 | Contratos Zod para ADN paramétrico, límites antropométricos, sub-prendas, vestidos, kimonos, telas y árboles de modificación. |
-| `tests/ai_provider.test.ts` | `src/ai/` | 29 | AI Provider Factory, `DirectApiProvider` (Fireworks AI / Qwen 3.8 Max `max_tokens: 6000`, inyección de Blueprints FreeSewing, Data URLs, visión) y `MockAiProvider`. |
+| `tests/triangulator.test.ts` | `src/engine/triangulator.ts` | 27 | Motor de Triangulación 2D Ear-Clipping; polígonos cóncavos, escotes en V, bajo en pico, mangas, perneras y faldas; área analítica ($\Delta < 0.1\%$) y orientación CCW. |
+| `tests/schema.test.ts` | `src/schema/pattern_schema.ts` | 41 | Contratos Zod para ADN paramétrico, límites antropométricos, sub-prendas, vestidos, kimonos, telas y árboles de modificación. |
+| `tests/ai_provider.test.ts` | `src/ai/` | 31 | AI Provider Factory, `DirectApiProvider` (Fireworks AI / Qwen 3.8 Max `max_tokens: 6000`, inyección de Blueprints FreeSewing, Data URLs, visión) y `MockAiProvider`. |
 | `tests/base_blocks.test.ts` | `src/engine/base_blocks/` | 51 | Slopers FreeSewing de Torso, Mangas, Capucha y Bolsillo; curvas Bézier y polígonos cerrados. |
 | `tests/womenswear.test.ts` | `src/engine/base_blocks/womens_bodice.ts` | 45 | Sloper femenino con pinza de busto al apex y falda recta/evasé/plisada ($\Delta \le 0.01\text{ mm}$). |
 | `tests/trousers.test.ts` | `src/engine/base_blocks/trousers.ts` | 35 | Slopers de Pantalón y Bermuda; aplomo central y ecualización de entrepierna ($\Delta \le 0.05\text{ mm}$). |
@@ -30,13 +30,13 @@ npm test
 | `tests/two_piece_set.test.ts` | `src/engine/modifier.ts` | 28 | Generador de conjuntos coordinados de 2 piezas (`straw_pirate_full_set`); continuidad de costuras y layout compuesto. |
 | `tests/tech_sheet.test.ts` | `src/engine/tech_sheet.ts` | 17 | Ficha técnica industrial (PDF, Markdown y JSON); cálculo de mermas ($\ge 10\%$), desglose multi-tela, BOM y guía de confección paso a paso de 4 etapas. |
 | `tests/tiler.test.ts` | `src/utils/tiler.js` | 19 | Paginación vectorial A4 / US Letter; Cuadro de Calibración 10x10 cm en Pág 1; cruces de registro. |
-| `tests/blender.test.ts` | `src/engine/blender_bridge.ts` | 24 | True-to-Pattern 3D Mesh Generator, ensamblador binario glTF 2.0 (`.glb`), metadatos `explodeOffset`, normales suaves, mapeo UV y multi-material PBR. |
-| `tests/viewer3d.test.ts` | `src/server/public/viewer3d.js` | 15 | Visor 3D WebGL nativo con Exploded Assembly Slider (0-100%), streaming `/api/patterns/:concept/glb`, líneas de unión de costura y controles orbitales 360°. |
+| `tests/blender.test.ts` | `src/engine/blender_bridge.ts` | 26 | True-to-Pattern 3D Mesh Generator, ensamblador binario glTF 2.0 (`.glb`), metadatos `explodeOffset`, normales suaves, mapeo UV y multi-material PBR. |
+| `tests/viewer3d.test.ts` | `src/server/public/viewer3d.js` | 19 | Visor 3D WebGL nativo con Exploded Assembly Slider (0-100%), streaming `/api/patterns/:concept/glb`, líneas de unión de costura y controles orbitales 360°. |
 | `tests/bundler.test.ts` | `src/engine/etsy_bundler.ts` | 17 | Empaquetador comercial Etsy; estructura de 7 carpetas dentro del `.zip`, 13 tags SEO, guía PDF con características industriales y modelo 3D. |
 | `tests/server.test.ts` | `src/server/app.ts` | 20 | Servidor HTTP REST nativo; CORS universal, soporte para selección de `blueprint`, logging estructurado y respuestas de error con `details`. |
 | `tests/viewer.test.ts` | `src/server/public/viewer.js` | 22 | Visor Vectorial 2D; transformaciones matemáticas (Zoom, Pan, Fit View), capas XS-3XL y cuadrícula A4. |
 | `tests/e2e.test.ts` | `src/pipeline.ts` | 11 | Pipeline End-to-End generando físicamente todos los 12 entregables (2D + 3D + ZIP) en disco. |
-| **TOTAL** | **21 suites** | **548** | **100% PASS (0 errores)** |
+| **TOTAL** | **21 suites** | **556** | **100% PASS (0 errores)** |
 
 ### Fase 9.0 - IDs de verificacion
 

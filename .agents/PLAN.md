@@ -2,7 +2,7 @@
 
 This file points to the current active milestone plan for `pattern-ai-core`.
 
-- **Active Plan:** [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN_v0.9-3d-geometry-and-meshing-calibration.md) (Status: approved / ready for RUN THE LOOP)
+- **Active Plan:** [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN_v0.9-3d-geometry-and-meshing-calibration.md) (Status: implementation complete / pending H-03 and CLOSE)
 - **Active Phase:** Phase 9.0 — Calibración Geométrica 3D, Despiece y Triangulación Homogénea (T-35 a T-38)
 - **Assurance Profile:** Standard for Phase 9 milestone closure; deterministic gates per task
 - **Archived Plans:**

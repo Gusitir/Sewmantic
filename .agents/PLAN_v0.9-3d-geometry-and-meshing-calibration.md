@@ -1,6 +1,6 @@
 # PLAN v0.9 - Fase 9: Calibracion Geometrica 3D, Despiece y Triangulacion Homogenea
 
-Status: approved
+Status: implementation complete (pending H-03 and CLOSE)
 Goal: Corregir las cuatro anomalias geometricas y visuales observadas en Web Studio sin alterar los contratos de ADN parametrico ni la geometria 2D industrial ya sellada.
 Assurance: Standard para cierre de fase (puertas deterministas por tarea y auditoria independiente del hito)
 
@@ -29,7 +29,7 @@ Assurance: Standard para cierre de fase (puertas deterministas por tarea y audit
 | **T-35** | Ear-Clipping robusto sin fallback en abanico invalido | Ninguna | Ingeniero / Obrero Luna MAX | `P9-T35`, `P9-GATE` | APTO |
 | **T-36** | Bolsillos cargo con fuelle 3D integrado y simetria x2 | T-35 APTO | Ingeniero / Obrero Luna MAX | `P9-T36`, `P9-GATE` | APTO |
 | **T-37** | Cuellos 3D con subdivision cilindrica continua | T-36 APTO | Ingeniero / Obrero Luna MAX | `P9-T37`, `P9-GATE` | APTO |
-| **T-38** | Guias de ensamble y orden de capas Z deterministas | T-37 APTO | Ingeniero / Obrero Luna MAX | `P9-T38`, `P9-GATE`, `H-03` | NO APTO |
+| **T-38** | Guias de ensamble y orden de capas Z deterministas | T-37 APTO | Ingeniero / Obrero Luna MAX | `P9-T38`, `P9-GATE`, `H-03` | APTO |
 
 El Ingeniero puede usar como maximo dos agentes Obrero Luna simultaneos con esfuerzo MAX, pero este plan serializa los writes. No se autoriza trabajo paralelo sobre los archivos permitidos de estas tareas.
 

@@ -1,13 +1,13 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T02:51:55-05:00
-source_commit: 03b5329 [T-38] restore bounds-anchored seam guides
+updated_at: 2026-08-23T02:56:03-05:00
+source_commit: 1b9bd0f [T-38] preserve seam guides for pants without torso
 assurance: Standard milestone audit; deterministic gates per task
-active_job: RUN THE LOOP
+active_job: CLOSE
 active_plan: PLAN_v0.9-3d-geometry-and-meshing-calibration.md
-active_task: T-38
-last_verdict: NO APTO
+active_task: none
+last_verdict: APTO (T-35..T-38); milestone pending H-03
 backup: local-only
 ```
 
@@ -20,22 +20,22 @@ backup: local-only
 
 ## Next action
 
-1. **Ingeniero/Obrero:** Corregir `[T-38]` para generar guias de piernas sin exigir primitivas de torso, evitar clasificar falda/bolsillo/cuello como torso y repetir `npm run build && npm test`; responder al Arquitecto para auditoria final.
+1. **Humano:** Ejecutar `H-03` en Web Studio: inspeccionar triangulacion, bolsillos cargo, cuellos y guias/despiece 3D; comunicar APTO o hallazgos al Arquitecto para CLOSE.
 
 ## Blockers
 
-- `[T-38]` NO APTO: con solo `front_leg` y `back_leg`, `getSeamGuideAnchors()` retorna `[]` por el retorno temprano que exige torso.
+- `H-03` pendiente. Las cuatro tareas de producto estan APTO; el cierre formal no se emite sin inspeccion visual humana.
 
 ## Current facts
 
 - **Fases 1.0 a 8.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Suite Determinista:** **21/21 suites passing (555/555 tests en verde)** en `03b5329`, con regresion funcional pendiente en `[T-38]`.
+- **Suite Determinista:** **21/21 suites passing (556/556 tests en verde)** tras `[T-38]`.
 - **Módulos Paramétricos Extendidos:** Cuellos técnicos (`stand_collar`, `shirt_collar_with_stand`), bolsillos cargo 3D con fuelle y solapa (`cargo_pocket_body`, `cargo_pocket_bellows`, `cargo_pocket_flap`), y blueprint ancla `utility_vest` (Chaleco Táctico / Safari / Cargo).
 - **Moldería Industrial & Visor 3D:** Cruces de botonadura (+20mm), marcas de ojales/botones, vistas interiores con entretela técnica (`Interfacing_Lining`), bajo en doble pico de chaleco sastre (`hem: { type: 'pointed', peak_drop_mm: 50 }`), Matriz de Inspección Ocular Multimodal de 6 Puntos y Guía de Despiece 3D interactivo en WebGL.
 
 ## Open findings
 
-- `P9-T38`: las guias de piernas deben calcularse independientemente del torso; la seleccion de torso debe excluir `leg`, `skirt`, `sleeve`, `pocket`, `collar`, `hood` y `waistband`.
+- Ninguno tecnico abierto. Pendiente solamente `H-03`.
 
 ## Human actions
 
