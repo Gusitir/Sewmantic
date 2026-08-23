@@ -74,3 +74,20 @@ node scripts/test_fireworks_e2e_image.js
 | **H-01** | Impresión física de Página 1 a escala 100% (Sin ajustar a página). | Medición con regla métrica del recuadro exterior: exactamente $10.0\text{ cm} \times 10.0\text{ cm}$ ($100\text{ mm} \times 100\text{ mm}$). | ✅ [VERIFICADO OK] |
 | **H-02** | Continuidad de ensamble de hojas A4/Letter. | Las líneas perimetrales de corte coinciden de forma continua sin saltos ni escalones al empalmar las marcas de cruz entre hojas. | ✅ [VERIFICADO OK] |
 | **H-03** | Verificación visual de patrones 2D y 3D en Web Studio. | Inspección interactiva del visor 2D (cruces de botonadura, marcas de ojales, vistas interiores) y rotación 360° del visor 3D WebGL con slider de despiece interactivo (0-100%). | 🟡 [LISTO PARA PROBAR POR EL USUARIO] |
+
+### H-03 - Sesion de validacion del usuario (2026-08-23)
+
+- Aplicacion: `http://127.0.0.1:3030`
+- Base probada: `bb2d354` (`1b9bd0f` como ultimo commit de producto)
+- Arranque verificado: servidor escuchando en `127.0.0.1:3030`, respuesta HTTP `200`.
+- Estado: EN CURSO. Los resultados siguientes requieren observacion directa del usuario.
+
+| ID | Comprobacion del usuario | Resultado | Observaciones |
+| :--- | :--- | :---: | :--- |
+| `H-03-A` | Web Studio carga, permite navegar y conserva controles utilizables. | PENDIENTE | Pendiente de respuesta del usuario. |
+| `H-03-B` | Un patron con escote o bajo concavo se visualiza sin triangulos en abanico ni caras cruzadas. | PENDIENTE | Pendiente de respuesta del usuario. |
+| `H-03-C` | El chaleco `utility_vest` muestra bolsillos cargo con volumen, fuelle perimetral, solapa y espejo izquierdo/derecho. | PENDIENTE | Pendiente de respuesta del usuario. |
+| `H-03-D` | `stand_collar` y cuello camisero se ven continuos, curvos y sin superficies parpadeantes o duplicadas. | PENDIENTE | Pendiente de respuesta del usuario. |
+| `H-03-E` | El slider 0-100% separa exterior, vistas y entretela en orden legible; las guias no forman diagonales espurias. | PENDIENTE | Pendiente de respuesta del usuario. |
+| `H-03-F` | Pantalon o bermuda conserva guias de ambas piernas aun sin piezas de torso. | PENDIENTE | Pendiente de respuesta del usuario. |
+| `H-03-G` | La vista funciona en escritorio y en ancho movil sin perder controles esenciales. | PENDIENTE | Pendiente de respuesta del usuario. |

@@ -1,8 +1,8 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T02:56:03-05:00
-source_commit: 1b9bd0f [T-38] preserve seam guides for pants without torso
+updated_at: 2026-08-23T17:56:20-05:00
+source_commit: bb2d354 [STATE] phase 9 tasks apto pending H-03
 assurance: Standard milestone audit; deterministic gates per task
 active_job: CLOSE
 active_plan: PLAN_v0.9-3d-geometry-and-meshing-calibration.md
@@ -20,7 +20,7 @@ backup: local-only
 
 ## Next action
 
-1. **Humano:** Ejecutar `H-03` en Web Studio: inspeccionar triangulacion, bolsillos cargo, cuellos y guias/despiece 3D; comunicar APTO o hallazgos al Arquitecto para CLOSE.
+1. **Humano:** Completar `H-03-A` a `H-03-G` en `http://127.0.0.1:3030` y comunicar APTO/NO APTO con observaciones para registrarlas y decidir CLOSE.
 
 ## Blockers
 
@@ -41,6 +41,6 @@ backup: local-only
 
 - `H-01`: Impresión física de la Página 1 a escala 100% y medición con regla del recuadro de 10x10 cm. [VERIFICADO OK]
 - `H-02`: Ensamble físico/digital de las hojas A4/Letter para validar continuidad de corte con PDFStitcher. [VERIFICADO OK]
-- `H-03`: Inspección visual del patrón generado a partir de una imagen de referencia en el Visor 2D/3D del Web Studio. [LISTO PARA PROBAR POR EL USUARIO]
+- `H-03`: Inspección visual del patrón en Web Studio. [EN CURSO POR EL USUARIO; SERVIDOR ACTIVO EN 127.0.0.1:3030]
 
 Keep this concise. History belongs in CONTEXT and Git.
