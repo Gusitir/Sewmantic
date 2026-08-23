@@ -17,6 +17,7 @@ import {
   isPolygonConvex,
   cleanPolygonVertices,
   isPointInTriangle,
+  crossProduct2D,
 } from '../src/engine/triangulator.js';
 import { generateTorsoBlock } from '../src/engine/base_blocks/torso.js';
 import { generateSleeveBlock } from '../src/engine/base_blocks/sleeve.js';
@@ -447,6 +448,45 @@ describe('Motor de Triangulación 2D de Polígonos de Moldería (Ear Clipping) -
       expect(isPointInTriangle(a, a, b, c)).toBe(false);
       expect(isPointInTriangle(b, a, b, c)).toBe(false);
       expect(isPointInTriangle(c, a, b, c)).toBe(false);
+      // Los puntos en aristas tampoco bloquean una oreja.
+      expect(isPointInTriangle(createPoint(50, 0), a, b, c)).toBe(false);
+      expect(isPointInTriangle(createPoint(75, 40), a, b, c)).toBe(false);
+    });
+
+    it('debe triangular una curva densa cóncava con puntos colineales sin abanico', () => {
+      const denseConcaveOutline: Point2D[] = [
+        createPoint(0, 0),
+        createPoint(20, 0),
+        createPoint(40, 0),
+        createPoint(60, 0),
+        createPoint(80, 0),
+        createPoint(120, 0),
+        createPoint(120, 25),
+        createPoint(118, 45),
+        createPoint(112, 62),
+        createPoint(105, 75),
+        createPoint(100, 100),
+        createPoint(75, 100),
+        createPoint(50, 100),
+        createPoint(0, 100),
+        createPoint(0, 70),
+        createPoint(20, 70),
+        createPoint(45, 55),
+        createPoint(20, 40),
+        createPoint(0, 40),
+      ];
+
+      const indices = triangulatePolygon(denseConcaveOutline);
+      const polygonArea = computePolygonArea(denseConcaveOutline);
+      const triangulatedArea = computeTriangulatedArea(denseConcaveOutline, indices);
+
+      expect(indices.length).toBe((denseConcaveOutline.length - 2) * 3);
+      expect(Math.abs(triangulatedArea - polygonArea) / polygonArea).toBeLessThan(0.001);
+      expect(validateTriangleOrientations(denseConcaveOutline, indices)).toBe(true);
+      for (let i = 0; i < indices.length; i += 3) {
+        const [a, b, c] = [indices[i], indices[i + 1], indices[i + 2]];
+        expect(crossProduct2D(denseConcaveOutline[a], denseConcaveOutline[b], denseConcaveOutline[c])).toBeGreaterThan(1e-7);
+      }
     });
   });
 

@@ -80,7 +80,7 @@ export function crossProduct2D(a: Point2D, b: Point2D, c: Point2D): number {
 }
 
 /**
- * Verifica si un punto P está estrictamente dentro o en el borde de un triángulo (A, B, C).
+ * Verifica si un punto P está estrictamente dentro de un triángulo (A, B, C).
  * El triángulo debe estar orientado en CCW.
  */
 export function isPointInTriangle(
@@ -103,8 +103,8 @@ export function isPointInTriangle(
   const c2 = crossProduct2D(b, c, p);
   const c3 = crossProduct2D(c, a, p);
 
-  // En CCW, el punto está dentro si los tres giros son no-negativos
-  return c1 >= -eps && c2 >= -eps && c3 >= -eps;
+  // Los puntos sobre el perímetro no bloquean una oreja válida.
+  return c1 > eps && c2 > eps && c3 > eps;
 }
 
 /**
@@ -178,7 +178,7 @@ export function cleanPolygonVertices(
 /**
  * Determina si el vértice i de un polígono CCW es una "oreja" (Ear) cortable.
  */
-function isEar(poly: Point2D[], i: number): boolean {
+function isEar(poly: Point2D[], i: number, eps: number = 1e-7): boolean {
   const n = poly.length;
   if (n < 3) return false;
 
@@ -192,7 +192,7 @@ function isEar(poly: Point2D[], i: number): boolean {
 
   // 1. Debe ser estrictamente convexo (> 0 en CCW)
   const cp = crossProduct2D(a, b, c);
-  if (cp <= 1e-7) {
+  if (cp <= eps) {
     return false;
   }
 
@@ -200,12 +200,17 @@ function isEar(poly: Point2D[], i: number): boolean {
   for (let k = 0; k < n; k++) {
     if (k === prevIdx || k === currIdx || k === nextIdx) continue;
     const p = poly[k];
-    if (isPointInTriangle(p, a, b, c)) {
+    if (isPointInTriangle(p, a, b, c, eps)) {
       return false;
     }
   }
 
   return true;
+}
+
+function isCollinearBetween(a: Point2D, b: Point2D, c: Point2D, eps: number = 1e-7): boolean {
+  if (Math.abs(crossProduct2D(a, b, c)) > eps) return false;
+  return (b.x - a.x) * (b.x - c.x) + (b.y - a.y) * (b.y - c.y) <= eps;
 }
 
 /**
@@ -283,10 +288,11 @@ export function triangulatePolygon(
     iter++;
     let earFound = false;
 
-    // Buscar una oreja válida
+    // Buscar una oreja válida. Si la tolerancia normal no encuentra una,
+    // repetir con precisión estricta conserva el ear clipping sin abanicos.
     for (let step = 0; step < count; step++) {
       const i = (currIdx + step) % count;
-      if (isEar(pts, i)) {
+      if (isEar(pts, i) || isEar(pts, i, 0)) {
         const prev = (i - 1 + count) % count;
         const next = (i + 1) % count;
 
@@ -304,38 +310,20 @@ export function triangulatePolygon(
       }
     }
 
-    // Fallback de emergencia si no se encuentra ninguna oreja estricta
-    // (singularidades geométricas, auto-tangencias o precisión flotante)
     if (!earFound) {
-      // Fallback 1: Buscar el vértice convexo con mayor ángulo o mayor producto cruzado
-      let bestIdx = -1;
-      let bestCross = -Infinity;
-
-      for (let i = 0; i < count; i++) {
-        const prev = (i - 1 + count) % count;
-        const next = (i + 1) % count;
-        const cp = crossProduct2D(pts[prev], pts[i], pts[next]);
-        if (cp > 1e-9 && cp > bestCross) {
-          bestCross = cp;
-          bestIdx = i;
-        }
-      }
-
-      if (bestIdx >= 0) {
-        const prev = (bestIdx - 1 + count) % count;
-        const next = (bestIdx + 1) % count;
-        indices.push(origIndices[prev], origIndices[bestIdx], origIndices[next]);
-        pts.splice(bestIdx, 1);
-        origIndices.splice(bestIdx, 1);
+      // Collinear boundary samples do not contribute area and cannot form an ear.
+      const collinearIdx = pts.findIndex((point, i) =>
+        isCollinearBetween(pts[(i - 1 + count) % count], point, pts[(i + 1) % count])
+      );
+      if (collinearIdx >= 0) {
+        const prev = (collinearIdx - 1 + count) % count;
+        pts.splice(collinearIdx, 1);
+        origIndices.splice(collinearIdx, 1);
         count--;
         currIdx = prev % count;
-      } else {
-        // Fallback 2: Abanico triangular (fan) sobre los vértices restantes
-        for (let f = 1; f < count - 1; f++) {
-          indices.push(origIndices[0], origIndices[f], origIndices[f + 1]);
-        }
-        break;
+        continue;
       }
+      throw new Error('Unable to triangulate polygon with ear clipping');
     }
   }
 
