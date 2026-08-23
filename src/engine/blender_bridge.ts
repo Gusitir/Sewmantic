@@ -837,6 +837,8 @@ export function generateTrueToPatternMesh(
     const isHood = lowerName.includes('hood');
     const isWaistband = lowerName.includes('waistband') || lowerName.includes('obi_belt');
     const isCollar = lowerName.includes('collar');
+    const isTechnicalCollar =
+      lowerName === 'stand_collar' || lowerName === 'collar_stand' || lowerName === 'collar_fall';
     const isPocket = lowerName.includes('pocket');
     const isCargoPocketBody = lowerName === 'cargo_pocket_body';
     const isCargoPocketBellows = lowerName === 'cargo_pocket_bellows';
@@ -1539,6 +1541,43 @@ export function generateTrueToPatternMesh(
         panelUvs.push(u, v);
       }
       panelIndices.push(...baseIndices);
+    } else if (isTechnicalCollar) {
+      // Technical collars are a continuous cylindrical band, avoiding a fan across the neck axis.
+      const segments = 20;
+      const radius = 0.095;
+      const collarBaseY =
+        lowerName === 'collar_fall'
+          ? SHOULDER_Y + ((resolvedParts.collar_stand?.height_mm || 0) / 1000)
+          : SHOULDER_Y;
+      const addBand = (mirror: boolean) => {
+        const vertexOffset = panelPositions.length / 3;
+        for (let ring = 0; ring < 2; ring++) {
+          for (let segment = 0; segment < segments; segment++) {
+            const u = segment / segments;
+            const phi = u * 2 * Math.PI;
+            const X = (mirror ? -1 : 1) * radius * Math.sin(phi);
+            const Y = collarBaseY + ring * H_m;
+            const Z = radius * Math.cos(phi);
+            panelPositions.push(X, Y, Z);
+            panelUvs.push(mirror ? 1 - u : u, ring);
+          }
+        }
+        for (let segment = 0; segment < segments; segment++) {
+          const next = (segment + 1) % segments;
+          const bottom = vertexOffset + segment;
+          const bottomNext = vertexOffset + next;
+          const top = vertexOffset + segments + segment;
+          const topNext = vertexOffset + segments + next;
+          if (mirror) {
+            panelIndices.push(bottom, topNext, bottomNext, bottom, top, topNext);
+          } else {
+            panelIndices.push(bottom, bottomNext, topNext, bottom, topNext, top);
+          }
+        }
+      };
+
+      addBand(false);
+      if (part.cutCount >= 2) addBand(true);
     } else if (isCollar) {
       // Cuello envolvente
       for (let k = 0; k < outline.length; k++) {

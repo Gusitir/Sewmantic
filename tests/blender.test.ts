@@ -928,4 +928,91 @@ describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
       expect(glbBuffer.readUInt32LE(0)).toBe(0x46546c67);
     });
   });
+
+  describe('8. Technical Collar Cylindrical Bands (T-37)', () => {
+    it('should project stand_collar, collar_stand, and collar_fall as mirrored non-degenerate cylindrical bands', () => {
+      const standDna: PatternDna = {
+        concept_name: 'stand_collar_mesh_test',
+        garment_category: 'top',
+        base_block: 'menswear_torso',
+        ease: { chest_ease_mm: 50 },
+        modifications: { neckline: { type: 'stand_collar', collar_height_mm: 45 } },
+      };
+      const shirtDna: PatternDna = {
+        concept_name: 'shirt_collar_mesh_test',
+        garment_category: 'top',
+        base_block: 'simon',
+        ease: { chest_ease_mm: 60 },
+        modifications: {
+          neckline: {
+            type: 'shirt_collar_with_stand',
+            collar_height_mm: 45,
+            collar_stand_height_mm: 32,
+            collar_point_length_mm: 70,
+          },
+        },
+      };
+      const collars = [
+        ...generateTrueToPatternMesh(modifyPattern(standDna, 'M'), standDna).primitives!,
+        ...generateTrueToPatternMesh(modifyPattern(shirtDna, 'M'), shirtDna).primitives!,
+      ].filter((primitive) => ['stand_collar', 'collar_stand', 'collar_fall'].includes(primitive.name));
+
+      expect(collars.map((primitive) => primitive.name).sort()).toEqual([
+        'collar_fall',
+        'collar_stand',
+        'stand_collar',
+      ]);
+
+      for (const collar of collars) {
+        const segments = collar.vertexCount / 4;
+        expect(Number.isInteger(segments)).toBe(true);
+        expect(segments).toBeGreaterThanOrEqual(16);
+        expect(segments).toBeLessThanOrEqual(24);
+        expect(collar.triangleCount).toBe(segments * 4);
+        expect(collar.bounds.maxX).toBeCloseTo(0.095, 8);
+        expect(collar.bounds.minX).toBeCloseTo(-0.095, 8);
+        expect(collar.bounds.maxZ).toBeCloseTo(0.095, 8);
+        expect(collar.bounds.minZ).toBeCloseTo(-0.095, 8);
+        expect(collar.positions.every(Number.isFinite)).toBe(true);
+        expect(collar.normals.every(Number.isFinite)).toBe(true);
+        expect(collar.uvs.every(Number.isFinite)).toBe(true);
+        expect(collar.indices.every((index) => index >= 0 && index < collar.vertexCount)).toBe(true);
+        expect(Object.values(collar.bounds).every(Number.isFinite)).toBe(true);
+        expect(collar.explodeOffset!.every(Number.isFinite)).toBe(true);
+
+        for (let segment = 0; segment < segments; segment++) {
+          const x = collar.positions[segment * 3];
+          const z = collar.positions[segment * 3 + 2];
+          expect(Math.hypot(x, z)).toBeCloseTo(0.095, 8);
+          const next = (segment + 1) % segments;
+          const chord = Math.hypot(
+            collar.positions[next * 3] - x,
+            collar.positions[next * 3 + 2] - z
+          );
+          expect(chord).toBeCloseTo(2 * 0.095 * Math.sin(Math.PI / segments), 8);
+        }
+
+        for (let index = 0; index < collar.indices.length; index += 3) {
+          const a = collar.indices[index] * 3;
+          const b = collar.indices[index + 1] * 3;
+          const c = collar.indices[index + 2] * 3;
+          const abx = collar.positions[b] - collar.positions[a];
+          const aby = collar.positions[b + 1] - collar.positions[a + 1];
+          const abz = collar.positions[b + 2] - collar.positions[a + 2];
+          const acx = collar.positions[c] - collar.positions[a];
+          const acy = collar.positions[c + 1] - collar.positions[a + 1];
+          const acz = collar.positions[c + 2] - collar.positions[a + 2];
+          const faceX = aby * acz - abz * acy;
+          const faceY = abz * acx - abx * acz;
+          const faceZ = abx * acy - aby * acx;
+          const doubledArea = Math.hypot(faceX, faceY, faceZ);
+          expect(doubledArea).toBeGreaterThan(1e-8);
+          const normalX = collar.normals[a];
+          const normalY = collar.normals[a + 1];
+          const normalZ = collar.normals[a + 2];
+          expect(faceX * normalX + faceY * normalY + faceZ * normalZ).toBeGreaterThan(0);
+        }
+      }
+    });
+  });
 });
