@@ -481,6 +481,10 @@ describe('Visor 3D WebGL, Streaming .GLB y Empaquetado Comercial 3D (T-24)', () 
       { name: 'front_leg', bounds: { minX: -0.22, maxX: 0.24, minY: 0.30, maxY: 1.10, minZ: 0.20, maxZ: 0.31 }, explodeOffset: [0.02, -0.16, 0.09] },
       { name: 'back_leg', bounds: { minX: -0.26, maxX: 0.26, minY: 0.28, maxY: 1.08, minZ: -0.30, maxZ: -0.18 }, explodeOffset: [-0.01, -0.14, -0.08] },
     ];
+    const pantsOnlyPrimitives = [
+      { name: 'front_leg', bounds: { minX: -0.22, maxX: 0.24, minY: 0.30, maxY: 1.10, minZ: 0.20, maxZ: 0.31 }, explodeOffset: [0.02, -0.16, 0.09] },
+      { name: 'back_leg', bounds: { minX: -0.26, maxX: 0.26, minY: 0.28, maxY: 1.08, minZ: -0.30, maxZ: -0.18 }, explodeOffset: [-0.01, -0.14, -0.08] },
+    ];
 
     it('une torso, mangas, vistas y piernas desde bounds reales trasladados, sin diagonales cruzadas', async () => {
       const { getSeamGuideAnchors, buildSeamGuideLineVertices } = await import('../src/server/public/viewer3d.js');
@@ -552,6 +556,17 @@ describe('Visor 3D WebGL, Streaming .GLB y Empaquetado Comercial 3D (T-24)', () 
       expect(orderPrimitivesForRendering(primitives).map((primitive) => primitive.name)).toEqual([
         'front_interfacing', 'front_facing', 'back_facing', 'front_leg', 'front_panel', 'back_leg', 'back_panel', 'left_sleeve', 'right_sleeve',
       ]);
+    });
+
+    it('conserva guías de ambas piernas en pantalón sin torso', async () => {
+      const { getSeamGuideAnchors, buildSeamGuideLineVertices } = await import('../src/server/public/viewer3d.js');
+      const anchors = getSeamGuideAnchors(pantsOnlyPrimitives, 0.5);
+
+      expect(anchors.map((anchor) => anchor.name)).toEqual(['leg-right', 'leg-left']);
+      expect(anchors).toHaveLength(2);
+      expect(anchors.every((anchor) => [...anchor.from, ...anchor.to].every(Number.isFinite))).toBe(true);
+      expect(buildSeamGuideLineVertices(pantsOnlyPrimitives, 0.5)).not.toHaveLength(0);
+      expect(buildSeamGuideLineVertices(pantsOnlyPrimitives, 0)).toEqual([]);
     });
 
     it('conserva la superficie pública del visor para carga, órbita y resize sin montar un DOM pesado', async () => {
