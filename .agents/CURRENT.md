@@ -1,13 +1,13 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T02:08:27-05:00
-source_commit: 9fd427e [STATE] deep reindex and maintenance of .agents control plane
+updated_at: 2026-08-23T02:16:00-05:00
+source_commit: d167b3e [T-35] harden ear clipping for dense concave outlines
 assurance: Standard milestone audit; deterministic gates per task
 active_job: RUN THE LOOP
 active_plan: PLAN_v0.9-3d-geometry-and-meshing-calibration.md
 active_task: T-35
-last_verdict: APTO
+last_verdict: NO APTO
 backup: local-only
 ```
 
@@ -20,11 +20,11 @@ backup: local-only
 
 ## Next action
 
-1. **Ingeniero:** Despachar `[T-35]` al Obrero Luna MAX con el brief aprobado, exigir commit enfocado `[T-35]`, `npm run build && npm test` y Audit Capsule; responder al Arquitecto antes de avanzar a `T-36`.
+1. **Ingeniero/Obrero:** Corregir `[T-35]`: la recuperacion no puede eliminar vertices colineales porque P9-T35 exige `n - 2` triangulos no degenerados para todo poligono simple valido. Reejecutar `npm run build && npm test` y presentar Audit Capsule antes de avanzar a `T-36`.
 
 ## Blockers
 
-- Ninguno para iniciar T-35. La base histórica registra 548/548 tests; requiere evidencia fresca por tarea.
+- `[T-35]` NO APTO: el commit `d167b3e` elimina un vertice colineal en su recuperacion, incumpliendo el criterio de `n - 2` triangulos para los vertices de entrada.
 
 ## Current facts
 
@@ -35,7 +35,7 @@ backup: local-only
 
 ## Open findings
 
-- Ninguno.
+- `P9-T35`: la recuperacion debe conservar todos los vertices de un poligono simple valido; no se autoriza el descarte de muestras colineales.
 
 ## Human actions
 
