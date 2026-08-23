@@ -398,27 +398,64 @@ function getTranslatedAnchor(primitive, x, y, z, explodeFactor) {
 
 export function getSeamGuideAnchors(primitives, explodeFactor) {
   const exterior = primitives.filter((primitive) => getPrimitiveLayer(primitive) === 2 && primitive?.bounds);
-  const front = exterior.find((primitive) => getPrimitiveSide(primitive) === 'front');
-  const back = exterior.find((primitive) => getPrimitiveSide(primitive) === 'back');
+  const torso = exterior.filter((primitive) => !/(leg|sleeve|furisode)/.test(getPrimitiveName(primitive)));
+  const front = torso.find((primitive) => getPrimitiveSide(primitive) === 'front');
+  const back = torso.find((primitive) => getPrimitiveSide(primitive) === 'back');
   if (!front || !back) return [];
 
   const frontBounds = front.bounds;
   const backBounds = back.bounds;
   const frontSideY = (frontBounds.minY + frontBounds.maxY) / 2;
   const backSideY = (backBounds.minY + backBounds.maxY) / 2;
-  return [
+  const anchors = [
     { name: 'shoulder-right', from: getTranslatedAnchor(front, frontBounds.maxX, frontBounds.maxY, frontBounds.minZ, explodeFactor), to: getTranslatedAnchor(back, backBounds.maxX, backBounds.maxY, backBounds.maxZ, explodeFactor) },
     { name: 'shoulder-left', from: getTranslatedAnchor(front, frontBounds.minX, frontBounds.maxY, frontBounds.minZ, explodeFactor), to: getTranslatedAnchor(back, backBounds.minX, backBounds.maxY, backBounds.maxZ, explodeFactor) },
     { name: 'side-right', from: getTranslatedAnchor(front, frontBounds.maxX, frontSideY, frontBounds.minZ, explodeFactor), to: getTranslatedAnchor(back, backBounds.maxX, backSideY, backBounds.maxZ, explodeFactor) },
     { name: 'side-left', from: getTranslatedAnchor(front, frontBounds.minX, frontSideY, frontBounds.minZ, explodeFactor), to: getTranslatedAnchor(back, backBounds.minX, backSideY, backBounds.maxZ, explodeFactor) },
   ];
+
+  const center = (bounds, axis) => (bounds[`min${axis}`] + bounds[`max${axis}`]) / 2;
+  const sleeves = exterior.filter((primitive) => /(sleeve|furisode)/.test(getPrimitiveName(primitive)));
+  const rightSleeve = sleeves.find((primitive) => getPrimitiveName(primitive).includes('right'));
+  const leftSleeve = sleeves.find((primitive) => getPrimitiveName(primitive).includes('left'));
+  if (rightSleeve) {
+    const bounds = rightSleeve.bounds;
+    anchors.push({ name: 'armhole-right', from: getTranslatedAnchor(front, frontBounds.maxX, center(frontBounds, 'Y'), center(frontBounds, 'Z'), explodeFactor), to: getTranslatedAnchor(rightSleeve, bounds.minX, center(bounds, 'Y'), center(bounds, 'Z'), explodeFactor) });
+  }
+  if (leftSleeve) {
+    const bounds = leftSleeve.bounds;
+    anchors.push({ name: 'armhole-left', from: getTranslatedAnchor(front, frontBounds.minX, center(frontBounds, 'Y'), center(frontBounds, 'Z'), explodeFactor), to: getTranslatedAnchor(leftSleeve, bounds.maxX, center(bounds, 'Y'), center(bounds, 'Z'), explodeFactor) });
+  }
+
+  const frontFacing = primitives.find((primitive) => getPrimitiveLayer(primitive) === 1 && getPrimitiveSide(primitive) === 'front' && primitive?.bounds);
+  const backFacing = primitives.find((primitive) => getPrimitiveLayer(primitive) === 1 && getPrimitiveSide(primitive) === 'back' && primitive?.bounds);
+  if (frontFacing) {
+    const bounds = frontFacing.bounds;
+    anchors.push({ name: 'facing-front', from: getTranslatedAnchor(front, center(frontBounds, 'X'), frontBounds.maxY, frontBounds.minZ, explodeFactor), to: getTranslatedAnchor(frontFacing, center(bounds, 'X'), bounds.maxY, bounds.maxZ, explodeFactor) });
+  }
+  if (backFacing) {
+    const bounds = backFacing.bounds;
+    anchors.push({ name: 'facing-back', from: getTranslatedAnchor(back, center(backBounds, 'X'), backBounds.maxY, backBounds.maxZ, explodeFactor), to: getTranslatedAnchor(backFacing, center(bounds, 'X'), bounds.maxY, bounds.minZ, explodeFactor) });
+  }
+
+  const frontLeg = exterior.find((primitive) => getPrimitiveSide(primitive) === 'front' && getPrimitiveName(primitive).includes('leg'));
+  const backLeg = exterior.find((primitive) => getPrimitiveSide(primitive) === 'back' && getPrimitiveName(primitive).includes('leg'));
+  if (frontLeg && backLeg) {
+    const frontLegBounds = frontLeg.bounds;
+    const backLegBounds = backLeg.bounds;
+    anchors.push(
+      { name: 'leg-right', from: getTranslatedAnchor(frontLeg, frontLegBounds.maxX, center(frontLegBounds, 'Y'), frontLegBounds.minZ, explodeFactor), to: getTranslatedAnchor(backLeg, backLegBounds.maxX, center(backLegBounds, 'Y'), backLegBounds.maxZ, explodeFactor) },
+      { name: 'leg-left', from: getTranslatedAnchor(frontLeg, frontLegBounds.minX, center(frontLegBounds, 'Y'), frontLegBounds.minZ, explodeFactor), to: getTranslatedAnchor(backLeg, backLegBounds.minX, center(backLegBounds, 'Y'), backLegBounds.maxZ, explodeFactor) }
+    );
+  }
+  return anchors;
 }
 
 export function buildSeamGuideLineVertices(primitives, explodeFactor) {
   if (!(explodeFactor > 0)) return [];
   const lines = [];
   for (const anchor of getSeamGuideAnchors(primitives, explodeFactor)) {
-    const dashes = anchor.name.startsWith('shoulder') ? 10 : 8;
+    const dashes = anchor.name.startsWith('shoulder') ? 10 : anchor.name.startsWith('facing') ? 6 : 8;
     for (let index = 0; index < dashes; index++) {
       const start = index / dashes;
       const end = index === dashes - 1 ? 1 : (index + 0.65) / dashes;

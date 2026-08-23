@@ -473,17 +473,20 @@ describe('Visor 3D WebGL, Streaming .GLB y Empaquetado Comercial 3D (T-24)', () 
     const primitives = [
       { name: 'front_panel', bounds: { minX: -0.34, maxX: 0.29, minY: 0.42, maxY: 1.61, minZ: 0.18, maxZ: 0.31 }, explodeOffset: [0.04, 0.08, 0.12] },
       { name: 'back_panel', bounds: { minX: -0.31, maxX: 0.35, minY: 0.39, maxY: 1.57, minZ: -0.33, maxZ: -0.17 }, explodeOffset: [-0.03, -0.04, -0.11] },
+      { name: 'right_sleeve', bounds: { minX: 0.31, maxX: 0.75, minY: 0.52, maxY: 1.47, minZ: -0.05, maxZ: 0.12 }, explodeOffset: [0.24, 0.02, 0] },
       { name: 'left_sleeve', bounds: { minX: -0.75, maxX: -0.31, minY: 0.52, maxY: 1.47, minZ: -0.05, maxZ: 0.12 }, explodeOffset: [-0.24, 0.02, 0] },
       { name: 'front_facing', bounds: { minX: -0.22, maxX: 0.20, minY: 1.24, maxY: 1.55, minZ: 0.14, maxZ: 0.17 }, explodeOffset: [0.01, 0, 0.04] },
       { name: 'front_interfacing', bounds: { minX: -0.21, maxX: 0.19, minY: 1.25, maxY: 1.54, minZ: 0.12, maxZ: 0.13 }, explodeOffset: [0.01, 0, 0.02] },
       { name: 'back_facing', bounds: { minX: -0.20, maxX: 0.21, minY: 1.20, maxY: 1.49, minZ: -0.16, maxZ: -0.13 }, explodeOffset: [0, 0, -0.04] },
+      { name: 'front_leg', bounds: { minX: -0.22, maxX: 0.24, minY: 0.30, maxY: 1.10, minZ: 0.20, maxZ: 0.31 }, explodeOffset: [0.02, -0.16, 0.09] },
+      { name: 'back_leg', bounds: { minX: -0.26, maxX: 0.26, minY: 0.28, maxY: 1.08, minZ: -0.30, maxZ: -0.18 }, explodeOffset: [-0.01, -0.14, -0.08] },
     ];
 
-    it('une hombros y costados desde bounds reales trasladados, sin diagonales cruzadas', async () => {
+    it('une torso, mangas, vistas y piernas desde bounds reales trasladados, sin diagonales cruzadas', async () => {
       const { getSeamGuideAnchors, buildSeamGuideLineVertices } = await import('../src/server/public/viewer3d.js');
       const anchors = getSeamGuideAnchors(primitives, 0.5);
 
-      expect(anchors).toHaveLength(4);
+      expect(anchors).toHaveLength(10);
       expect(anchors[0].name).toBe('shoulder-right');
       expect(anchors[0].from).toEqual(expect.arrayContaining([0.31, 0.24]));
       expect(anchors[0].from[1]).toBeCloseTo(1.65);
@@ -498,17 +501,38 @@ describe('Visor 3D WebGL, Streaming .GLB y Empaquetado Comercial 3D (T-24)', () 
       expect(anchors[0].from[0]).toBeGreaterThan(anchors[1].from[0]);
       expect(anchors[0].to[0]).toBeGreaterThan(anchors[1].to[0]);
 
+      expect(anchors.slice(4).map((anchor) => anchor.name)).toEqual([
+        'armhole-right', 'armhole-left', 'facing-front', 'facing-back', 'leg-right', 'leg-left',
+      ]);
+      expect(anchors[4].from).toEqual(expect.arrayContaining([0.31, 0.305]));
+      expect(anchors[4].to[0]).toBeCloseTo(0.43);
+      expect(anchors[5].from[0]).toBeCloseTo(-0.32);
+      expect(anchors[5].to[0]).toBeCloseTo(-0.43);
+      expect(anchors[6].from[1]).toBeCloseTo(1.65);
+      expect(anchors[6].to[2]).toBeCloseTo(0.19);
+      expect(anchors[7].from[2]).toBeCloseTo(-0.225);
+      expect(anchors[7].to[2]).toBeCloseTo(-0.18);
+      expect(anchors[8].from[0]).toBeCloseTo(0.25);
+      expect(anchors[8].to[0]).toBeCloseTo(0.255);
+      expect(anchors[9].from[0]).toBeCloseTo(-0.21);
+      expect(anchors[9].to[0]).toBeCloseTo(-0.265);
+      expect(anchors[4].from[0]).toBeGreaterThan(anchors[5].from[0]);
+      expect(anchors[4].to[0]).toBeGreaterThan(anchors[5].to[0]);
+      expect(anchors[8].from[0]).toBeGreaterThan(anchors[9].from[0]);
+      expect(anchors[8].to[0]).toBeGreaterThan(anchors[9].to[0]);
+
       const lines = buildSeamGuideLineVertices(primitives, 0.5);
       expect(lines.slice(0, 3)).toEqual(anchors[0].from);
       lines.slice(57, 60).forEach((value, axis) => expect(value).toBeCloseTo(anchors[0].to[axis]));
+      expect(lines).toHaveLength(480);
       expect(lines.every(Number.isFinite)).toBe(true);
     });
 
     it('mantiene traslación y precedencia Z deterministas en todo el slider', async () => {
-      const { getExplodedTranslation, orderPrimitivesForRendering } = await import('../src/server/public/viewer3d.js');
+      const { getExplodedTranslation, getSeamGuideAnchors, buildSeamGuideLineVertices, orderPrimitivesForRendering } = await import('../src/server/public/viewer3d.js');
       const front = primitives[0];
-      const facing = primitives[3];
-      const interfacing = primitives[4];
+      const facing = primitives.find((primitive) => primitive.name === 'front_facing')!;
+      const interfacing = primitives.find((primitive) => primitive.name === 'front_interfacing')!;
 
       expect(getExplodedTranslation(front, 0)).toEqual([0, 0, 0]);
       expect(getExplodedTranslation(front, 0.5)).toEqual([0.02, 0.04, 0.06]);
@@ -521,10 +545,12 @@ describe('Visor 3D WebGL, Streaming .GLB y Empaquetado Comercial 3D (T-24)', () 
         const interfacingZ = interfacing.bounds.maxZ + getExplodedTranslation(interfacing, factor)[2];
         expect(frontZ).toBeGreaterThan(facingZ);
         expect(facingZ).toBeGreaterThan(interfacingZ);
+        expect(getSeamGuideAnchors(primitives, factor).every((anchor) => [...anchor.from, ...anchor.to].every(Number.isFinite))).toBe(true);
+        expect(buildSeamGuideLineVertices(primitives, factor)).toHaveLength(factor === 0 ? 0 : 480);
       }
 
       expect(orderPrimitivesForRendering(primitives).map((primitive) => primitive.name)).toEqual([
-        'front_interfacing', 'front_facing', 'back_facing', 'front_panel', 'back_panel', 'left_sleeve',
+        'front_interfacing', 'front_facing', 'back_facing', 'front_leg', 'front_panel', 'back_leg', 'back_panel', 'left_sleeve', 'right_sleeve',
       ]);
     });
 
