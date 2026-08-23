@@ -1,12 +1,12 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T02:25:22-05:00
-source_commit: 7f610ef [T-35] block ears crossed by diagonal vertices
+updated_at: 2026-08-23T02:31:04-05:00
+source_commit: 2a22449 [T-36] model cargo pockets as volumetric assemblies
 assurance: Standard milestone audit; deterministic gates per task
 active_job: RUN THE LOOP
 active_plan: PLAN_v0.9-3d-geometry-and-meshing-calibration.md
-active_task: T-36
+active_task: T-37
 last_verdict: APTO
 backup: local-only
 ```
@@ -20,16 +20,16 @@ backup: local-only
 
 ## Next action
 
-1. **Ingeniero:** Despachar `[T-36]` al Obrero Luna MAX con el brief aprobado, exigir commit enfocado `[T-36]`, `npm run build && npm test` y Audit Capsule; responder al Arquitecto antes de avanzar a `T-37`.
+1. **Ingeniero:** Despachar `[T-37]` al Obrero Luna MAX con el brief aprobado, exigir commit enfocado `[T-37]`, `npm run build && npm test` y Audit Capsule; responder al Arquitecto antes de avanzar a `T-38`.
 
 ## Blockers
 
-- Ninguno para `[T-36]`. `[T-35]` APTO con puerta fresca de 21/21 suites y 550/550 tests.
+- Ninguno para `[T-37]`. `[T-36]` APTO con puerta fresca de 21/21 suites y 551/551 tests.
 
 ## Current facts
 
 - **Fases 1.0 a 8.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Suite Determinista:** **21/21 suites passing (550/550 tests en verde)** tras `[T-35]`.
+- **Suite Determinista:** **21/21 suites passing (551/551 tests en verde)** tras `[T-36]`.
 - **Módulos Paramétricos Extendidos:** Cuellos técnicos (`stand_collar`, `shirt_collar_with_stand`), bolsillos cargo 3D con fuelle y solapa (`cargo_pocket_body`, `cargo_pocket_bellows`, `cargo_pocket_flap`), y blueprint ancla `utility_vest` (Chaleco Táctico / Safari / Cargo).
 - **Moldería Industrial & Visor 3D:** Cruces de botonadura (+20mm), marcas de ojales/botones, vistas interiores con entretela técnica (`Interfacing_Lining`), bajo en doble pico de chaleco sastre (`hem: { type: 'pointed', peak_drop_mm: 50 }`), Matriz de Inspección Ocular Multimodal de 6 Puntos y Guía de Despiece 3D interactivo en WebGL.
 
