@@ -1,13 +1,13 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T02:37:09-05:00
-source_commit: 9fa8e49 [T-37] project technical collars as cylindrical bands
+updated_at: 2026-08-23T02:40:53-05:00
+source_commit: 41db0af [T-37] prevent duplicate technical collar bands
 assurance: Standard milestone audit; deterministic gates per task
 active_job: RUN THE LOOP
 active_plan: PLAN_v0.9-3d-geometry-and-meshing-calibration.md
-active_task: T-37
-last_verdict: NO APTO
+active_task: T-38
+last_verdict: APTO
 backup: local-only
 ```
 
@@ -20,22 +20,22 @@ backup: local-only
 
 ## Next action
 
-1. **Ingeniero/Obrero:** Corregir `[T-37]` eliminando el segundo cilindro coincidente creado por `cutCount >= 2`, agregar una asercion de posiciones/topologia unicas y repetir `npm run build && npm test`; no iniciar `T-38`.
+1. **Ingeniero:** Despachar `[T-38]` al Obrero Luna MAX con el brief aprobado, exigir commit enfocado `[T-38]`, `npm run build && npm test` y Audit Capsule; responder al Arquitecto para auditoria final.
 
 ## Blockers
 
-- `[T-37]` NO APTO: `stand_collar` genera 80 vertices pero solo 46 posiciones unicas; el espejo de una banda de 360 grados duplica superficies y puede causar z-fighting.
+- Ninguno para `[T-38]`. `[T-37]` APTO con puerta fresca de 21/21 suites y 552/552 tests.
 
 ## Current facts
 
 - **Fases 1.0 a 8.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Suite Determinista:** **21/21 suites passing (552/552 tests en verde)** en `9fa8e49`, con hallazgo geometrico pendiente en `[T-37]`.
+- **Suite Determinista:** **21/21 suites passing (552/552 tests en verde)** tras `[T-37]`.
 - **Módulos Paramétricos Extendidos:** Cuellos técnicos (`stand_collar`, `shirt_collar_with_stand`), bolsillos cargo 3D con fuelle y solapa (`cargo_pocket_body`, `cargo_pocket_bellows`, `cargo_pocket_flap`), y blueprint ancla `utility_vest` (Chaleco Táctico / Safari / Cargo).
 - **Moldería Industrial & Visor 3D:** Cruces de botonadura (+20mm), marcas de ojales/botones, vistas interiores con entretela técnica (`Interfacing_Lining`), bajo en doble pico de chaleco sastre (`hem: { type: 'pointed', peak_drop_mm: 50 }`), Matriz de Inspección Ocular Multimodal de 6 Puntos y Guía de Despiece 3D interactivo en WebGL.
 
 ## Open findings
 
-- `P9-T37`: una banda cilindrica completa no debe volver a reflejarse por `cutCount`; conservar una sola superficie 360 grados con 20 segmentos.
+- Ninguno.
 
 ## Human actions
 
