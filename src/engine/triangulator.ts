@@ -288,9 +288,35 @@ export function triangulatePolygon(
     iter++;
     let earFound = false;
 
-    // Buscar una oreja válida. Si la tolerancia normal no encuentra una,
-    // repetir con precisión estricta conserva el ear clipping sin abanicos.
+    // Procesar primero las orejas junto a cadenas colineales evita que queden
+    // como el único contorno restante, sin descartar sus vértices.
     for (let step = 0; step < count; step++) {
+      const i = (currIdx + step) % count;
+      const prev = (i - 1 + count) % count;
+      const next = (i + 1) % count;
+      const nextNext = (i + 2) % count;
+      if (
+        (isCollinearBetween(pts[prev], pts[i], pts[next]) ||
+          isCollinearBetween(pts[i], pts[next], pts[nextNext])) &&
+        (isEar(pts, i) || isEar(pts, i, 0))
+      ) {
+        // Agregar triángulo con orientación CCW garantizada
+        indices.push(origIndices[prev], origIndices[i], origIndices[next]);
+
+        // Cortar la oreja
+        pts.splice(i, 1);
+        origIndices.splice(i, 1);
+        count--;
+
+        currIdx = prev % count;
+        earFound = true;
+        break;
+      }
+    }
+
+    // Buscar cualquier oreja válida. Si la tolerancia normal no encuentra una,
+    // repetir con precisión estricta conserva el ear clipping sin abanicos.
+    for (let step = 0; !earFound && step < count; step++) {
       const i = (currIdx + step) % count;
       if (isEar(pts, i) || isEar(pts, i, 0)) {
         const prev = (i - 1 + count) % count;
@@ -311,18 +337,6 @@ export function triangulatePolygon(
     }
 
     if (!earFound) {
-      // Collinear boundary samples do not contribute area and cannot form an ear.
-      const collinearIdx = pts.findIndex((point, i) =>
-        isCollinearBetween(pts[(i - 1 + count) % count], point, pts[(i + 1) % count])
-      );
-      if (collinearIdx >= 0) {
-        const prev = (collinearIdx - 1 + count) % count;
-        pts.splice(collinearIdx, 1);
-        origIndices.splice(collinearIdx, 1);
-        count--;
-        currIdx = prev % count;
-        continue;
-      }
       throw new Error('Unable to triangulate polygon with ear clipping');
     }
   }

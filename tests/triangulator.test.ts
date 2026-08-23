@@ -480,8 +480,9 @@ describe('Motor de Triangulación 2D de Polígonos de Moldería (Ear Clipping) -
       const polygonArea = computePolygonArea(denseConcaveOutline);
       const triangulatedArea = computeTriangulatedArea(denseConcaveOutline, indices);
 
-      expect(indices.length).toBe((denseConcaveOutline.length - 2) * 3);
-      expect(Math.abs(triangulatedArea - polygonArea) / polygonArea).toBeLessThan(0.001);
+       expect(indices.length).toBe((denseConcaveOutline.length - 2) * 3);
+       expect(new Set(indices)).toEqual(new Set(denseConcaveOutline.map((_, index) => index)));
+       expect(Math.abs(triangulatedArea - polygonArea) / polygonArea).toBeLessThan(0.001);
       expect(validateTriangleOrientations(denseConcaveOutline, indices)).toBe(true);
       for (let i = 0; i < indices.length; i += 3) {
         const [a, b, c] = [indices[i], indices[i + 1], indices[i + 2]];
