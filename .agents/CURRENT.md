@@ -1,13 +1,13 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T02:21:00-05:00
-source_commit: b073238 [STATE] audit T-35 apto
+updated_at: 2026-08-23T02:25:22-05:00
+source_commit: 7f610ef [T-35] block ears crossed by diagonal vertices
 assurance: Standard milestone audit; deterministic gates per task
 active_job: RUN THE LOOP
 active_plan: PLAN_v0.9-3d-geometry-and-meshing-calibration.md
-active_task: T-35
-last_verdict: NO APTO
+active_task: T-36
+last_verdict: APTO
 backup: local-only
 ```
 
@@ -20,22 +20,22 @@ backup: local-only
 
 ## Next action
 
-1. **Ingeniero/Obrero:** Corregir `[T-35]` para que un vertice no adyacente sobre la diagonal de una oreja bloquee el corte, agregar el fixture minimo indicado por el Arquitecto y repetir `npm run build && npm test`; no iniciar `T-36`.
+1. **Ingeniero:** Despachar `[T-36]` al Obrero Luna MAX con el brief aprobado, exigir commit enfocado `[T-36]`, `npm run build && npm test` y Audit Capsule; responder al Arquitecto antes de avanzar a `T-37`.
 
 ## Blockers
 
-- `[T-35]` NO APTO en auditoria del Arquitecto: el poligono `[(0,0),(2,0),(2,2),(1,1),(0,2)]` produce area triangulada `5` frente a area real `3` y un triangulo con winding negativo.
+- Ninguno para `[T-36]`. `[T-35]` APTO con puerta fresca de 21/21 suites y 550/550 tests.
 
 ## Current facts
 
 - **Fases 1.0 a 8.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Suite Determinista:** **21/21 suites passing (548/548 tests en verde)**.
+- **Suite Determinista:** **21/21 suites passing (550/550 tests en verde)** tras `[T-35]`.
 - **Módulos Paramétricos Extendidos:** Cuellos técnicos (`stand_collar`, `shirt_collar_with_stand`), bolsillos cargo 3D con fuelle y solapa (`cargo_pocket_body`, `cargo_pocket_bellows`, `cargo_pocket_flap`), y blueprint ancla `utility_vest` (Chaleco Táctico / Safari / Cargo).
 - **Moldería Industrial & Visor 3D:** Cruces de botonadura (+20mm), marcas de ojales/botones, vistas interiores con entretela técnica (`Interfacing_Lining`), bajo en doble pico de chaleco sastre (`hem: { type: 'pointed', peak_drop_mm: 50 }`), Matriz de Inspección Ocular Multimodal de 6 Puntos y Guía de Despiece 3D interactivo en WebGL.
 
 ## Open findings
 
-- `P9-T35`: `isPointInTriangle` no puede ignorar indiscriminadamente vertices sobre una diagonal interna; debe distinguir puntos del borde exterior de puntos no adyacentes que invalidan la oreja.
+- Ninguno.
 
 ## Human actions
 
