@@ -1,12 +1,12 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T00:05:00-05:00
-source_commit: 14802bf [STATE] handoff session: prepare PLAN v0.9 for 3D meshing, pockets and collar calibration
-assurance: Lean
-active_job: none
+updated_at: 2026-08-23T02:08:27-05:00
+source_commit: 9fd427e [STATE] deep reindex and maintenance of .agents control plane
+assurance: Standard milestone audit; deterministic gates per task
+active_job: RUN THE LOOP
 active_plan: PLAN_v0.9-3d-geometry-and-meshing-calibration.md
-active_task: none
+active_task: T-35
 last_verdict: APTO
 backup: local-only
 ```
@@ -20,13 +20,11 @@ backup: local-only
 
 ## Next action
 
-1. **Próxima Sesión:** Humano aprueba `PLAN_v0.9-3d-geometry-and-meshing-calibration.md`.
-2. **Ingeniero/Obrero:** Despachar y ejecutar `[T-35]` (Corrección de Ear-Clipping en `triangulator.ts` para eliminar la triangulación en abanico) y verificar con `npm test`.
-3. Continuar con `[T-36]` (Bolsillos 3D integrados sin tira horizontal plana), `[T-37]` (Cuellos cilíndricos continuos) y `[T-38]` (Guías de costura y capas Z).
+1. **Ingeniero:** Despachar `[T-35]` al Obrero Luna MAX con el brief aprobado, exigir commit enfocado `[T-35]`, `npm run build && npm test` y Audit Capsule; responder al Arquitecto antes de avanzar a `T-36`.
 
 ## Blockers
 
-- Ninguno. 548/548 tests pasando al 100% en Vitest (21/21 suites).
+- Ninguno para iniciar T-35. La base histórica registra 548/548 tests; requiere evidencia fresca por tarea.
 
 ## Current facts
 

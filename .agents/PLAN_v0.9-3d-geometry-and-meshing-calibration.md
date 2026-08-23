@@ -1,44 +1,101 @@
-﻿# PLAN v0.9 - Fase 9: Calibración Geométrica 3D, Despiece y Triangulación Homogénea
+# PLAN v0.9 - Fase 9: Calibracion Geometrica 3D, Despiece y Triangulacion Homogenea
 
-Status: draft (pending approval)
-Goal: Corregir las 4 anomalías geométricas y visuales del motor 3D observadas en Web Studio: (1) eliminar la singularidad de triangulación en abanico en triangulator.ts, (2) transformar la tira de fuelle 2D en volumen 3D integrado del bolsillo y espejar en corte x2, (3) subdividir cilíndricamente los cuellos para curvatura continua en 3D, y (4) alinear las líneas de guía de ensamble y el orden de capas Z.
-Assurance: Lean
+Status: approved
+Goal: Corregir las cuatro anomalias geometricas y visuales observadas en Web Studio sin alterar los contratos de ADN parametrico ni la geometria 2D industrial ya sellada.
+Assurance: Standard para cierre de fase (puertas deterministas por tarea y auditoria independiente del hito)
 
-## Matriz de Tareas y Asignación de Roles
+## Approval record
 
-| Tarea | Descripción | Rol Principal | Rol Secundario | Puerta Determinista | Estado |
+- Decision ID: `D-2026-08-23-P9`
+- Approved by: Humano (Usuario), autorizacion explicita en la sesion del Arquitecto el 2026-08-23.
+- Source commit: `9fd427e`
+- Canonical approval statement: `PLAN-v0.9|phase-9.0|serial:T-35>T-36>T-37>T-38|gate:npm-run-build+npm-test|closure:H-03+independent-audit|approved-by:human|decision:D-2026-08-23-P9`
+- Approval SHA-256: `5d71a4e71b38e10a880f32061b70a67abf3216f6a7357d04d01c5c61256b3d57`
+- Invalidation: cualquier cambio material de contratos, alcance permitido, orden de dependencias, criterios de aceptacion o puerta determinista exige retorno al Arquitecto y nueva aprobacion.
+
+## Scope and closure
+
+- In scope: robustez Ear-Clipping, proyeccion 3D de bolsillos cargo, subdivision cilindrica de cuellos y calibracion de guias/capas Z del visor.
+- Non-goals: redisenar slopers, cambiar el esquema `PatternDna`, incorporar nuevos blueprints, sustituir el pipeline glTF, modificar exportacion PDF/Etsy o intervenir scripts Blender ajenos actualmente modificados.
+- Execution order: `T-35 -> T-36 -> T-37 -> T-38`. `T-36` y `T-37` se serializan porque comparten `src/engine/blender_bridge.ts`; `T-38` integra el resultado visual de las anteriores.
+- Commit policy: un commit de producto enfocado `[T-NN]` por tarea APTO; cambios de control separados en commits `[STATE]`; staging selectivo obligatorio.
+- Required gate per product commit: `npm run build && npm test` ejecutado despues del cambio final.
+- Closure evidence: cuatro Audit Capsules, diffs y commits enfocados, puertas frescas por tarea, auditoria independiente de fase, GLB/visor representativos y validacion humana `H-03`.
+
+## Task matrix
+
+| Tarea | Objetivo | Dependencia | Owner / Delegate | TESTING IDs | Estado |
 |---|---|---|---|---|:---:|
-| **T-35** | Corrección de Ear-Clipping en `triangulator.ts`: eliminación del fallback a abanico en curvas densas | Ingeniero | Obrero | `npm test` | ⚪ PENDING |
-| **T-36** | Reestructuración 3D de Bolsillos Cargo (`cargo_pocket_body`, `cargo_pocket_bellows`, `cargo_pocket_flap`) y espejado x2 | Ingeniero | Obrero | `npm test` | ⚪ PENDING |
-| **T-37** | Subdivisión Cilíndrica de Cuellos (`stand_collar`, `collar_stand`, `collar_fall`) en `blender_bridge.ts` | Ingeniero | Obrero | `npm test` | ⚪ PENDING |
-| **T-38** | Calibración de Líneas de Guía de Ensamble y Orden de Capas Z en `viewer3d.js` | Ingeniero | Obrero | `npm run build && npm test` | ⚪ PENDING |
+| **T-35** | Ear-Clipping robusto sin fallback en abanico invalido | Ninguna | Ingeniero / Obrero Luna MAX | `P9-T35`, `P9-GATE` | READY |
+| **T-36** | Bolsillos cargo con fuelle 3D integrado y simetria x2 | T-35 APTO | Ingeniero / Obrero Luna MAX | `P9-T36`, `P9-GATE` | READY |
+| **T-37** | Cuellos 3D con subdivision cilindrica continua | T-36 APTO | Ingeniero / Obrero Luna MAX | `P9-T37`, `P9-GATE` | READY |
+| **T-38** | Guias de ensamble y orden de capas Z deterministas | T-37 APTO | Ingeniero / Obrero Luna MAX | `P9-T38`, `P9-GATE`, `H-03` | READY |
 
----
+El Ingeniero puede usar como maximo dos agentes Obrero Luna simultaneos con esfuerzo MAX, pero este plan serializa los writes. No se autoriza trabajo paralelo sobre los archivos permitidos de estas tareas.
 
-## Especificación Técnica de Tareas
+## `[T-35]` Ear-Clipping robusto en curvas densas
 
-### `[T-35]` Ear-Clipping Robusto en Curvas Bézier (`triangulator.ts`)
-- **Problema:** En polígonos cóncavos con muchos vértices muestreados (escotes V, sisas, dobladillos con pico), los puntos colineales en bordes causan falsos positivos en `isPointInTriangle`, haciendo que `isEar` falle y active el Fallback 2 (abanico desde el vértice 0).
-- **Acción:**
-  1. Ajustar `isPointInTriangle` para excluir puntos del perímetro exterior y manejar tolerancia de bordes.
-  2. Implementar particionado convexo o corte de menor ángulo antes de recurrir a abanicos.
-  3. Validar con tests unitarios en `tests/triangulator.test.ts`.
+- Objective: eliminar triangulos en abanico invalidos en poligonos concavos densos conservando determinismo y area.
+- Allowed scope: `src/engine/triangulator.ts`, `tests/triangulator.test.ts`.
+- Non-goals: cambiar la API publica del triangulador, introducir una libreria de triangulacion o modificar consumidores 3D.
+- Acceptance criteria:
+  - Todo poligono simple valido de `n` vertices produce exactamente `n - 2` triangulos no degenerados.
+  - La suma de areas conserva el area del poligono con error relativo menor a `0.1%`.
+  - Winding y orientacion son consistentes; no hay aristas internas cruzadas ni indices fuera de rango.
+  - Fixtures concavos densos, colineales y con escote V no activan un abanico desde el vertice 0 que cruce el exterior.
+- Expected evidence: tests focalizados nuevos, diff, commit `[T-35]`, salida literal de `npm run build && npm test` y Audit Capsule con base/head.
+- Audit trigger: cualquier fallback nuevo, cambio de tolerancia geometrica o caso degenerado omitido.
+- Risks: precision flotante, vertices duplicados, colinealidad y regresion de winding.
+- STOP: poligonos no simples requeridos por producto, necesidad de dependencia externa o cambio de contrato.
 
-### `[T-36]` Proyección 3D de Bolsillos con Fuelle y Espejado Simétrico (`blender_bridge.ts`)
-- **Problema:** `cargo_pocket_bellows` es una tira plana de 460mm x 50mm proyectada horizontalmente en el eje X, atravesando el torso.
-- **Acción:**
-  1. Separar el manejo de `cargo_pocket_bellows` en 3D: posicionar como paredes perimetrales del bolsillo (extrusión hacia el torso) en vez de tira plana desenrollada.
-  2. Posicionar `cargo_pocket_flap` en la parte superior con leve inclinación frontal.
-  3. Si `part.cutCount === 2` o la prenda lo requiere, espejar el conjunto del bolsillo en el lado izquierdo del torso.
+## `[T-36]` Bolsillos cargo 3D integrados y espejados
 
-### `[T-37]` Subdivisión Cilíndrica de Cuellos 3D (`blender_bridge.ts`)
-- **Problema:** Los cuellos solo tienen 6 puntos de esquina en 2D, lo que genera triángulos gigantescos que cruzan el centro del cuello.
-- **Acción:**
-  1. Interpolar la tira del cuello en $N = 16\text{--}24$ segmentos cilíndricos a lo largo de su longitud ($u \in [0, 1]$).
-  2. Mapear cada segmento con su ángulo correspondiente $\phi(u)$ y radio de cuello $R \approx 9\text{--}10\text{ cm}$.
+- Objective: proyectar `cargo_pocket_body`, `cargo_pocket_bellows` y `cargo_pocket_flap` como un conjunto volumetrico unido al torso.
+- Allowed scope: `src/engine/blender_bridge.ts`, `tests/blender.test.ts`, `tests/cargo_pockets.test.ts` solo si la evidencia exige contrato compartido.
+- Non-goals: redisenar las piezas 2D, cambiar dimensiones del ADN o modificar scripts Blender actualmente fuera de alcance.
+- Acceptance criteria:
+  - El fuelle forma paredes perimetrales y no una tira horizontal que atraviese el torso.
+  - La solapa queda sobre el cuerpo del bolsillo con inclinacion frontal determinista.
+  - `cutCount === 2` produce conjuntos derecho e izquierdo espejados, con normales de doble cara y materiales consistentes.
+  - Vertices, indices, `explodeOffset` y bounds de cada primitiva GLB son finitos y estructuralmente validos.
+- Expected evidence: fixtures GLB/metadata, tests focalizados, diff, commit `[T-36]`, puerta completa y Audit Capsule.
+- Audit trigger: cambio de layout de primitivas, materiales, normales, simetria o metadatos de despiece.
+- Risks: interseccion con torso, orientacion de normales, offsets inconsistentes y duplicacion incorrecta.
+- STOP: necesidad de cambiar la geometria 2D o el contrato `PatternDna`.
 
-### `[T-38]` Guías de Ensamble y Orden de Capas Z (`viewer3d.js`)
-- **Problema:** Líneas de ensamble cruzadas en diagonal y distancias Z de vistas interiores (`front_facing`) inconsistentes.
-- **Acción:**
-  1. Actualizar `updateSeamGuideLines()` en `viewer3d.js` para anclar a las coordenadas reales de hombros y costados de cada panel.
-  2. Ajustar `explodeOffset` para vistas interiores y capas de refuerzo.
+## `[T-37]` Subdivision cilindrica de cuellos 3D
+
+- Objective: mapear `stand_collar`, `collar_stand` y `collar_fall` a una superficie continua alrededor del cuello.
+- Allowed scope: `src/engine/blender_bridge.ts`, `tests/blender.test.ts`, `tests/collars.test.ts` solo si la evidencia exige contrato compartido.
+- Non-goals: cambiar patronaje 2D de cuellos, alturas aprobadas, piquetes o contratos Zod.
+- Acceptance criteria:
+  - La longitud se interpola en `16..24` segmentos con orden e indices deterministas.
+  - El radio objetivo permanece entre `90..100 mm`, salvo evidencia geometrica documentada que requiera retorno al Arquitecto.
+  - No existen triangulos que crucen el centro del cuello, indices invalidos, vertices no finitos ni cambios abruptos de winding.
+  - `collar_stand` y `collar_fall` conservan relacion espacial, materiales y offsets de ensamble verificables.
+- Expected evidence: tests de conteo/bounds/continuidad, diff, commit `[T-37]`, puerta completa y Audit Capsule.
+- Audit trigger: heuristica por nombre de pieza, cambio de radio/rango o alteracion de contratos 2D.
+- Risks: distorsion de escala, costura abierta, triangulos largos y conflicto con piezas no-collar.
+- STOP: falta de metadatos para distinguir tipos de cuello sin cambiar contrato publico.
+
+## `[T-38]` Guias de ensamble y orden de capas Z
+
+- Objective: anclar guias a puntos reales de paneles y aplicar un orden Z reproducible para piezas exteriores, vistas y refuerzos.
+- Allowed scope: `src/server/public/viewer3d.js`, `tests/viewer3d.test.ts`.
+- Non-goals: sustituir el renderer WebGL, redisenar la interfaz o modificar endpoints del servidor.
+- Acceptance criteria:
+  - Las guias conectan hombros y costados correspondientes sin diagonales espurias ni coordenadas hardcoded ajenas al modelo cargado.
+  - El orden Z y `explodeOffset` mantienen separacion determinista entre exterior, vistas y entretela durante `0..100%` del despiece.
+  - Carga, rotacion y slider continúan operativos en desktop y viewport movil.
+  - El build resincroniza los estaticos y los tests verifican anclajes y precedencia de capas.
+- Expected evidence: tests focalizados, diff, commit `[T-38]`, puerta completa, captura/artefacto reproducible del visor y Audit Capsule.
+- Audit trigger: dependencia de geometria hardcoded, regresion responsive o divergencia entre `src` y `dist`.
+- Risks: pruebas DOM insuficientes, metadatos GLB incompletos y falso positivo visual.
+- STOP: `H-03` revela defecto material, metadata necesaria no existe o se requiere cambiar API/GLB.
+
+## Milestone audit and stop conditions
+
+- El Ingeniero no autoaprueba trabajo de sus obreros: debe devolver al Arquitecto las cuatro Audit Capsules y el resumen de fase para auditoria de cierre.
+- Tres ciclos fallidos sobre la misma causa raiz detienen el loop y escalan al Arquitecto.
+- Una puerta requerida no disponible produce `BLOCKED`, nunca una reduccion de alcance.
+- `H-03` sigue siendo barrera humana obligatoria para el veredicto final y cierre de Fase 9.0.

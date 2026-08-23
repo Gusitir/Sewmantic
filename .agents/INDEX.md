@@ -10,7 +10,7 @@ Este índice organiza los archivos del plano de control (`.agents/`) y las rutas
 - [`CONTEXT.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/CONTEXT.md): Crónica inmutable de decisiones, auditorías, hitos completados y handoffs.
 - [`PLAN.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN.md): Puntero al plan activo y directorio de planes archivados.
 - [`TESTING.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/TESTING.md): Matriz de pruebas automatizadas (21 suites Vitest, 548 tests), verificaciones humanas (`H-01` a `H-03`) y scripts de diagnóstico.
-- [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN_v0.9-3d-geometry-and-meshing-calibration.md): Plan activo / borrador (Fase 9.0: Calibración Geométrica 3D, Despiece y Triangulación Homogénea).
+- [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN_v0.9-3d-geometry-and-meshing-calibration.md): Plan aprobado y activo (Fase 9.0: Calibración Geométrica 3D, Despiece y Triangulación Homogénea).
 
 ### Directorio Histórico (`.agents/archive/`)
 - [`archive/PLAN_v0.1-mvp.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/archive/PLAN_v0.1-mvp.md): Fase 1.0 (MVP Geometría Base, Tiling y PDFs paginados con calibración 10x10cm).
@@ -42,5 +42,4 @@ Este índice organiza los archivos del plano de control (`.agents/`) y las rutas
 - `output/`: Entregables físicos generados (PDFs, SVGs, Modelos .glb 3D, Fichas técnicas y paquetes comerciales ZIP).
 
 Last reindexed: 2026-08-23 at Phase 8.0 Milestone Closure (commit 14802bf).
-
 

@@ -98,6 +98,12 @@ suites_passing: 21/21 (548/548 tests PASS)
 | **H-02** | Continuidad de ensamble de hojas A4/Letter. | Líneas de corte continuas con PDFStitcher sin saltos ni escalones. | ✅ [VERIFICADO OK] |
 | **H-03** | Verificación visual de patrones 2D y 3D en Web Studio. | Inspección interactiva del visor 2D y rotación 360° del visor 3D WebGL. | 🟡 [LISTO PARA PROBAR POR EL USUARIO] |
 
+## 2026-08-23 - Aprobacion humana y activacion de Fase 9.0
+
+- El Humano aprobo explicitamente el Plan v0.9 y las recomendaciones de preflight bajo la decision `D-2026-08-23-P9`.
+- El Arquitecto reforzo `T-35` a `T-38` con alcance permitido, criterios cuantitativos, dependencias seriales, Audit Capsules y puerta obligatoria `npm run build && npm test` por tarea.
+- El hito adopta auditoria Standard para el cierre y conserva `H-03` como barrera humana obligatoria.
+- Siguiente transicion autorizada: el Ingeniero ejecuta `RUN THE LOOP` comenzando por `T-35` y responde al Arquitecto antes de avanzar.
 
 
 

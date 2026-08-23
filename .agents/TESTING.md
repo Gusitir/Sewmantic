@@ -1,6 +1,6 @@
 # TESTING — Matriz de Pruebas y Verificación (`pattern-ai-core`)
 
-Guía completa de pruebas automatizadas, semi-automatizadas y verificación humana/funcional para las Fases 1.0 a 8.0 (y preparación Fase 9.0).
+Guía completa de pruebas automatizadas, semi-automatizadas y verificación humana/funcional para las Fases 1.0 a 9.0.
 
 ---
 
@@ -37,6 +37,16 @@ npm test
 | `tests/viewer.test.ts` | `src/server/public/viewer.js` | 22 | Visor Vectorial 2D; transformaciones matemáticas (Zoom, Pan, Fit View), capas XS-3XL y cuadrícula A4. |
 | `tests/e2e.test.ts` | `src/pipeline.ts` | 11 | Pipeline End-to-End generando físicamente todos los 12 entregables (2D + 3D + ZIP) en disco. |
 | **TOTAL** | **21 suites** | **548** | **100% PASS (0 errores)** |
+
+### Fase 9.0 - IDs de verificacion
+
+| ID | Superficie | Evidencia requerida |
+| :--- | :--- | :--- |
+| `P9-T35` | Ear-Clipping robusto | `n - 2` triangulos, area `< 0.1%`, winding consistente, sin cruces ni abanico invalido. |
+| `P9-T36` | Bolsillos cargo 3D | Fuelle perimetral, solapa, simetria x2, normales/materiales y GLB finitos. |
+| `P9-T37` | Cuellos 3D | `16..24` segmentos, radio `90..100 mm`, continuidad e indices validos. |
+| `P9-T38` | Guias y capas Z | Anclajes geometricos, precedencia Z, slider `0..100%` y desktop/movil. |
+| `P9-GATE` | Puerta por tarea | Salida fresca de `npm run build && npm test` despues del cambio final. |
 
 ---
 
