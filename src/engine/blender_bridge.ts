@@ -838,6 +838,10 @@ export function generateTrueToPatternMesh(
     const isWaistband = lowerName.includes('waistband') || lowerName.includes('obi_belt');
     const isCollar = lowerName.includes('collar');
     const isPocket = lowerName.includes('pocket');
+    const isCargoPocketBody = lowerName === 'cargo_pocket_body';
+    const isCargoPocketBellows = lowerName === 'cargo_pocket_bellows';
+    const isCargoPocketFlap = lowerName === 'cargo_pocket_flap';
+    const isCargoPocket = isCargoPocketBody || isCargoPocketBellows || isCargoPocketFlap;
 
     // Determinar si pertenece a la prenda inferior (Bottom) para asignación de material
     const isBottomPart =
@@ -854,7 +858,10 @@ export function generateTrueToPatternMesh(
 
     // Determinar índice de material (incluyendo entretela para vistas)
     let materialIndex = 0;
-    if (isFacing || part.isFacing || part.requiresInterfacing) {
+    if (isCargoPocket) {
+      // The cargo body, bellows and flap are one visible assembly on the torso.
+      materialIndex = 0;
+    } else if (isFacing || part.isFacing || part.requiresInterfacing) {
       let facingMatIdx = materials.findIndex(
         (m) =>
           m.name.toLowerCase().includes('interfacing') ||
@@ -913,6 +920,15 @@ export function generateTrueToPatternMesh(
     } else if (isCollar) {
       explodeOffset = [0, 0.10, 0];
       partType = 'collar';
+    } else if (isCargoPocketBody) {
+      explodeOffset = [0, 0, 0.18];
+      partType = 'cargo_pocket_body';
+    } else if (isCargoPocketBellows) {
+      explodeOffset = [0, 0, 0.17];
+      partType = 'cargo_pocket_bellows';
+    } else if (isCargoPocketFlap) {
+      explodeOffset = [0, 0, 0.19];
+      partType = 'cargo_pocket_flap';
     } else if (isPocket) {
       explodeOffset = [0, 0, 0.16];
       partType = 'pocket';
@@ -1370,6 +1386,95 @@ export function generateTrueToPatternMesh(
         }
         for (let i = 0; i < baseIndices.length; i += 3) {
           panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
+        }
+      }
+    } else if (isCargoPocket) {
+      const cargoBody = resolvedParts.cargo_pocket_body;
+      const cargoBellows = resolvedParts.cargo_pocket_bellows;
+      const cargoWidth = (cargoBody?.bounds?.width || cargoBody?.width_mm || width_mm) / 1000;
+      const cargoHeight = (cargoBody?.bounds?.height || cargoBody?.height_mm || height_mm) / 1000;
+      const cargoDepth = Math.max((cargoBellows?.bounds?.height || cargoBellows?.height_mm || 40) / 2000, 0.005);
+      const cargoX = 0.08;
+      const cargoTopY = 1.15;
+      const cargoSurfaceZ = (x: number) => Z_CHEST * Math.cos((x / 0.25) * (Math.PI / 2.5)) + Z_OFFSET;
+      const appendVertex = (x: number, y: number, z: number, u: number, v: number) => {
+        panelPositions.push(x, y, z);
+        panelUvs.push(u, v);
+      };
+      const appendQuad = (
+        a: [number, number, number],
+        b: [number, number, number],
+        c: [number, number, number],
+        d: [number, number, number],
+        reverse = false
+      ) => {
+        const offset = panelPositions.length / 3;
+        appendVertex(...a, 0, 0);
+        appendVertex(...b, 0, 1);
+        appendVertex(...c, 1, 1);
+        appendVertex(...d, 1, 0);
+        if (reverse) {
+          panelIndices.push(offset, offset + 2, offset + 1, offset, offset + 3, offset + 2);
+        } else {
+          panelIndices.push(offset, offset + 1, offset + 2, offset, offset + 2, offset + 3);
+        }
+      };
+
+      if (isCargoPocketBody) {
+        for (const pt of outline) {
+          const localX = (pt.x - minX) / 1000;
+          const localY = (pt.y - minY) / 1000;
+          const X = cargoX + localX;
+          appendVertex(
+            X,
+            cargoTopY - localY,
+            cargoSurfaceZ(X) + cargoDepth,
+            Math.min(Math.max(localX / cargoWidth, 0), 1),
+            Math.min(Math.max(localY / cargoHeight, 0), 1)
+          );
+        }
+        panelIndices.push(...baseIndices);
+      } else if (isCargoPocketBellows) {
+        const left = cargoX;
+        const right = cargoX + cargoWidth;
+        const bottom = cargoTopY - cargoHeight;
+        const rearLeft = cargoSurfaceZ(left) + 0.008;
+        const rearRight = cargoSurfaceZ(right) + 0.008;
+        const frontLeft = cargoSurfaceZ(left) + cargoDepth;
+        const frontRight = cargoSurfaceZ(right) + cargoDepth;
+
+        // The flat three-side strip becomes the two side walls and bottom wall of the pocket.
+        appendQuad([left, cargoTopY, rearLeft], [left, bottom, rearLeft], [left, bottom, frontLeft], [left, cargoTopY, frontLeft]);
+        appendQuad([right, cargoTopY, rearRight], [right, bottom, rearRight], [right, bottom, frontRight], [right, cargoTopY, frontRight], true);
+        appendQuad([left, bottom, rearLeft], [right, bottom, rearRight], [right, bottom, frontRight], [left, bottom, frontLeft]);
+      } else {
+        const flapWidth = width_mm / 1000;
+        const flapHeight = height_mm / 1000;
+        for (const pt of outline) {
+          const localX = (pt.x - minX) / 1000;
+          const localY = (pt.y - minY) / 1000;
+          const X = cargoX + (cargoWidth - flapWidth) / 2 + localX;
+          const v = Math.min(Math.max(localY / flapHeight, 0), 1);
+          appendVertex(
+            X,
+            cargoTopY - localY,
+            cargoSurfaceZ(X) + cargoDepth + 0.010 + v * 0.012,
+            Math.min(Math.max(localX / flapWidth, 0), 1),
+            v
+          );
+        }
+        panelIndices.push(...baseIndices);
+      }
+
+      // A geometric reflection reverses orientation, so reverse its winding for outward normals.
+      if (part.cutCount >= 2) {
+        const vOffset = panelPositions.length / 3;
+        const originalIndexCount = panelIndices.length;
+        for (let k = 0; k < vOffset; k++) {
+          appendVertex(-panelPositions[k * 3], panelPositions[k * 3 + 1], panelPositions[k * 3 + 2], 1 - panelUvs[k * 2], panelUvs[k * 2 + 1]);
+        }
+        for (let i = 0; i < originalIndexCount; i += 3) {
+          panelIndices.push(panelIndices[i] + vOffset, panelIndices[i + 2] + vOffset, panelIndices[i + 1] + vOffset);
         }
       }
     } else if (isPocket) {

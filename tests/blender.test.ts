@@ -860,5 +860,72 @@ describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
       expect(result.triangleCount).toBeGreaterThan(40);
     });
   });
-});
 
+  describe('7. Cargo Pocket Volumetric Assembly (T-36)', () => {
+    it('should project mirrored cargo body, bellows walls, and flap with finite GLB-ready geometry', () => {
+      const dna: PatternDna = {
+        concept_name: 'cargo_mesh_volume_test',
+        garment_category: 'top',
+        base_block: 'menswear_torso',
+        ease: { chest_ease_mm: 70 },
+        modifications: {
+          sleeves: { type: 'sleeveless' },
+          pocket: { type: 'cargo_bellows', width_mm: 130, height_mm: 150, bellows_depth_mm: 20, flap: true },
+        },
+      };
+      const mesh = generateTrueToPatternMesh(modifyPattern(dna, 'M'), dna);
+      const cargo = new Map(mesh.primitives!
+        .filter((primitive) => primitive.name.startsWith('cargo_pocket_'))
+        .map((primitive) => [primitive.name, primitive]));
+      const body = cargo.get('cargo_pocket_body')!;
+      const bellows = cargo.get('cargo_pocket_bellows')!;
+      const flap = cargo.get('cargo_pocket_flap')!;
+
+      expect(body.materialIndex).toBe(bellows.materialIndex);
+      expect(body.materialIndex).toBe(flap.materialIndex);
+      expect(body.vertexCount).toBe(8); // two mirrored rectangular body panels
+      expect(bellows.vertexCount).toBe(24); // three walls, mirrored
+      expect(bellows.bounds.maxZ - bellows.bounds.minZ).toBeGreaterThan(0.015);
+      expect(flap.bounds.minY).toBeGreaterThan(body.bounds.minY);
+      expect(flap.bounds.minZ).toBeGreaterThan(body.bounds.minZ);
+
+      for (const primitive of [body, bellows, flap]) {
+        expect(primitive.positions.every(Number.isFinite)).toBe(true);
+        expect(primitive.indices.every((index) => index >= 0 && index < primitive.vertexCount)).toBe(true);
+        expect(Object.values(primitive.bounds).every(Number.isFinite)).toBe(true);
+        expect(primitive.explodeOffset!.every(Number.isFinite)).toBe(true);
+        const mirroredXs = primitive.positions.filter((_, index) => index % 3 === 0);
+        expect(mirroredXs.some((x) => x > 0)).toBe(true);
+        expect(mirroredXs.some((x) => x < 0)).toBe(true);
+
+        const halfVertices = primitive.vertexCount / 2;
+        for (let vertex = 0; vertex < halfVertices; vertex++) {
+          const mirror = vertex + halfVertices;
+          expect(primitive.positions[mirror * 3]).toBeCloseTo(-primitive.positions[vertex * 3], 8);
+          expect(primitive.positions[mirror * 3 + 1]).toBeCloseTo(primitive.positions[vertex * 3 + 1], 8);
+          expect(primitive.positions[mirror * 3 + 2]).toBeCloseTo(primitive.positions[vertex * 3 + 2], 8);
+          expect(primitive.normals[mirror * 3]).toBeCloseTo(-primitive.normals[vertex * 3], 5);
+          expect(primitive.normals[mirror * 3 + 1]).toBeCloseTo(primitive.normals[vertex * 3 + 1], 5);
+          expect(primitive.normals[mirror * 3 + 2]).toBeCloseTo(primitive.normals[vertex * 3 + 2], 5);
+        }
+
+        for (let index = 0; index < primitive.indices.length; index += 3) {
+          const a = primitive.indices[index] * 3;
+          const b = primitive.indices[index + 1] * 3;
+          const c = primitive.indices[index + 2] * 3;
+          const abx = primitive.positions[b] - primitive.positions[a];
+          const aby = primitive.positions[b + 1] - primitive.positions[a + 1];
+          const abz = primitive.positions[b + 2] - primitive.positions[a + 2];
+          const acx = primitive.positions[c] - primitive.positions[a];
+          const acy = primitive.positions[c + 1] - primitive.positions[a + 1];
+          const acz = primitive.positions[c + 2] - primitive.positions[a + 2];
+          const doubledArea = Math.hypot(aby * acz - abz * acy, abz * acx - abx * acz, abx * acy - aby * acx);
+          expect(doubledArea).toBeGreaterThan(1e-8);
+        }
+      }
+
+      const { glbBuffer } = buildGlbBuffer(mesh, mesh.materials, 'cargo_mesh_volume_test');
+      expect(glbBuffer.readUInt32LE(0)).toBe(0x46546c67);
+    });
+  });
+});
