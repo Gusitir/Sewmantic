@@ -468,6 +468,73 @@ describe('Visor 3D WebGL, Streaming .GLB y Empaquetado Comercial 3D (T-24)', () 
       expect(typeof GarmentViewer3D.prototype.getExplodeFactor).toBe('function');
     });
   });
+
+  describe('6. Guías geométricas y precedencia de despiece (T-38)', () => {
+    const primitives = [
+      { name: 'front_panel', bounds: { minX: -0.34, maxX: 0.29, minY: 0.42, maxY: 1.61, minZ: 0.18, maxZ: 0.31 }, explodeOffset: [0.04, 0.08, 0.12] },
+      { name: 'back_panel', bounds: { minX: -0.31, maxX: 0.35, minY: 0.39, maxY: 1.57, minZ: -0.33, maxZ: -0.17 }, explodeOffset: [-0.03, -0.04, -0.11] },
+      { name: 'left_sleeve', bounds: { minX: -0.75, maxX: -0.31, minY: 0.52, maxY: 1.47, minZ: -0.05, maxZ: 0.12 }, explodeOffset: [-0.24, 0.02, 0] },
+      { name: 'front_facing', bounds: { minX: -0.22, maxX: 0.20, minY: 1.24, maxY: 1.55, minZ: 0.14, maxZ: 0.17 }, explodeOffset: [0.01, 0, 0.04] },
+      { name: 'front_interfacing', bounds: { minX: -0.21, maxX: 0.19, minY: 1.25, maxY: 1.54, minZ: 0.12, maxZ: 0.13 }, explodeOffset: [0.01, 0, 0.02] },
+      { name: 'back_facing', bounds: { minX: -0.20, maxX: 0.21, minY: 1.20, maxY: 1.49, minZ: -0.16, maxZ: -0.13 }, explodeOffset: [0, 0, -0.04] },
+    ];
+
+    it('une hombros y costados desde bounds reales trasladados, sin diagonales cruzadas', async () => {
+      const { getSeamGuideAnchors, buildSeamGuideLineVertices } = await import('../src/server/public/viewer3d.js');
+      const anchors = getSeamGuideAnchors(primitives, 0.5);
+
+      expect(anchors).toHaveLength(4);
+      expect(anchors[0].name).toBe('shoulder-right');
+      expect(anchors[0].from).toEqual(expect.arrayContaining([0.31, 0.24]));
+      expect(anchors[0].from[1]).toBeCloseTo(1.65);
+      expect(anchors[0].to[0]).toBeCloseTo(0.335);
+      expect(anchors[0].to[1]).toBeCloseTo(1.55);
+      expect(anchors[0].to[2]).toBeCloseTo(-0.225);
+      expect(anchors[3].name).toBe('side-left');
+      expect(anchors[3].from[0]).toBeCloseTo(-0.32);
+      expect(anchors[3].from[1]).toBeCloseTo(1.055);
+      expect(anchors[3].to[0]).toBeCloseTo(-0.325);
+      expect(anchors[3].to[1]).toBeCloseTo(0.96);
+      expect(anchors[0].from[0]).toBeGreaterThan(anchors[1].from[0]);
+      expect(anchors[0].to[0]).toBeGreaterThan(anchors[1].to[0]);
+
+      const lines = buildSeamGuideLineVertices(primitives, 0.5);
+      expect(lines.slice(0, 3)).toEqual(anchors[0].from);
+      lines.slice(57, 60).forEach((value, axis) => expect(value).toBeCloseTo(anchors[0].to[axis]));
+      expect(lines.every(Number.isFinite)).toBe(true);
+    });
+
+    it('mantiene traslación y precedencia Z deterministas en todo el slider', async () => {
+      const { getExplodedTranslation, orderPrimitivesForRendering } = await import('../src/server/public/viewer3d.js');
+      const front = primitives[0];
+      const facing = primitives[3];
+      const interfacing = primitives[4];
+
+      expect(getExplodedTranslation(front, 0)).toEqual([0, 0, 0]);
+      expect(getExplodedTranslation(front, 0.5)).toEqual([0.02, 0.04, 0.06]);
+      expect(getExplodedTranslation(front, 1)).toEqual([0.04, 0.08, 0.12]);
+      expect(getExplodedTranslation({ explodeOffset: [Infinity, NaN, 0.1] }, 1)).toEqual([0, 0, 0.1]);
+
+      for (const factor of [0, 0.5, 1]) {
+        const frontZ = front.bounds.maxZ + getExplodedTranslation(front, factor)[2];
+        const facingZ = facing.bounds.maxZ + getExplodedTranslation(facing, factor)[2];
+        const interfacingZ = interfacing.bounds.maxZ + getExplodedTranslation(interfacing, factor)[2];
+        expect(frontZ).toBeGreaterThan(facingZ);
+        expect(facingZ).toBeGreaterThan(interfacingZ);
+      }
+
+      expect(orderPrimitivesForRendering(primitives).map((primitive) => primitive.name)).toEqual([
+        'front_interfacing', 'front_facing', 'back_facing', 'front_panel', 'back_panel', 'left_sleeve',
+      ]);
+    });
+
+    it('conserva la superficie pública del visor para carga, órbita y resize sin montar un DOM pesado', async () => {
+      const { GarmentViewer3D, parseGlbBuffer } = await import('../src/server/public/viewer3d.js');
+      expect(typeof parseGlbBuffer).toBe('function');
+      expect(typeof GarmentViewer3D.prototype.loadModel).toBe('function');
+      expect(typeof GarmentViewer3D.prototype.handleResize).toBe('function');
+      expect(typeof GarmentViewer3D.prototype.resetView).toBe('function');
+      expect(typeof GarmentViewer3D.prototype.setExplodeFactor).toBe('function');
+    });
+  });
 });
-
-

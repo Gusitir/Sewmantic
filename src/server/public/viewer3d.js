@@ -335,6 +335,8 @@ void main() {
  */
 export function getFallbackExplodeOffset(name) {
   const n = (name || '').toLowerCase();
+  if (n.includes('interfacing') && n.includes('front')) return [0, 0, 0.04];
+  if (n.includes('interfacing') && n.includes('back')) return [0, 0, -0.04];
   if (n.includes('front_facing') || (n.includes('facing') && n.includes('front'))) return [0, 0, 0.05];
   if (n.includes('back_neck_facing') || (n.includes('facing') && (n.includes('back') || n.includes('neck')))) return [0, 0, -0.05];
   if (n.includes('armhole_facing') || (n.includes('facing') && n.includes('armhole'))) return [0.08, 0, 0.04];
@@ -351,6 +353,85 @@ export function getFallbackExplodeOffset(name) {
   if (n.includes('pocket')) return [0, 0, 0.16];
   if (n.includes('cuff')) return [0, -0.12, 0];
   return [0, 0, 0.05];
+}
+
+function getPrimitiveName(primitive) {
+  return `${primitive?.name || ''} ${primitive?.partType || ''}`.toLowerCase();
+}
+
+function getPrimitiveSide(primitive) {
+  const name = getPrimitiveName(primitive);
+  if (name.includes('front')) return 'front';
+  if (name.includes('back')) return 'back';
+  return '';
+}
+
+function getPrimitiveLayer(primitive) {
+  const name = getPrimitiveName(primitive);
+  if (name.includes('interfacing')) return 0;
+  if (name.includes('facing')) return 1;
+  return 2;
+}
+
+export function getExplodedTranslation(primitive, explodeFactor) {
+  const factor = Number.isFinite(explodeFactor) ? Math.max(0, Math.min(1, explodeFactor)) : 0;
+  const offset = primitive?.explodeOffset || [0, 0, 0];
+  return [0, 1, 2].map((axis) => (Number.isFinite(offset[axis]) ? offset[axis] : 0) * factor);
+}
+
+// Interior construction pieces render first so coplanar Z values favour exterior panels.
+export function orderPrimitivesForRendering(primitives) {
+  const sideRank = { front: 0, back: 1, '': 2 };
+  return [...primitives].sort((a, b) => {
+    const layerDifference = getPrimitiveLayer(a) - getPrimitiveLayer(b);
+    if (layerDifference) return layerDifference;
+    const sideDifference = sideRank[getPrimitiveSide(a)] - sideRank[getPrimitiveSide(b)];
+    if (sideDifference) return sideDifference;
+    return getPrimitiveName(a).localeCompare(getPrimitiveName(b));
+  });
+}
+
+function getTranslatedAnchor(primitive, x, y, z, explodeFactor) {
+  const translation = getExplodedTranslation(primitive, explodeFactor);
+  return [x + translation[0], y + translation[1], z + translation[2]];
+}
+
+export function getSeamGuideAnchors(primitives, explodeFactor) {
+  const exterior = primitives.filter((primitive) => getPrimitiveLayer(primitive) === 2 && primitive?.bounds);
+  const front = exterior.find((primitive) => getPrimitiveSide(primitive) === 'front');
+  const back = exterior.find((primitive) => getPrimitiveSide(primitive) === 'back');
+  if (!front || !back) return [];
+
+  const frontBounds = front.bounds;
+  const backBounds = back.bounds;
+  const frontSideY = (frontBounds.minY + frontBounds.maxY) / 2;
+  const backSideY = (backBounds.minY + backBounds.maxY) / 2;
+  return [
+    { name: 'shoulder-right', from: getTranslatedAnchor(front, frontBounds.maxX, frontBounds.maxY, frontBounds.minZ, explodeFactor), to: getTranslatedAnchor(back, backBounds.maxX, backBounds.maxY, backBounds.maxZ, explodeFactor) },
+    { name: 'shoulder-left', from: getTranslatedAnchor(front, frontBounds.minX, frontBounds.maxY, frontBounds.minZ, explodeFactor), to: getTranslatedAnchor(back, backBounds.minX, backBounds.maxY, backBounds.maxZ, explodeFactor) },
+    { name: 'side-right', from: getTranslatedAnchor(front, frontBounds.maxX, frontSideY, frontBounds.minZ, explodeFactor), to: getTranslatedAnchor(back, backBounds.maxX, backSideY, backBounds.maxZ, explodeFactor) },
+    { name: 'side-left', from: getTranslatedAnchor(front, frontBounds.minX, frontSideY, frontBounds.minZ, explodeFactor), to: getTranslatedAnchor(back, backBounds.minX, backSideY, backBounds.maxZ, explodeFactor) },
+  ];
+}
+
+export function buildSeamGuideLineVertices(primitives, explodeFactor) {
+  if (!(explodeFactor > 0)) return [];
+  const lines = [];
+  for (const anchor of getSeamGuideAnchors(primitives, explodeFactor)) {
+    const dashes = anchor.name.startsWith('shoulder') ? 10 : 8;
+    for (let index = 0; index < dashes; index++) {
+      const start = index / dashes;
+      const end = index === dashes - 1 ? 1 : (index + 0.65) / dashes;
+      for (const t of [start, end]) {
+        lines.push(
+          anchor.from[0] + (anchor.to[0] - anchor.from[0]) * t,
+          anchor.from[1] + (anchor.to[1] - anchor.from[1]) * t,
+          anchor.from[2] + (anchor.to[2] - anchor.from[2]) * t
+        );
+      }
+    }
+  }
+  return lines;
 }
 
 // =========================================================================
@@ -1091,112 +1172,7 @@ class NativeWebGlEngine {
     const gl = this.gl;
     if (!this.seamGuideVbo) return;
 
-    const f = this.explodeFactor;
-    if (f < 0.001) {
-      this.seamGuideVertexCount = 0;
-      return;
-    }
-
-    // Identificar offsets dinámicos de piezas
-    let frontOffset = [0, 0, 0.12];
-    let backOffset = [0, 0, -0.12];
-    let sleeveOffset = [0.25, 0, 0];
-    let facingOffset = [0, 0, 0.05];
-    let backFacingOffset = [0, 0, -0.05];
-    let legOffset = [0, -0.15, 0.08];
-
-    let hasFacings = false;
-    let hasSleeves = false;
-    let hasPants = false;
-
-    if (this.primitiveBuffers) {
-      for (const p of this.primitiveBuffers) {
-        const name = (p.name || p.partType || '').toLowerCase();
-        if (name.includes('front') && !name.includes('facing') && !name.includes('leg') && !name.includes('skirt')) {
-          frontOffset = p.explodeOffset || frontOffset;
-        } else if (name.includes('back') && !name.includes('facing') && !name.includes('leg') && !name.includes('skirt')) {
-          backOffset = p.explodeOffset || backOffset;
-        } else if (name.includes('sleeve') || name.includes('furisode')) {
-          sleeveOffset = p.explodeOffset || sleeveOffset;
-          hasSleeves = true;
-        } else if (name.includes('facing')) {
-          hasFacings = true;
-          if (name.includes('back')) backFacingOffset = p.explodeOffset || backFacingOffset;
-          else facingOffset = p.explodeOffset || facingOffset;
-        } else if (name.includes('leg')) {
-          hasPants = true;
-          legOffset = p.explodeOffset || legOffset;
-        }
-      }
-    }
-
-    const lines = [];
-
-    const addDashedLine = (p0, p1, dashes = 8) => {
-      for (let j = 0; j < dashes; j++) {
-        const t1 = j / dashes;
-        const t2 = (j + 0.65) / dashes;
-        lines.push(
-          p0[0] + (p1[0] - p0[0]) * t1,
-          p0[1] + (p1[1] - p0[1]) * t1,
-          p0[2] + (p1[2] - p0[2]) * t1,
-          p0[0] + (p1[0] - p0[0]) * t2,
-          p0[1] + (p1[1] - p0[1]) * t2,
-          p0[2] + (p1[2] - p0[2]) * t2
-        );
-      }
-    };
-
-    // 1. Costuras de Hombro Derecho e Izquierdo (Frontal -> Espalda)
-    const frontShR = [0.12 + frontOffset[0] * f, 1.43 + frontOffset[1] * f, 0.14 + frontOffset[2] * f];
-    const backShR = [0.12 + backOffset[0] * f, 1.43 + backOffset[1] * f, -0.13 + backOffset[2] * f];
-    addDashedLine(frontShR, backShR, 10);
-
-    const frontShL = [-0.12 + frontOffset[0] * f, 1.43 + frontOffset[1] * f, 0.14 + frontOffset[2] * f];
-    const backShL = [-0.12 + backOffset[0] * f, 1.43 + backOffset[1] * f, -0.13 + backOffset[2] * f];
-    addDashedLine(frontShL, backShL, 10);
-
-    // 2. Costuras de Costado Torso (Frontal -> Espalda)
-    const frontSideR = [0.22 + frontOffset[0] * f, 1.15 + frontOffset[1] * f, 0.07 + frontOffset[2] * f];
-    const backSideR = [0.22 + backOffset[0] * f, 1.15 + backOffset[1] * f, -0.07 + backOffset[2] * f];
-    addDashedLine(frontSideR, backSideR, 8);
-
-    const frontSideL = [-0.22 + frontOffset[0] * f, 1.15 + frontOffset[1] * f, 0.07 + frontOffset[2] * f];
-    const backSideL = [-0.22 + backOffset[0] * f, 1.15 + backOffset[1] * f, -0.07 + backOffset[2] * f];
-    addDashedLine(frontSideL, backSideL, 8);
-
-    // 3. Costuras de Sisa / Manga (si hay mangas)
-    if (hasSleeves) {
-      const armR = [0.23 + frontOffset[0] * f * 0.5, 1.38, 0.0];
-      const slvR = [0.23 + sleeveOffset[0] * f, 1.38 + sleeveOffset[1] * f, 0.0 + sleeveOffset[2] * f];
-      addDashedLine(armR, slvR, 8);
-
-      const armL = [-0.23 + frontOffset[0] * f * 0.5, 1.38, 0.0];
-      const slvL = [-0.23 - sleeveOffset[0] * f, 1.38 + sleeveOffset[1] * f, 0.0 + sleeveOffset[2] * f];
-      addDashedLine(armL, slvL, 8);
-    }
-
-    // 4. Guías de Ensamble de Vistas Interiores (Facings)
-    if (hasFacings) {
-      const frontNeck = [0.0 + frontOffset[0] * f, 1.36 + frontOffset[1] * f, 0.13 + frontOffset[2] * f];
-      const facingPt = [0.0 + facingOffset[0] * f, 1.36 + facingOffset[1] * f, 0.04 + facingOffset[2] * f];
-      addDashedLine(frontNeck, facingPt, 6);
-
-      const backNeck = [0.0 + backOffset[0] * f, 1.42 + backOffset[1] * f, -0.13 + backOffset[2] * f];
-      const backFacingPt = [0.0 + backFacingOffset[0] * f, 1.42 + backFacingOffset[1] * f, -0.04 + backFacingOffset[2] * f];
-      addDashedLine(backNeck, backFacingPt, 6);
-    }
-
-    // 5. Costuras de Costado de Pantalón / Bermuda (si aplica)
-    if (hasPants) {
-      const frontLegR = [0.18, 0.80 + legOffset[1] * f, 0.08 + legOffset[2] * f];
-      const backLegR = [0.18, 0.80 + legOffset[1] * f, -0.08 - legOffset[2] * f];
-      addDashedLine(frontLegR, backLegR, 8);
-
-      const frontLegL = [-0.18, 0.80 + legOffset[1] * f, 0.08 + legOffset[2] * f];
-      const backLegL = [-0.18, 0.80 + legOffset[1] * f, -0.08 - legOffset[2] * f];
-      addDashedLine(frontLegL, backLegL, 8);
-    }
+    const lines = buildSeamGuideLineVertices(this.primitiveBuffers || [], this.explodeFactor);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.seamGuideVbo);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lines), gl.DYNAMIC_DRAW);
@@ -1308,17 +1284,17 @@ class NativeWebGlEngine {
       const amb = this.theme === 'light' ? [0.65, 0.65, 0.65] : [0.35, 0.38, 0.45];
       gl.uniform3fv(this.meshLocations.uAmbientColor, amb);
 
-      for (const primBuf of this.primitiveBuffers) {
+      for (const primBuf of orderPrimitivesForRendering(this.primitiveBuffers)) {
         if (!primBuf.positionBuffer) continue;
 
         // Traslación individual de despiece para cada pieza T = explodeFactor * explodeOffset
         const mMatrix = mat4.create();
         mat4.identity(mMatrix);
 
-        const off = primBuf.explodeOffset || [0, 0, 0];
-        mMatrix[12] += (off[0] || 0) * this.explodeFactor;
-        mMatrix[13] += (off[1] || 0) * this.explodeFactor;
-        mMatrix[14] += (off[2] || 0) * this.explodeFactor;
+        const translation = getExplodedTranslation(primBuf, this.explodeFactor);
+        mMatrix[12] += translation[0];
+        mMatrix[13] += translation[1];
+        mMatrix[14] += translation[2];
 
         const nMatrix = mat4.create();
         mat4.invert(nMatrix, mMatrix);
