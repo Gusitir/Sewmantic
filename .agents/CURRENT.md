@@ -1,13 +1,13 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T02:20:00-05:00
-source_commit: 3b0db53 [T-35] preserve collinear outline vertices
+updated_at: 2026-08-23T02:21:00-05:00
+source_commit: b073238 [STATE] audit T-35 apto
 assurance: Standard milestone audit; deterministic gates per task
 active_job: RUN THE LOOP
 active_plan: PLAN_v0.9-3d-geometry-and-meshing-calibration.md
 active_task: T-35
-last_verdict: APTO
+last_verdict: NO APTO
 backup: local-only
 ```
 
@@ -20,11 +20,11 @@ backup: local-only
 
 ## Next action
 
-1. **Ingeniero:** Informar al Arquitecto el veredicto APTO y la evidencia de `[T-35]`; no despachar `[T-36]` hasta una nueva orden.
+1. **Ingeniero/Obrero:** Corregir `[T-35]` para que un vertice no adyacente sobre la diagonal de una oreja bloquee el corte, agregar el fixture minimo indicado por el Arquitecto y repetir `npm run build && npm test`; no iniciar `T-36`.
 
 ## Blockers
 
-- Ninguno para `[T-35]`: auditoria independiente APTO sobre `3b0db53` con `npm run build && npm test` fresco (21/21 suites, 549/549 tests).
+- `[T-35]` NO APTO en auditoria del Arquitecto: el poligono `[(0,0),(2,0),(2,2),(1,1),(0,2)]` produce area triangulada `5` frente a area real `3` y un triangulo con winding negativo.
 
 ## Current facts
 
@@ -35,7 +35,7 @@ backup: local-only
 
 ## Open findings
 
-- Ninguno.
+- `P9-T35`: `isPointInTriangle` no puede ignorar indiscriminadamente vertices sobre una diagonal interna; debe distinguir puntos del borde exterior de puntos no adyacentes que invalidan la oreja.
 
 ## Human actions
 
