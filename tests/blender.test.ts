@@ -930,7 +930,7 @@ describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
   });
 
   describe('8. Technical Collar Cylindrical Bands (T-37)', () => {
-    it('should project stand_collar, collar_stand, and collar_fall as mirrored non-degenerate cylindrical bands', () => {
+    it('should project stand_collar, collar_stand, and collar_fall as unique non-degenerate cylindrical bands', () => {
       const standDna: PatternDna = {
         concept_name: 'stand_collar_mesh_test',
         garment_category: 'top',
@@ -964,11 +964,9 @@ describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
       ]);
 
       for (const collar of collars) {
-        const segments = collar.vertexCount / 4;
-        expect(Number.isInteger(segments)).toBe(true);
-        expect(segments).toBeGreaterThanOrEqual(16);
-        expect(segments).toBeLessThanOrEqual(24);
-        expect(collar.triangleCount).toBe(segments * 4);
+        const segments = 20;
+        expect(collar.vertexCount).toBe(40);
+        expect(collar.triangleCount).toBe(40);
         expect(collar.bounds.maxX).toBeCloseTo(0.095, 8);
         expect(collar.bounds.minX).toBeCloseTo(-0.095, 8);
         expect(collar.bounds.maxZ).toBeCloseTo(0.095, 8);
@@ -979,6 +977,23 @@ describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
         expect(collar.indices.every((index) => index >= 0 && index < collar.vertexCount)).toBe(true);
         expect(Object.values(collar.bounds).every(Number.isFinite)).toBe(true);
         expect(collar.explodeOffset!.every(Number.isFinite)).toBe(true);
+
+        const positionKeys = new Set<string>();
+        for (let vertex = 0; vertex < collar.vertexCount; vertex++) {
+          const position = collar.positions.slice(vertex * 3, vertex * 3 + 3);
+          positionKeys.add(position.map((coordinate) => coordinate.toFixed(8)).join(','));
+        }
+        expect(positionKeys.size).toBe(collar.vertexCount);
+
+        const triangleKeys = new Set<string>();
+        for (let index = 0; index < collar.indices.length; index += 3) {
+          const triangle = collar.indices.slice(index, index + 3)
+            .map((vertex) => collar.positions.slice(vertex * 3, vertex * 3 + 3)
+              .map((coordinate) => coordinate.toFixed(8)).join(','))
+            .sort();
+          triangleKeys.add(triangle.join('|'));
+        }
+        expect(triangleKeys.size).toBe(collar.triangleCount);
 
         for (let segment = 0; segment < segments; segment++) {
           const x = collar.positions[segment * 3];
@@ -1013,6 +1028,10 @@ describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
           expect(faceX * normalX + faceY * normalY + faceZ * normalZ).toBeGreaterThan(0);
         }
       }
+
+      const collarStand = collars.find((collar) => collar.name === 'collar_stand')!;
+      const collarFall = collars.find((collar) => collar.name === 'collar_fall')!;
+      expect(collarFall.bounds.minY).toBeCloseTo(collarStand.bounds.maxY, 8);
     });
   });
 });
