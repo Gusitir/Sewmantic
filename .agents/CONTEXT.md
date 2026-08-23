@@ -1,12 +1,12 @@
 # CONTEXT - Crónica de Decisiones y Estado (`pattern-ai-core`)
 
 ```yaml
-version: 1.0.0
-compacted_at: 2026-08-20T18:05:00-05:00
+version: 1.1.0
+compacted_at: 2026-08-23T00:05:00-05:00
 archive_snapshot: .agents/archive/CONTEXT_pre_compact_snapshot.md
 assurance: Lean
 active_model: accounts/fireworks/models/qwen3p8-max (Fireworks AI Direct API)
-suites_passing: 17/17 (468/468 tests PASS)
+suites_passing: 21/21 (548/548 tests PASS)
 ```
 
 ---

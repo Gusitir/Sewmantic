@@ -1,6 +1,6 @@
 # TESTING — Matriz de Pruebas y Verificación (`pattern-ai-core`)
 
-Guía completa de pruebas automatizadas, semi-automatizadas y verificación humana/funcional para las Fases 1.0 a 7.0.
+Guía completa de pruebas automatizadas, semi-automatizadas y verificación humana/funcional para las Fases 1.0 a 8.0 (y preparación Fase 9.0).
 
 ---
 

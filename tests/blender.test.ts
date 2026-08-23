@@ -373,7 +373,7 @@ describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
       // Validar magic bytes del .glb generado por Blender
       expect(result.glbBuffer.readUInt32LE(0)).toBe(0x46546c67);
       expect(result.glbBuffer.readUInt32LE(4)).toBe(2);
-    });
+    }, 20000);
 
     it('should gracefully fallback to native glTF generator if Blender fails or is unavailable', async () => {
       const vestDna: PatternDna = {

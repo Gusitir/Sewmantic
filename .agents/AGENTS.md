@@ -51,7 +51,8 @@
   - **Fase 5.0 (Womenswear Slopers & Headless 3D Export: T-21 a T-24):** `npm run build && npm test` (468 tests PASS).
   - **Fase 6.0 (True-to-Pattern 3D Meshing & Ear-Clipping: T-25 a T-28):** `npm run build && npm test` (513 tests PASS).
   - **Fase 7.0 (Blueprints Ancla, Moldería Industrial & Despiece 3D: T-29 a T-32):** `npm run build && npm test` (537 tests PASS).
-  - **Mejoras Continuas (Inspección Ocular Multimodal & Pointed Waistcoat Hem):** `npm run build && npm test` (538 tests PASS).
+  - **Fase 8.0 (Cuellos Técnicos, Bolsillos Cargo 3D & Utility Vest: T-33 y T-34):** `npm run build && npm test` (548 tests PASS).
+  - **Fase 9.0 (Calibración Geométrica 3D & Triangulación Homogénea: T-35 a T-38):** `npm run build && npm test` (548+ tests).
 
 - **Barrera de Parada Humana (Stop Condition Obligatorio):**
   - `H-01`: Impresión física de la Página 1 a escala 100% y medición con regla del recuadro de 10x10 cm. [VERIFICADO OK]
