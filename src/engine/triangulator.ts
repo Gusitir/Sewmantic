@@ -200,7 +200,13 @@ function isEar(poly: Point2D[], i: number, eps: number = 1e-7): boolean {
   for (let k = 0; k < n; k++) {
     if (k === prevIdx || k === currIdx || k === nextIdx) continue;
     const p = poly[k];
-    if (isPointInTriangle(p, a, b, c, eps)) {
+    const ab = crossProduct2D(a, b, p);
+    const bc = crossProduct2D(b, c, p);
+    const ca = crossProduct2D(c, a, p);
+
+    // A point on the candidate diagonal A-C splits the remaining polygon and blocks the ear.
+    // Points on exterior edges A-B and B-C remain valid for collinear boundary chains.
+    if (ab > eps && bc > eps && ca >= -eps) {
       return false;
     }
   }

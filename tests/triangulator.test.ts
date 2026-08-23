@@ -453,6 +453,29 @@ describe('Motor de Triangulación 2D de Polígonos de Moldería (Ear Clipping) -
       expect(isPointInTriangle(createPoint(75, 40), a, b, c)).toBe(false);
     });
 
+    it('debe bloquear una oreja cuya diagonal contiene un vértice no adyacente', () => {
+      const diagonalVertexOutline: Point2D[] = [
+        createPoint(0, 0),
+        createPoint(2, 0),
+        createPoint(2, 2),
+        createPoint(1, 1),
+        createPoint(0, 2),
+      ];
+
+      const indices = triangulatePolygon(diagonalVertexOutline, { tolerance_mm: 0 });
+      const polygonArea = computePolygonArea(diagonalVertexOutline);
+      const triangulatedArea = computeTriangulatedArea(diagonalVertexOutline, indices);
+
+      expect(indices.length).toBe((diagonalVertexOutline.length - 2) * 3);
+      expect(new Set(indices)).toEqual(new Set(diagonalVertexOutline.map((_, index) => index)));
+      expect(Math.abs(triangulatedArea - polygonArea) / polygonArea).toBeLessThan(0.001);
+      expect(validateTriangleOrientations(diagonalVertexOutline, indices)).toBe(true);
+      for (let i = 0; i < indices.length; i += 3) {
+        const [a, b, c] = [indices[i], indices[i + 1], indices[i + 2]];
+        expect(crossProduct2D(diagonalVertexOutline[a], diagonalVertexOutline[b], diagonalVertexOutline[c])).toBeGreaterThan(1e-7);
+      }
+    });
+
     it('debe triangular una curva densa cóncava con puntos colineales sin abanico', () => {
       const denseConcaveOutline: Point2D[] = [
         createPoint(0, 0),
