@@ -176,7 +176,7 @@ class Interface {
 
 // Concrete, resolved stitch segments for an interface after sampling. Matched
 // sub-segments are created by merging both sides' cumulative boundary offsets,
-// so each produced pair always covers an equal length on both sides (the 
+// so each produced pair always covers an equal length on both sides (the
 // segmentation differs but no total length is dropped between the run starts).
 class StitchPair {
   constructor({ id, interfaceId, leftLength, rightLength, commonLength, delta, deltaExceeds, orientationCompatible, pairs }) {
