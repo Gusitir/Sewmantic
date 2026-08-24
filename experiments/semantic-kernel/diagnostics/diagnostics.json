@@ -48,7 +48,7 @@
           ],
           "aEnd": [
             60,
-            50
+            62.5
           ],
           "bStart": [
             80,
@@ -56,10 +56,10 @@
           ],
           "bEnd": [
             80,
-            50
+            37.5
           ],
-          "aLen": 25,
-          "bLen": 25,
+          "aLen": 12.5,
+          "bLen": 12.5,
           "residual": 0
         },
         {
@@ -67,50 +67,96 @@
           "bIndex": 1,
           "aStart": [
             60,
-            50
+            62.5
           ],
           "aEnd": [
             60,
-            46
+            58.5
           ],
           "bStart": [
             80,
-            50
+            37.5
           ],
           "bEnd": [
             76,
-            50
+            37.5
           ],
           "aLen": 4,
           "bLen": 4,
           "residual": 0
         },
         {
-          "aIndex": 1,
+          "aIndex": 0,
           "bIndex": 2,
           "aStart": [
             60,
-            46
+            58.5
+          ],
+          "aEnd": [
+            60,
+            54.5
+          ],
+          "bStart": [
+            76,
+            37.5
+          ],
+          "bEnd": [
+            80,
+            37.5
+          ],
+          "aLen": 4,
+          "bLen": 4,
+          "residual": 0
+        },
+        {
+          "aIndex": 0,
+          "bIndex": 3,
+          "aStart": [
+            60,
+            54.5
+          ],
+          "aEnd": [
+            60,
+            50
+          ],
+          "bStart": [
+            80,
+            37.5
+          ],
+          "bEnd": [
+            80,
+            42
+          ],
+          "aLen": 4.5,
+          "bLen": 4.5,
+          "residual": 0
+        },
+        {
+          "aIndex": 0,
+          "bIndex": 4,
+          "aStart": [
+            60,
+            50
           ],
           "aEnd": [
             60,
             42
           ],
           "bStart": [
-            76,
-            50
+            80,
+            42
           ],
           "bEnd": [
             80,
             50
           ],
-          "aLen": 4,
-          "bLen": 4,
+          "aLen": 8,
+          "bLen": 8,
           "residual": 0
         },
         {
           "aIndex": 1,
-          "bIndex": 3,
+          "bIndex": 4,
           "aStart": [
             60,
             42
@@ -365,7 +411,6 @@
       ]
     }
   },
-  "latencyMs": 9.948,
-  "invariantsPassed": 17,
-  "invariantsTotal": 17
+  "invariantsPassed": 18,
+  "invariantsTotal": 18
 }

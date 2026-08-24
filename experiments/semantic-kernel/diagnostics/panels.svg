@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -40 260 300" width="520" height="600"><title>T-42 cosible panel pair (mm)</title><rect x="-10" y="-40" width="260" height="300" fill="white" stroke="none"/>
 <rect x="0" y="0" width="60" height="100" fill="#006d77" fill-opacity="0.10" stroke="#006d77" stroke-dasharray="3 2" stroke-width="0.8"/><path d="M 60 100 L 60 50 L 60 25 L 60 0 Z" fill="none" stroke="#0a9396" stroke-width="2.4"/>
-<rect x="80" y="0" width="60" height="100" fill="#006d77" fill-opacity="0.10" stroke="#006d77" stroke-dasharray="3 2" stroke-width="0.8"/><path d="M 80 0 L 80 25 L 80 50 L 76 50 L 80 50 L 80 50 L 80 75 L 80 100 Z" fill="none" stroke="#94d2bd" stroke-width="2.4"/>
+<rect x="80" y="0" width="60" height="100" fill="#006d77" fill-opacity="0.10" stroke="#006d77" stroke-dasharray="3 2" stroke-width="0.8"/><path d="M 80 0 L 80 25 L 80 37.5 L 76 37.5 L 80 37.5 L 80 50 L 80 75 L 80 100 Z" fill="none" stroke="#94d2bd" stroke-width="2.4"/>
 <rect x="0" y="120" width="60" height="100" fill="#5c677d" fill-opacity="0.10" stroke="#5c677d" stroke-dasharray="3 2" stroke-width="0.8"/><path d="M 60 220 L 60 170 L 60 120 Z" fill="none" stroke="#e76f51" stroke-width="2.4"/>
 <text x="0" y="-6" font-size="9" fill="#333">A front: S-A-side runs down</text>
 <text x="80" y="-6" font-size="9" fill="#333">B back: S-B-side runs up (mate)</text>

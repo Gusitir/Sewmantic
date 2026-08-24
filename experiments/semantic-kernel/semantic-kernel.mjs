@@ -310,7 +310,20 @@ class SemanticKernel {
     const cum = seq.cumulative(this);
     const edgeIndex = containingIndex(cum, atOffset);
     const edge = this.edges.get(seq.edgeIds[edgeIndex]);
-    const mid = seq.pointAt(this, atOffset);
+    const segStartOffset = cum[edgeIndex];
+    const segEndOffset = cum[edgeIndex + 1];
+
+    // Snap the realized insertion arc-length to the strict interior of the
+    // selected edge. If the caller's atOffset lands exactly on a vertex of the
+    // selected edge, both the leading (d1) and trailing (d4) dart legs would
+    // otherwise collapse to zero length. Relocating to the edge midpoint keeps
+    // the V shape real while preserving the exact +2*depth added length.
+    let s = atOffset;
+    if (s <= segStartOffset + EPSILON || s >= segEndOffset - EPSILON) {
+      s = segStartOffset + (segEndOffset - segStartOffset) / 2;
+    }
+
+    const mid = seq.pointAt(this, s);
     const start = edge.start;
     const end = edge.end;
     const tangent = dirOf(start, end);

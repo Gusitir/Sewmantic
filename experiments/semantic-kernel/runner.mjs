@@ -143,6 +143,12 @@ function run() {
   const measures = { before: measure(kernel), after: measure(rebuilt) };
   const measuresEqual = Object.entries(measures.after).every(([key, val]) => Math.abs(val - measures.before[key]) < TOL);
 
+  // Every edge and every resolved StitchPair must carry strictly positive length.
+  // A zero-length edge or pair indicates a degenerate dart/cut/vertex collapse.
+  const allEdgesPositive = [...kernel.edges.values()].every((e) => e.length() > 0);
+  const matchPairsPositive = Object.values(kernel.diagnostic('T-42').interfaces).every((m) => m.pairs.every((p) => p.aLen > 0 && p.bLen > 0));
+  const allStrictlyPositive = allEdgesPositive && matchPairsPositive;
+
   const checks = [
     ['AB side delta == 0 (different segmentation, equal length)', abSide.delta < TOL],
     ['AB side preserves total length (common == left == right 100)', Math.abs(abSide.commonLength - 100) < TOL && Math.abs(abSide.leftLength - abSide.rightLength) < TOL],
@@ -161,6 +167,7 @@ function run() {
     ['round-trip preserves all ids', idsEqual],
     ['round-trip preserves semantics (interface wiring)', semanticsEqual],
     ['round-trip preserves measures', measuresEqual],
+    ['all edges and StitchPairs have strictly positive length', allStrictlyPositive],
   ];
 
   const diag = kernel.diagnostic('T-42');
@@ -182,7 +189,9 @@ function run() {
   ]);
   const passCount = checks.filter(([, pass]) => pass).length;
   console.log(`Semantic kernel spike (T-42): ${passCount}/${checks.length} invariants passed`);
-  diag.latencyMs = latencyMs;
+  // latencyMs stays in the console/transient diagnostic only. It is timing
+  // noise (varies per run) and is intentionally NOT serialized into the
+  // versioned diagnostics.json so each deterministic gate leaves a clean tree.
   diag.invariantsPassed = passCount;
   diag.invariantsTotal = checks.length;
   writeFileSync(new URL('./diagnostics.json', output), `${JSON.stringify(diag, null, 2)}\n`);
