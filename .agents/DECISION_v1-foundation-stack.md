@@ -48,3 +48,14 @@ Evidence plan: `PLAN_v1.0-semantic-pattern-foundation.md`
 ## STOP boundary
 
 La seleccion de stack completa la autorizacion `D-2026-08-23-V1-EXEC`. No se inicia Semantic Kernel MVP ni se integra dependencia alguna hasta que el Humano confirme `H-04` y autorice el siguiente plan.
+
+## Savepoint
+
+- Tag: `savepoint-v1-foundation-stack-20260823`
+- Commit: `5abf95ae180a714f19385d8fcfd6b26b99f2fbe2`
+- Remote: private GitHub `Gusitir/Sewmantic`, tag y `master` verificados.
+- Google Drive bundle: `Mi unidad/backups/sewmantic-savepoint-v1-foundation-stack-20260823.bundle`
+- Bundle SHA-256: `58C877AE59940917B30F001E558BB7B8F1CF0B8909E496CB93A6FF1BB63DFE9E`
+- Google Drive snapshot: `Mi unidad/backups/sewmantic-savepoint-v1-foundation-stack-20260823.zip`
+- ZIP SHA-256: `3038A9EBF608D763AFF7B99E105C408EE1811143B0A334AE6E019035D8930EEB`
+- Verification: bundle complete history PASS; ZIP 166 entries PASS.

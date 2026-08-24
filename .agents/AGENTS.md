@@ -6,7 +6,7 @@
 - Product plane owner: Worker (`[T-NN]` commits)
 - Control plane owner: Architect / Engineer (`[STATE]` commits)
 - Local Git: required
-- Backup: local-only
+- Backup: private GitHub remote + Google Drive bundle/snapshot
 - Sibling systems outside scope: MyPetCreature 3D/AR WebGL viewer (Fase 2)
 
 ## Roles y Jerarquía de Orquestación (agents-workflow v3)
@@ -90,6 +90,7 @@
 - No credentials, tokens, private keys, personal data, or valued .env files.
 - CONTEXT is append-only except during explicit MAINTAIN/COMPACT with traceability.
 - A Git remote is optional; never assume it exists.
+- Current verified remote: private repository `Gusitir/Sewmantic`; pushes remain explicit.
 - Tool commands belong in versioned, dated local recipes and must be re-verified.
 - Export root DOCUMENTATION.md on demand for a human; it is a dated snapshot, not living docs.
 

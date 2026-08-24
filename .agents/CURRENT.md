@@ -1,14 +1,14 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T21:36:55-05:00
-source_commit: 1a515e1 [T-43] fix AI SDK 7 tool loop
+updated_at: 2026-08-23T23:21:57-05:00
+source_commit: 5abf95a [STATE] select semantic foundation stack and stop at H-04
 assurance: Standard for architecture selection; deterministic gates per spike
 active_job: PLAN
 active_plan: PLAN_v1.0-semantic-pattern-foundation.md
 active_task: none
 last_verdict: APTO T-41..T-44; foundation stack selected; H-04 pending
-backup: local-only
+backup: private GitHub + Google Drive verified
 ```
 
 ## Orchestration Roles (agents-workflow v3)
@@ -41,6 +41,7 @@ backup: local-only
 - **T-43 live definitivo:** Vercel AI SDK + `@ai-sdk/fireworks` ejecuto tool call y respuesta final en 2 pasos/855 tokens.
 - **T-44 APTO:** Orama full-text, 24 reglas, 18 consultas, recall@k 1.0, fuentes directas y 14/14 invariantes.
 - **Stack seleccionado:** kernel semantico TypeScript propio + Flatten adapter + Vercel AI SDK/Fireworks + Zod + JSON local versionado + Orama full-text + adapters al pipeline comercial.
+- **Savepoint fundacional:** tag `savepoint-v1-foundation-stack-20260823` publicado y respaldos bundle/ZIP verificados en Google Drive.
 - **Módulos Paramétricos Extendidos:** Cuellos técnicos (`stand_collar`, `shirt_collar_with_stand`), bolsillos cargo 3D con fuelle y solapa (`cargo_pocket_body`, `cargo_pocket_bellows`, `cargo_pocket_flap`), y blueprint ancla `utility_vest` (Chaleco Táctico / Safari / Cargo).
 - **Moldería Industrial & Visor 3D:** Cruces de botonadura (+20mm), marcas de ojales/botones, vistas interiores con entretela técnica (`Interfacing_Lining`), bajo en doble pico de chaleco sastre (`hem: { type: 'pointed', peak_drop_mm: 50 }`), Matriz de Inspección Ocular Multimodal de 6 Puntos y Guía de Despiece 3D interactivo en WebGL.
 

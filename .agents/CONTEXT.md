@@ -190,4 +190,12 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Stack seleccionado en `DECISION_v1-foundation-stack.md`.
 - STOP cumplido: no integrar Motor v2 hasta confirmacion humana H-04 y nuevo PLAN.
 
+## 2026-08-23 - Savepoint fundacional remoto y Google Drive
+
+- `master` y el tag anotado `savepoint-v1-foundation-stack-20260823` se publicaron en el repositorio privado `Gusitir/Sewmantic`.
+- El tag remoto resuelve al commit `5abf95ae180a714f19385d8fcfd6b26b99f2fbe2`.
+- Google Drive contiene un bundle Git de historia completa y un ZIP de 166 entradas bajo `Mi unidad/backups/`.
+- Bundle SHA-256: `58C877AE59940917B30F001E558BB7B8F1CF0B8909E496CB93A6FF1BB63DFE9E`.
+- ZIP SHA-256: `3038A9EBF608D763AFF7B99E105C408EE1811143B0A334AE6E019035D8930EEB`.
+- Ambos respaldos fueron abiertos/verificados; cambios locales ajenos no forman parte del savepoint y permanecieron intactos.
 
