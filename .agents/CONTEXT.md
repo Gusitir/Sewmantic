@@ -149,6 +149,11 @@ suites_passing: 21/21 (548/548 tests PASS)
 - El Humano aprobo un tramo de USD 10 para Obreros y pruebas internas; recargara manualmente al agotarse.
 - El presupuesto T-43 deja de ser blocker. T-41 a T-44 siguen bloqueadas solo por falta de autorizacion general de ejecucion.
 
+## 2026-08-23 - Autorizacion de Foundation Spikes
+
+- El Humano autorizo ejecucion automatica de T-41 a T-44 y seleccion del stack definitivo.
+- Execution SHA-256: `a68bdfed622a4d3dab73303baef88d329d5b29c4dfcac24df4af7518a893bac0`.
+- El limite aprobado termina despues de la recomendacion de stack y `H-04`; integrar Motor v2 requiere nueva confirmacion humana.
 
 
 

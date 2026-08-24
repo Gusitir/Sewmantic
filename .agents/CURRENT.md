@@ -1,13 +1,13 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T19:38:48-05:00
-source_commit: 61005d0 [STATE] plan semantic pattern platform v1 foundation
+updated_at: 2026-08-23T19:55:37-05:00
+source_commit: 76b1891 [STATE] configure Luna and DeepSeek orchestration budget
 assurance: Standard for architecture selection; deterministic gates per spike
-active_job: PLAN
+active_job: RUN THE LOOP
 active_plan: PLAN_v1.0-semantic-pattern-foundation.md
-active_task: none
-last_verdict: NO APTO (Phase 9 H-03); v1 design approved, execution not authorized
+active_task: T-41
+last_verdict: execution authorized for T-41..T-44; Phase 9 H-03 remains NO APTO
 backup: local-only
 ```
 
@@ -20,12 +20,12 @@ backup: local-only
 
 ## Next action
 
-1. **Humano:** Revisar `PLAN_v1.0-semantic-pattern-foundation.md` y autorizar o ajustar la ejecucion de T-41 a T-44; el presupuesto Fireworks ya esta aprobado.
+1. **Ingeniero:** Ejecutar T-41 con un Obrero DeepSeek V4 Flash 0731, exigir gates y Audit Capsule, y responder al Arquitecto sin iniciar T-42.
 
 ## Blockers
 
 - Phase 9 CLOSE bloqueado por `H-03-F` (orientacion anatomica de `back_leg`) y `H-03-H` (deriva `pull_over` entre prompt y Zod).
-- T-41 a T-44 bloqueadas unicamente hasta autorizacion explicita de ejecucion.
+- Ninguno para T-41. T-42 depende de T-41 APTO; la integracion Motor v2 permanece fuera de alcance hasta nueva confirmacion.
 
 ## Current facts
 

@@ -1,6 +1,6 @@
 # PLAN v1.0 - Foundation Spikes para Motor Semantico y Patronista Conversacional
 
-Status: design approved; execution not authorized
+Status: active; execution authorized through stack selection
 Goal: seleccionar con evidencia las fundaciones tecnicas minimas para Motor v2 sin integrar dependencias ni modificar el motor de producto actual.
 Assurance: Standard para la decision de arquitectura; gates deterministas por spike.
 
@@ -14,6 +14,14 @@ Assurance: Standard para la decision de arquitectura; gates deterministas por sp
 - Authority boundary: esta aprobacion autoriza documentar y preparar la ruta; no autoriza implementar ni ejecutar los spikes.
 - Invalidation: cambiar el north star, permitir coordenadas arbitrarias del modelo, reemplazar el pipeline comercial o incorporar GPLv3 invalida esta aprobacion.
 
+### Execution authorization
+
+- Decision ID: `D-2026-08-23-V1-EXEC`
+- Authorized by: Humano (Usuario), 2026-08-23.
+- Canonical execution statement: `EXEC|PLAN-v1.0|T-41,T-42,T-43,T-44|automatic-until-stack-selection|stop-before-engine-integration|fireworks-budget:USD10|decision:D-2026-08-23-V1-EXEC`
+- Execution SHA-256: `a68bdfed622a4d3dab73303baef88d329d5b29c4dfcac24df4af7518a893bac0`
+- Boundary: ejecutar T-41 a T-44, seleccionar el stack y hacer STOP. La integracion del Motor v2 requiere nueva confirmacion humana.
+
 ## Scope and non-goals
 
 - In scope: cuatro experimentos aislados, comparacion reproducible, artefactos diagnosticos y recomendacion de dependencias.
@@ -26,10 +34,10 @@ Assurance: Standard para la decision de arquitectura; gates deterministas por sp
 
 | Tarea | Objetivo | Dependencia | Evidence ID | Estado |
 |---|---|---|---|:---:|
-| **T-41** | Comparar kernel geometrico 2D con fixtures textiles | Autorizacion de ejecucion | `V1-GEO-01` | BLOCKED |
+| **T-41** | Comparar kernel geometrico 2D con fixtures textiles | Autorizacion de ejecucion | `V1-GEO-01` | READY |
 | **T-42** | Probar modelo semantico Edge/Panel/Interface/StitchPair | T-41 APTO | `V1-SEM-01` | BLOCKED |
-| **T-43** | Probar harness persistente, tools, revisiones y Fireworks | Autorizacion de ejecucion | `V1-HAR-01` | BLOCKED |
-| **T-44** | Probar RAG local full-text/hibrido sobre reglas textiles | Autorizacion de ejecucion | `V1-RAG-01` | BLOCKED |
+| **T-43** | Probar harness persistente, tools, revisiones y Fireworks | Autorizacion de ejecucion | `V1-HAR-01` | READY |
+| **T-44** | Probar RAG local full-text/hibrido sobre reglas textiles | Autorizacion de ejecucion | `V1-RAG-01` | READY |
 
 Los spikes se serializan si comparten `package.json` o lockfile. El Ingeniero puede paralelizar como maximo dos Obreros DeepSeek V4 Flash 0731 solo con workspaces y staging disjuntos.
 
@@ -114,4 +122,4 @@ Los spikes se serializan si comparten `package.json` o lockfile. El Ingeniero pu
 
 ## Next authorization
 
-El Humano debe revisar este plan y definir si autoriza ejecucion. El presupuesto Fireworks de USD 10 ya fue aprobado; hasta la autorizacion general el Ingeniero no despacha tareas.
+La ejecucion T-41 a T-44 esta autorizada. El Ingeniero comienza por T-41 y responde al Arquitecto antes de abrir T-42. Tras seleccionar el stack se ejecuta STOP antes de integrar Motor v2.
