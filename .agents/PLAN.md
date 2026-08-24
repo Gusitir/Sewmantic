@@ -2,7 +2,7 @@
 
 This file points to the current planning target and records the open predecessor for `pattern-ai-core`.
 
-- **Active Plan:** [`PLAN_v1.1-semantic-kernel-mvp.md`](PLAN_v1.1-semantic-kernel-mvp.md) (Phase 11 active; T-45 ready)
+- **Active Plan:** [`PLAN_v1.1-semantic-kernel-mvp.md`](PLAN_v1.1-semantic-kernel-mvp.md) (Phase 11 paused after T-46 APTO; T-47 ready)
 - **Foundation Decision:** [`DECISION_v1-foundation-stack.md`](DECISION_v1-foundation-stack.md)
 - **Strategic Roadmap:** [`ROADMAP_v1-semantic-pattern-platform.md`](ROADMAP_v1-semantic-pattern-platform.md)
 - **Research Evidence:** [`REFERENCES_v1-open-source-foundations.md`](REFERENCES_v1-open-source-foundations.md)

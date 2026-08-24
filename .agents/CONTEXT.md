@@ -218,3 +218,11 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Gate final: 40/40 focalizados, build PASS y 596/596 tests globales.
 - Contratos congelados: cuatro curvas con arco dirigido/geometricamente coherente, serializer validado, refs/IDs estables y StitchPairs sin huecos/solapes/degeneraciones.
 - `constraintId` es un ID externo no vacio del futuro Capability Registry. T-46 queda habilitada.
+
+## 2026-08-24 - T-46 GeometryAdapter APTO y handoff de sesion
+
+- Commits: `405dcdc` y recuperacion post-corte `1869cd4`.
+- El corte de conexion no corrompio Git; `git fsck` fue correcto. Una micro-correccion parcial quedo sin commit y fue recuperada con Luna MAX.
+- Gate final: geometry focalizado 20/20, Foundation geometry 16/16, build PASS y suite 23/23 con 616/616 tests.
+- API offset congelada como miter-only; round/bevel se rechazan en vez de sustituirse silenciosamente. CutLoop cubre line, circularArc, quadraticBezier y cubicBezier.
+- T-46 APTO. T-47 queda READY pero no iniciada. STOP solicitado por el Humano; proxima sesion reanuda desde T-47.

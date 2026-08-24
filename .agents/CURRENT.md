@@ -1,13 +1,13 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T23:54:49-05:00
-source_commit: e81533a [T-45] strengthen ordered stitch coverage
+updated_at: 2026-08-24T00:34:21-05:00
+source_commit: 1869cd4 [T-46] enforce miter-only offset and complete curve cut coverage
 assurance: Standard; deterministic gates per task and independent Architect audit
-active_job: RUN THE LOOP
+active_job: none
 active_plan: PLAN_v1.1-semantic-kernel-mvp.md
-active_task: T-46
-last_verdict: APTO T-45
+active_task: T-47
+last_verdict: APTO T-46; session stopped by user
 backup: private GitHub + Google Drive verified
 ```
 
@@ -20,18 +20,20 @@ backup: private GitHub + Google Drive verified
 
 ## Next action
 
-1. **Ingeniero:** Ejecutar T-46 con un Obrero DeepSeek V4 Flash 0731, seleccionar offset por evidencia y responder al Arquitecto sin iniciar T-47.
+1. **Proxima sesion / Arquitecto:** Reanudar Phase 11 y autorizar al Ingeniero a ejecutar T-47; no repetir T-45/T-46.
 
 ## Blockers
 
 - Phase 9 CLOSE bloqueado por `H-03-F` (orientacion anatomica de `back_leg`) y `H-03-H` (deriva `pull_over` entre prompt y Zod).
-- Ninguno para T-46.
+- Ninguno para T-47. Trabajo pausado por solicitud humana, no por bloqueo tecnico.
+- Dirty state preservado y fuera de Phase 11: `scripts/build_vest_blender.py`, `scripts/render_4_views_blender.py`, `IMAGENES/`, `scripts/run_mcp_bridge.py`.
 
 ## Current facts
 
 - **Fases 1.0 a 8.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Suite Determinista:** **21/21 suites passing (556/556 tests en verde)** tras `[T-38]`.
+- **Suite Determinista:** **23/23 suites passing (616/616 tests en verde)** tras `[T-46]`.
 - **Phase 11 T-45 APTO:** 40 tests contractuales; suite global 22/22 y 596/596; contratos v2 congelados para GeometryAdapter.
+- **Phase 11 T-46 APTO:** GeometryAdapter con Flatten encapsulado; offset publico miter-only; cutLoop cubre cuatro curvas; 20 focalizados y suite 23/23, 616/616.
 - **North Star v1 aprobado:** Motor Semantico + Patronista Conversacional persistente + Capability Registry/Workshop + RAG local.
 - **Foundation decision:** stack seleccionado en `DECISION_v1-foundation-stack.md`; Phase 11 autorizada y activa.
 - **Orquestacion verificada:** Luna MAX accesible; DeepSeek V4 Flash operativo mediante el modelo versionado `deepseek-v4-flash-0731`.
@@ -48,6 +50,7 @@ backup: private GitHub + Google Drive verified
 
 ## Open findings
 
+- `P11-GEO-01` riesgo residual: miter sin limite puede crear picos en angulos agudos; resolver antes de uso productivo sobre patrones arbitrarios.
 - `H-03-F`: pernera trasera 3D espejada con tiro orientado hacia afuera.
 - `H-03-H`: el prompt ofrece `pull_over`, pero el esquema de cierre lo rechaza.
 

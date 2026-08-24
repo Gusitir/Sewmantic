@@ -9,7 +9,7 @@ Este índice organiza los archivos del plano de control (`.agents/`) y las rutas
 - [`CURRENT.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/CURRENT.md): Estado activo del proyecto, veredicto, plan activo y siguiente acción inmediata.
 - [`CONTEXT.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/CONTEXT.md): Crónica inmutable de decisiones, auditorías, hitos completados y handoffs.
 - [`PLAN.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN.md): Puntero al plan activo y directorio de planes archivados.
-- [`TESTING.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/TESTING.md): Matriz de pruebas automatizadas (21 suites Vitest, 556 tests), verificaciones humanas (`H-01` a `H-03`) y scripts de diagnóstico.
+- [`TESTING.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/TESTING.md): Matriz de pruebas automatizadas (23 suites Vitest, 616 tests), verificaciones humanas (`H-01` a `H-04`) y scripts de diagnóstico.
 - [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN_v0.9-3d-geometry-and-meshing-calibration.md): Implementación completa; `H-03` NO APTO y CLOSE bloqueado (Fase 9.0).
 - [`PLAN_v1.0-semantic-pattern-foundation.md`](PLAN_v1.0-semantic-pattern-foundation.md): Plan de Foundation Spikes T-41 a T-44; diseño aprobado, ejecución no autorizada.
 - [`PLAN_v1.1-semantic-kernel-mvp.md`](PLAN_v1.1-semantic-kernel-mvp.md): Plan activo Phase 11 T-45 a T-48 para kernel TypeScript, GeometryAdapter, constraints y shadow mode.
@@ -46,4 +46,4 @@ Este índice organiza los archivos del plano de control (`.agents/`) y las rutas
 - `src/server/`: Servidor HTTP REST y frontend Web Studio (HTML, CSS, JS, Visor 2D, Visor 3D WebGL con Exploded View Slider).
 - `output/`: Entregables físicos generados (PDFs, SVGs, Modelos .glb 3D, Fichas técnicas y paquetes comerciales ZIP).
 
-Last reindexed: 2026-08-23 at Phase 11 authorization (source commit 570ca3f).
+Last reindexed: 2026-08-24 at T-46 handoff (source commit 1869cd4).

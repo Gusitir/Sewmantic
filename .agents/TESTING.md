@@ -4,7 +4,7 @@ Guía completa de pruebas automatizadas, semi-automatizadas y verificación huma
 
 ---
 
-## 1. Suite de Pruebas Automatizadas (556/556 PASS — 21 Suites Vitest)
+## 1. Suite de Pruebas Automatizadas (616/616 PASS — 23 Suites Vitest)
 
 Para ejecutar la suite completa de pruebas deterministas:
 ```powershell
@@ -36,7 +36,18 @@ npm test
 | `tests/server.test.ts` | `src/server/app.ts` | 20 | Servidor HTTP REST nativo; CORS universal, soporte para selección de `blueprint`, logging estructurado y respuestas de error con `details`. |
 | `tests/viewer.test.ts` | `src/server/public/viewer.js` | 22 | Visor Vectorial 2D; transformaciones matemáticas (Zoom, Pan, Fit View), capas XS-3XL y cuadrícula A4. |
 | `tests/e2e.test.ts` | `src/pipeline.ts` | 11 | Pipeline End-to-End generando físicamente todos los 12 entregables (2D + 3D + ZIP) en disco. |
-| **TOTAL** | **21 suites** | **556** | **100% PASS (0 errores)** |
+| `tests/semantic_v2.test.ts` | `src/engine/v2/contracts.ts`, `serialization.ts` | 40 | Contratos v2, curvas discriminadas, IDs/referencias, serializacion y coherencia StitchPair. |
+| `tests/semantic_geometry_v2.test.ts` | `src/engine/v2/geometry/` | 20 | GeometryAdapter, booleans, cortes de cuatro curvas, winding y offset miter 3/10/25mm. |
+| **TOTAL** | **23 suites** | **616** | **100% PASS (0 errores)** |
+
+### Phase 11.0 - IDs de verificacion
+
+| ID | Superficie | Estado |
+| :--- | :--- | :---: |
+| `P11-CON-01` | Contratos TypeScript y serializacion v2 | APTO T-45 |
+| `P11-GEO-01` | GeometryAdapter, curvas y offset miter-only | APTO T-46 |
+| `P11-OPS-01` | Constraints y operadores atomicos | PENDIENTE T-47 |
+| `P11-SHD-01` | Legacy adapter y shadow mode | PENDIENTE T-48 |
 
 ### Fase 9.0 - IDs de verificacion
 
