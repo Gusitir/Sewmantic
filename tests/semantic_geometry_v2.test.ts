@@ -167,8 +167,8 @@ describe('geometryAdapter plain surface', () => {
   it('finds the two points where a horizontal cut crosses a rectangle boundary', () => {
     const { vertices, outer } = squareFixture();
     const cutVerts: Vertex[] = [
-      { id: 'c1', xMm: 0, yMm: 50 },
-      { id: 'c2', xMm: 100, yMm: 50 },
+      { id: 'c1', xMm: 0, yMm: 55 },
+      { id: 'c2', xMm: 100, yMm: 55 },
     ];
     const cut: Curve = { kind: 'line', startVertexId: 'c1', endVertexId: 'c2' };
     const pts = geometryAdapter.cutLoop(vertices.concat(cutVerts), outer, cut);
@@ -207,6 +207,77 @@ describe('geometryAdapter plain surface', () => {
     for (const r of [union, intersect, subtract]) {
       expect(['counterclockwise', 'clockwise']).toContain(r.winding);
     }
+  });
+});
+
+describe('cutLoop across all curve kinds', () => {
+  // Every cut runs from (0,55) to (100,55) across the 100x100 square loop, is
+  // monotonic in x and stays within the square, so it crosses the boundary
+  // exactly twice (at the left and right edges). Endpoint crossings are exact;
+  // a mid-path crossing would only land within the mandated tessellation
+  // tolerance (DEFAULT_TOLERANCE_MM), which these fixtures intentionally avoid
+  // so the expected count is deterministic.
+  const cutCases: Array<{ name: string; make: (base: Vertex[], tail: Vertex[]) => Curve }> = [
+    {
+      name: 'line',
+      make: () => ({ kind: 'line' as const, startVertexId: 'c1', endVertexId: 'c2' }),
+    },
+    {
+      name: 'circularArc',
+      make: () => ({
+        kind: 'circularArc' as const,
+        startVertexId: 'c1',
+        endVertexId: 'c2',
+        centerVertexId: 'cC',
+        radiusMm: Math.sqrt(50 * 50 + 50 * 50),
+        sweepAngleDeg: 90,
+        clockwise: false,
+      }),
+    },
+    {
+      name: 'quadraticBezier',
+      make: () => ({
+        kind: 'quadraticBezier' as const,
+        startVertexId: 'c1',
+        endVertexId: 'c2',
+        controlVertexId: 'cQ',
+      }),
+    },
+    {
+      name: 'cubicBezier',
+      make: () => ({
+        kind: 'cubicBezier' as const,
+        startVertexId: 'c1',
+        endVertexId: 'c2',
+        controlVertexAId: 'cCa',
+        controlVertexBId: 'cCb',
+      }),
+    },
+  ];
+
+  it.each(cutCases)('$name cut crosses the loop at exactly two boundary points', ({ make }) => {
+    const { vertices, outer } = squareFixture();
+    const tail: Vertex[] = [
+      { id: 'c1', xMm: 0, yMm: 55 },
+      { id: 'c2', xMm: 100, yMm: 55 },
+      { id: 'cC', xMm: 50, yMm: 105 },
+      { id: 'cQ', xMm: 50, yMm: 90 },
+      { id: 'cCa', xMm: 25, yMm: 85 },
+      { id: 'cCb', xMm: 75, yMm: 25 },
+    ];
+    const cut = make(vertices, tail);
+    const pts = geometryAdapter.cutLoop(vertices.concat(tail), outer, cut);
+    expect(pts).toHaveLength(2);
+    // Both crossings sit on the left (x=0) and right (x=100) edges at y=55.
+    // Endpoint crossings are sharp; allow the documented tessellation tolerance.
+    const tol = DEFAULT_TOLERANCE_MM;
+    for (const p of pts) {
+      expect(Math.abs(p.yMm - 55)).toBeLessThanOrEqual(tol);
+      expect(Math.abs(p.xMm - 0) <= tol || Math.abs(p.xMm - 100) <= tol).toBe(true);
+    }
+    const xs = pts.map((p) => p.xMm).sort((a, b) => a - b);
+    expect(xs[0] < 50).toBe(true);
+    expect(xs[1] > 50).toBe(true);
   });
 });
 
@@ -269,6 +340,12 @@ describe('offset gate (selected own miter offset)', () => {
     const { vertices, outer } = squareFixture();
     const r = geometryAdapter.offset(vertices, { outer, holes: [] }, 0);
     expect(geometryAdapter.polygonAreaMm2(r.vertices, r.outer)).toBeGreaterThan(0);
+  });
+
+  it('rejects unsupported runtime join values instead of substituting miter', () => {
+    const { vertices, outer } = squareFixture();
+    expect(() => geometryAdapter.offset(vertices, { outer, holes: [] }, 3, 'round' as never))
+      .toThrow(/only 'miter' is implemented/);
   });
 });
 

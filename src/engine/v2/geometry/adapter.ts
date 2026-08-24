@@ -113,11 +113,17 @@ export function createAdapter(): GeometryAdapter {
       return readFlattenPolygon(result);
     },
 
-    offset(vertices, loop, distanceMm, _join) {
+    offset(vertices, loop, distanceMm, join) {
       // Selected strategy (see DECISION.md): own minimal miter offset.
       // Deterministic, boolean-free, no Flatten internals; passes the convex /
-      // concave / curved gate fixtures at 3 / 10 / 25 mm. The requested join is
-      // accepted but the v2 adapter currently implements only this miter path.
+      // concave / curved gate fixtures at 3 / 10 / 25 mm. Only miter is
+      // supported; round/bevel are not implemented and are rejected rather than
+      // silently substituted (the public type restricts callers to 'miter').
+      if (join !== undefined && join !== 'miter') {
+        throw new Error(
+          `geometry: offset join "${String(join)}" is not supported; only 'miter' is implemented (see DECISION.md)`,
+        );
+      }
       const ctx = new CurveContext(vertices);
       const outerPts = closedLoopPoints(ctx, loop.outer);
       const holePts = (loop.holes ?? []).map((h) => closedLoopPoints(ctx, h));

@@ -73,8 +73,9 @@ future `miter-limit` enhancement, not a block on selection.
   exposed on `GeometryAdapter.offset`.
 - **Rejected:** `@flatten-js/polygon-offset@1.1.4` (runtime throw under core 1.6.14)
   and the own capsular round-join boolean union (numeric instability).
-- Exactly **one** strategy is integrated (miter). `OffsetJoin` is accepted by the
-  adapter API but the v2 adapter currently implements only the miter path.
+- The public API exposes exactly one join value: `OffsetJoin = 'miter'`.
+  `round` and `bevel` are absent; unsupported runtime values are rejected with a
+  clear error and are never silently accepted or substituted.
 - No new dependency is added or kept; `@flatten-js/core@1.6.14` remains the sole
   exact geometry dependency.
 

@@ -23,8 +23,14 @@ export type Winding = 'clockwise' | 'counterclockwise';
 /** The three boolean polygon operators supported by the adapter. */
 export type BooleanOp = 'union' | 'intersect' | 'subtract';
 
-/** Join style for an offset. round is the strategy selected by the offset gate. */
-export type OffsetJoin = 'round' | 'miter' | 'bevel';
+/**
+ * Join style for an offset. Only `miter` is supported: it is the single
+ * strategy selected by the offset gate (see DECISION.md). `round` and `bevel`
+ * are NOT implemented in the v2 adapter and are intentionally absent from this
+ * public type rather than silently substituted. Pass any other value at runtime
+ * and the adapter throws a clear error.
+ */
+export type OffsetJoin = 'miter';
 
 /**
  * A (multi-)polygon expressed purely with v2 `Curve` objects. `outer` is one
