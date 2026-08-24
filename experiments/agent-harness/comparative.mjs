@@ -62,11 +62,24 @@ const md = `# SDK Comparative — Vercel AI SDK vs OpenAI Agents SDK (Provider: 
 ## Provider-compatibility decision (evidence-gated)
 
 - Fireworks offers an OpenAI-compatible REST endpoint (\`/v1/chat/completions\`), used by this repo's
-  \`scripts/test_fireworks_call.js\`, and confirmed reachable (key length 25, base URL live).
+  \`scripts/test_fireworks_call.js\`, and confirmed reachable with the live harness below.
 - Vercel AI SDK ships \`@ai-sdk/fireworks\` first-party (real registry metadata above) → clean support.
 - OpenAI Agents SDK lists no first-party Fireworks adapter in its real deps; support would require an
   OpenAI-compatible base_url override **and** an unforced integration gate. Per T-43 scope, the OpenAI
-  Agents SDK path is documented but never force-wired when Fireworks is the target.
+  Agents SDK path is rejected for this phase because its manual adapter remains untested.
+
+## Architect-verified live evidence
+
+- \`HARNESS_LIVE=1\`: one successful call to Qwen 3.8 Max through the Fireworks OpenAI-compatible endpoint.
+- Token usage: \`90\` prompt + \`201\` completion = \`291\` total tokens.
+- Status: \`pass\`.
+- \`costUsd\`: \`null\`, because the API does not report cost.
+- Local evidence: \`output/live-fireworks.json\` is ignored by Git.
+
+## Provisional recommendation
+
+Prefer Vercel AI SDK for the next phase: it has a first-party Fireworks adapter and lower provider lock-in.
+Reject OpenAI Agents SDK for this phase because its required manual Fireworks adapter has not been tested.
 
 ## Reproducibility
 
