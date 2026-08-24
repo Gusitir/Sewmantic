@@ -1,8 +1,8 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T19:25:01-05:00
-source_commit: 1a9e748 [STATE] start H-03 user validation
+updated_at: 2026-08-23T19:38:48-05:00
+source_commit: 61005d0 [STATE] plan semantic pattern platform v1 foundation
 assurance: Standard for architecture selection; deterministic gates per spike
 active_job: PLAN
 active_plan: PLAN_v1.0-semantic-pattern-foundation.md
@@ -20,12 +20,12 @@ backup: local-only
 
 ## Next action
 
-1. **Humano:** Revisar `PLAN_v1.0-semantic-pattern-foundation.md`, autorizar o ajustar la ejecucion de T-41 a T-44 y definir el presupuesto Fireworks de T-43.
+1. **Humano:** Revisar `PLAN_v1.0-semantic-pattern-foundation.md` y autorizar o ajustar la ejecucion de T-41 a T-44; el presupuesto Fireworks ya esta aprobado.
 
 ## Blockers
 
 - Phase 9 CLOSE bloqueado por `H-03-F` (orientacion anatomica de `back_leg`) y `H-03-H` (deriva `pull_over` entre prompt y Zod).
-- T-41 a T-44 bloqueadas hasta autorizacion explicita de ejecucion; T-43 requiere presupuesto API.
+- T-41 a T-44 bloqueadas unicamente hasta autorizacion explicita de ejecucion.
 
 ## Current facts
 
@@ -33,6 +33,8 @@ backup: local-only
 - **Suite Determinista:** **21/21 suites passing (556/556 tests en verde)** tras `[T-38]`.
 - **North Star v1 aprobado:** Motor Semantico + Patronista Conversacional persistente + Capability Registry/Workshop + RAG local.
 - **Open-source shortlist:** GarmentCode/Design2GarmentCode, Flatten.js, Vercel AI SDK y Orama son candidatos principales; ninguna dependencia fue seleccionada aun.
+- **Orquestacion verificada:** Luna MAX accesible; DeepSeek V4 Flash operativo mediante el modelo versionado `deepseek-v4-flash-0731`.
+- **Presupuesto Fireworks:** USD 10 aprobados y compartidos entre Obreros DeepSeek y pruebas internas; recarga manual a cargo del Humano.
 - **Módulos Paramétricos Extendidos:** Cuellos técnicos (`stand_collar`, `shirt_collar_with_stand`), bolsillos cargo 3D con fuelle y solapa (`cargo_pocket_body`, `cargo_pocket_bellows`, `cargo_pocket_flap`), y blueprint ancla `utility_vest` (Chaleco Táctico / Safari / Cargo).
 - **Moldería Industrial & Visor 3D:** Cruces de botonadura (+20mm), marcas de ojales/botones, vistas interiores con entretela técnica (`Interfacing_Lining`), bajo en doble pico de chaleco sastre (`hem: { type: 'pointed', peak_drop_mm: 50 }`), Matriz de Inspección Ocular Multimodal de 6 Puntos y Guía de Despiece 3D interactivo en WebGL.
 

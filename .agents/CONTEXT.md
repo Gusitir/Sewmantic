@@ -139,6 +139,15 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Seamly2D (GPLv3) queda como referencia funcional, no como dependencia aprobada.
 - La ruta completa esta en `ROADMAP_v1-semantic-pattern-platform.md`; T-41 a T-44 estan definidos en `PLAN_v1.0-semantic-pattern-foundation.md` y bloqueados hasta nueva autorizacion.
 
+## 2026-08-23 - Modelos orquestados y presupuesto Fireworks
+
+- El Humano asigno al Arquitecto un asistente persistente GPT-5.6 Luna MAX para micro-correcciones, mantenimiento pequeno y auditorias enfocadas.
+- El Humano autorizo al Ingeniero hasta dos Obreros DeepSeek V4 Flash orquestados mediante OpenCode y Fireworks AI.
+- Evidencia de acceso: GPT-5.6 Luna respondio `LUNA_MAX_OK` en esfuerzo MAX.
+- El catalogo mostro `deepseek-v4-flash`, pero una llamada real al alias fallo como no desplegado.
+- El modelo fijado `fireworks-ai/accounts/fireworks/models/deepseek-v4-flash-0731` respondio `DEEPSEEK_V4_FLASH_0731_OK`.
+- El Humano aprobo un tramo de USD 10 para Obreros y pruebas internas; recargara manualmente al agotarse.
+- El presupuesto T-43 deja de ser blocker. T-41 a T-44 siguen bloqueadas solo por falta de autorizacion general de ejecucion.
 
 
 

@@ -28,10 +28,10 @@ Assurance: Standard para la decision de arquitectura; gates deterministas por sp
 |---|---|---|---|:---:|
 | **T-41** | Comparar kernel geometrico 2D con fixtures textiles | Autorizacion de ejecucion | `V1-GEO-01` | BLOCKED |
 | **T-42** | Probar modelo semantico Edge/Panel/Interface/StitchPair | T-41 APTO | `V1-SEM-01` | BLOCKED |
-| **T-43** | Probar harness persistente, tools, revisiones y Fireworks | Autorizacion + presupuesto API | `V1-HAR-01` | BLOCKED |
+| **T-43** | Probar harness persistente, tools, revisiones y Fireworks | Autorizacion de ejecucion | `V1-HAR-01` | BLOCKED |
 | **T-44** | Probar RAG local full-text/hibrido sobre reglas textiles | Autorizacion de ejecucion | `V1-RAG-01` | BLOCKED |
 
-Los spikes se serializan si comparten `package.json` o lockfile. El Ingeniero puede paralelizar como maximo dos Obreros Luna MAX solo con workspaces y staging disjuntos.
+Los spikes se serializan si comparten `package.json` o lockfile. El Ingeniero puede paralelizar como maximo dos Obreros DeepSeek V4 Flash 0731 solo con workspaces y staging disjuntos.
 
 ## `[T-41]` Geometry Adapter Spike
 
@@ -78,13 +78,13 @@ Los spikes se serializan si comparten `package.json` o lockfile. El Ingeniero pu
   - Cada mutacion crea revision provisional; undo restaura exactamente el estado anterior.
   - Argumentos se validan con Zod y tools inexistentes no se ejecutan.
   - El transcript registra input, tool call, resultado, revision y parada.
-  - Prueba offline mock es obligatoria; prueba Fireworks usa maximo 8 llamadas y 48k tokens solo tras autorizacion humana del presupuesto.
+  - Prueba offline mock es obligatoria; el presupuesto Fireworks de USD 10 esta aprobado y la prueba real usa maximo 8 llamadas y 48k tokens.
   - Informe compara compatibilidad, complejidad, streaming, sesiones, HITL, licencia y lock-in.
 - Expected evidence: transcript reproducible, tests mock, costo real declarado si aplica, commit `[T-43]` y Audit Capsule.
 - Deterministic gate to create and run: `npm run experiment:harness && npm run build && npm test`.
 - Audit trigger: perdida de estado, tool loop no acotado, parche no reversible o divergencia mock/Fireworks.
 - Risks: semantica OpenAI-compatible incompleta, consumo API y dependencia excesiva del framework.
-- STOP: falta aprobacion de costo, mas de ocho llamadas, tres fallos del mismo root cause o necesidad de shell.
+- STOP: saldo insuficiente, mas de ocho llamadas, tres fallos del mismo root cause o necesidad de shell.
 
 ## `[T-44]` Local RAG Spike
 
@@ -114,4 +114,4 @@ Los spikes se serializan si comparten `package.json` o lockfile. El Ingeniero pu
 
 ## Next authorization
 
-El Humano debe revisar este plan, definir si autoriza ejecucion y aprobar o reducir el presupuesto Fireworks de T-43. Hasta entonces el Ingeniero no despacha tareas.
+El Humano debe revisar este plan y definir si autoriza ejecucion. El presupuesto Fireworks de USD 10 ya fue aprobado; hasta la autorizacion general el Ingeniero no despacha tareas.

@@ -15,26 +15,38 @@
    - Aprobación de alcance material, decisiones irreversibles, evaluación visual y validación física.
 
 2. **Arquitecto (Lead / Planner / Milestone Closure)**:
-   - Modelo: **Gemini 3.7 Flash High**
-   - Dueño exclusivo de INIT, PLAN (preflight de diseño y descomposición de tareas), coherencia de arquitectura y CLOSE.
-   - Genera planes aprobados y diseño modular. Nunca realiza implementación de código de producto.
-   - Emite veredictos finales de fase y realiza commits `[STATE] close phase X.Y`.
+   - Modelo principal: **GPT-5.6 Sol**.
+   - Puede orquestar **1 asistente persistente GPT-5.6 Luna con esfuerzo MAX** para mantenimiento acotado de `.agents/`, auditorias enfocadas y micro-correcciones de bajo riesgo.
+   - Dueño de INIT, PLAN (preflight de diseño y descomposición de tareas), mantenimiento principal de `.agents/`, coherencia de arquitectura, auditoria independiente de fase y CLOSE.
+   - Genera planes aprobados y diseño modular. Nunca escribe personalmente codigo de producto.
+   - Controla los commits `[STATE]`, emite veredictos finales y autoriza cada avance de tarea.
 
 3. **Ingeniero (Loop Orchestration, Technical Audit & Control State)**:
-   - Modelo: **Gemini 3.7 Flash High** (`Model: inherit`)
-   - Dueño de RUN THE LOOP, AUDIT, MAINTAIN, REINDEX, COMPACT, HANDOFF y EXPORT DOCUMENTATION.
+   - Modelo principal: **GPT-5.6 Terra**.
+   - Dueño de RUN THE LOOP, auditoria localizada de Obreros, REINDEX, COMPACT, HANDOFF y EXPORT DOCUMENTATION bajo el plan activo.
    - Resuelve problemas de alta complejidad lógica, contratos de datos (Zod schemas, TypeScript), matemáticas y patronaje FreeSewing v3.
+   - Puede orquestar como maximo **2 Obreros DeepSeek V4 Flash 0731** mediante OpenCode y Fireworks AI.
    - Despacha briefs de tareas al Obrero, ejecuta mini-auditorías localizadas y evalúa Audit Capsules con evidencia empírica verificada.
-   - Mantiene el plano de control (`.agents/`) y genera commits de control `[STATE] ...`.
+   - Responde obligatoriamente al Arquitecto con evidencia y no avanza de tarea sin nueva autorizacion. Propone cambios de control; el Arquitecto conserva el checkpoint `[STATE]` final.
 
 4. **Obrero (Implementación Acotada & Puertas Deterministas)**:
-   - Modelo: **Gemini 3.7 Flash High** (`Model: inherit`)
+   - Modelo fijado: `fireworks-ai/accounts/fireworks/models/deepseek-v4-flash-0731`.
    - Dueño del plano de producto: implementa código fuente TypeScript/Node.js/HTML/CSS/JS estrictamente dentro del alcance de su brief `[T-NN]`.
    - Ejecuta puertas deterministas locales (`npm run build`, `npm test`) y genera la Cápsula de Auditoría (Audit Capsule).
    - Nunca expande el alcance por iniciativa propia ni se auto-aprueba.
 
 5. **Automatización Mecánica (Scripts)**:
    - Todas las tareas repetitivas o mecánicas (generación de esqueletos, matrices de pruebas, formateo, empaquetado) se ejecutan mediante scripts versionados en `scripts/` (Node.js / PowerShell).
+
+## Orquestacion de modelos y presupuesto
+
+- **Asistente Luna del Arquitecto:** se reserva para correcciones rapidas donde involucrar al Ingeniero seria burocracia desproporcionada, auditorias enfocadas y mantenimiento pequeno. Una micro-correccion no puede cambiar arquitectura, contratos publicos, dependencias, migraciones ni alcance material; si aparece cualquiera de esas condiciones, se escala al Ingeniero.
+- **Evidencia para micro-correcciones:** diff enfocado, gate pertinente, commit de producto separado y revision del Arquitecto. Luna nunca se autoaprueba.
+- **Obreros del Ingeniero:** maximo dos sesiones DeepSeek simultaneas y solo con scopes de escritura disjuntos. Archivos compartidos, schemas, lockfiles y contratos fuerzan serializacion.
+- **Modelo Fireworks fijado:** usar `deepseek-v4-flash-0731`; el alias no versionado `deepseek-v4-flash` no esta desplegado para la cuenta verificada.
+- **Presupuesto Fireworks:** tramo operativo de **USD 10**, compartido entre los dos Obreros y pruebas internas de API. El Humano realiza recarga manual cuando se agota.
+- **Control de consumo:** cada brief declara limite de llamadas/tokens cuando use API. Reintentos pagos son acotados; saldo insuficiente o error de facturacion produce `BLOCKED`, sin cambiar silenciosamente a otro modelo pago.
+- Nunca persistir credenciales, tokens ni datos de facturacion en Git.
 
 ## Verification Surface & Puertas Deterministas
 
@@ -64,10 +76,11 @@
 1. **Humano**: Define objetivo o aprueba alcance material.
 2. **Arquitecto**: Diseña solución / planifica hitos y preflight (`PLAN`).
 3. **Humano**: Aprueba el plan.
-4. **Ingeniero**: Despacha brief de tarea `[T-NN]` al Obrero (`RUN THE LOOP`).
-5. **Obrero**: Implementa en plano de producto, ejecuta puertas deterministas (`npm run build && npm test`), comitea `[T-NN]` y retorna Audit Capsule.
-6. **Ingeniero**: Audita evidencia (`AUDIT`), emite veredicto (APTO / NO APTO) y actualiza estado de control (`[STATE]`).
-7. **Arquitecto**: Cierra y archiva el hito verificado (`CLOSE`).
+4. **Arquitecto**: Autoriza una tarea `[T-NN]` y la entrega al Ingeniero.
+5. **Ingeniero**: Despacha el brief aprobado al Obrero (`RUN THE LOOP`).
+6. **Obrero**: Implementa en plano de producto, ejecuta puertas deterministas (`npm run build && npm test`), comitea `[T-NN]` y retorna Audit Capsule.
+7. **Ingeniero**: Audita al Obrero, corrige si corresponde y responde al Arquitecto con Audit Capsule y evidencia.
+8. **Arquitecto**: Audita independientemente, emite APTO / NO APTO / BLOCKED, actualiza `[STATE]`, autoriza el avance y ejecuta CLOSE al final.
 
 ## Durable rules
 
