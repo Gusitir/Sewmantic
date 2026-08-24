@@ -19,7 +19,7 @@ import { QUERIES_VERSION, QUERIES } from './queries.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const evidenceDir = here; // committed: diagnostics.json + report.json
-const outDir = join(here, 'output'); // transient/gitignored: serialized index snapshot
+const outDir = join(here, 'output'); // transient/gitignored: index snapshot + runtime latency
 await mkdir(outDir, { recursive: true });
 
 // The stock Orama v2 English tokenizer keeps hyphen characters inside tokens
@@ -95,7 +95,7 @@ function evaluate(q, res) {
   // the document must carry its original id + source verbatim (no phantoms).
   const sources = res.hits
     .filter((h) => byId.has(h.id))
-    .map((h) => ({ id: h.id, source: byId.get(h.id).source, score: Number(h.score) }));
+    .map((h) => ({ id: h.id, source: byId.get(h.id).source, score: Number(Number(h.score).toFixed(4)) }));
   return { topk, expectedIds, relevantRecovered, recallAtK, precisionAtK, sources };
 }
 
@@ -111,11 +111,17 @@ check('corpus_at_least_20_rules', RULES.length >= 20, `RULES=${RULES.length} fro
 check('queries_at_least_12', QUERIES.length >= 12, `QUERIES=${QUERIES.length} from queries ${QUERIES_VERSION}`);
 check('index_contains_all_rules', Number(indexedCount) === RULES.length, `index count=${indexedCount}`);
 
-// Traceability: every expected target id must exist in the corpus.
-const missingExpected = QUERIES
-  .flatMap((q) => q.expected.map((e) => e.id))
-  .filter((id) => !byId.has(id));
-check('every_expected_id_traces_to_corpus', missingExpected.length === 0, missingExpected.join(',') || 'all trace');
+// Traceability: every expected (id + source) pair must trace to the corpus, i.e.
+// the id exists and its verbatim source equals the indexed document's source.
+const unmappedPairs = QUERIES
+  .flatMap((q) => q.expected.map((e) => ({ id: e.id, source: e.source })))
+  .filter((e) => !byId.has(e.id) || byId.get(e.id).source !== e.source)
+  .map((e) => (byId.has(e.id) && byId.get(e.id).source !== e.source ? `${e.id}:source-mismatch` : `${e.id}:missing`));
+check('every_expected_id_source_traces_to_corpus', unmappedPairs.length === 0, unmappedPairs.join(',') || 'all id+source pairs trace');
+
+// Filter satisfaction: every returned answer of a WHERE query must actually
+// satisfy the query's where fields on its indexed document metadata.
+const filterSatisfaction = {};
 
 const perQuery = [];
 let totalRecall = 0;
@@ -126,6 +132,13 @@ for (const q of QUERIES) {
   const { res, elapsedMs } = await runQuery(db, q);
   const ev = evaluate(q, res);
   perQuery.push({ id: q.id, ...ev, elapsedMs, note: q.note ?? 'full-text BM25' });
+  if (q.where) {
+    const unmet = res.hits.filter((h) => {
+      const doc = h.document ?? h;
+      return Object.entries(q.where).some(([k, v]) => doc[k] !== v);
+    });
+    filterSatisfaction[q.id] = unmet.length === 0;
+  }
   totalRecall += ev.recallAtK;
   totalPrecision += ev.precisionAtK;
   totalElapsed += elapsedMs;
@@ -140,6 +153,9 @@ const meanLatencyMs = totalElapsed / QUERIES.length;
 const filterQueries = QUERIES.filter((q) => q.where);
 const filterAllHit = filterQueries.every((q) => perQuery.find((p) => p.id === q.id)?.relevantRecovered > 0);
 check('metadata_filters_recover_expected', filterAllHit, `filter queries=${filterQueries.length} ${filterQueries.map((q) => q.id).join(',')}`);
+const filtersWereChecked = filterQueries.every((q) => filterSatisfaction[q.id] === true);
+check('filter_answers_satisfy_where_fields', filtersWereChecked,
+  filterQueries.map((q) => `${q.id}:${filterSatisfaction[q.id]}`).join(' ') || 'no filter queries');
 
 // ---- Persistence: save the DB, reload from bytes, and confirm deterministic,
 //      byte-identical retrieval on the pre/post probe (no session carried). ----
@@ -164,6 +180,11 @@ check('persisted_bytes_present', persistedBytes > 0, `${persistedBytes} bytes wr
 //      byId map with verbatim id/source; no DNA/session fields exist at all). ----
 const phantomDocs = perQuery.flatMap((p) => p.sources).filter((s) => !byId.has(s.id));
 check('no_phantom_ids_all_sources_preserved', phantomDocs.length === 0, `${phantomDocs.length} phantom resolution(s)`);
+// Assert every returned answer's source equals the indexed document/corpus source.
+const sourceMismatches = perQuery
+  .flatMap((p) => p.sources.filter((s) => !byId.has(s.id) || byId.get(s.id).source !== s.source))
+  .map((s) => `${s.id}:mismatch`);
+check('returned_sources_match_corpus', sourceMismatches.length === 0, sourceMismatches.join(',') || 'all returned sources equal corpus/indexed source');
 
 // ---- Baseline deficiency gate: full-text is the baseline. Vector/hybrid is
 //      recommended ONLY if full-text demonstrably fails on source recovery.
@@ -183,10 +204,12 @@ const DECISION = baselineDeficiency
   : 'SELECT ORAMA FULL-TEXT (BM25F, hyphen-split tokenizer): recovers every expected source on a local, deterministic, cost-free baseline. Default Orama English tokenizer keeps hyphenated compounds as single tokens (reproducible empty results for "out"/"stitch"); the tuned tokenizer resolves this while remaining pure full-text. Hybrid/vector would impose external embeddings (a declared non-goal) with no demonstrated benefit; rejected per STOP gate.';
 
 // ---- Report (human-readable, persisted) ----
+// Answer persistence: every returned answer is stored as ID + verbatim source
+// (+ deterministic BM25F score). No `date` / runtime latency here: the committed
+// evidence must be byte-stable across consecutive clean runs.
 const report = {
   experiment: 'rag-retrieval',
   task: 'T-44',
-  date: new Date().toISOString(),
   engine: 'orama',
   engineVersion: '@orama/orama 2.1.1',
   mode: 'full-text BM25F',
@@ -195,7 +218,6 @@ const report = {
   metrics: {
     meanRecallAtK: Number(meanRecall.toFixed(4)),
     meanPrecisionAtK: Number(meanPrecision.toFixed(4)),
-    meanLatencyMs: Number(meanLatencyMs.toFixed(4)),
     savedIndexBytes: persistedBytes,
   },
   persistenceDeterministic: deterministic,
@@ -206,8 +228,7 @@ const report = {
     id: p.id, k: QUERIES.find((q) => q.id === p.id)?.k,
     recallAtK: Number(p.recallAtK.toFixed(4)),
     precisionAtK: Number(p.precisionAtK.toFixed(4)),
-    elapsedMs: Number(p.elapsedMs.toFixed(4)),
-    topIds: p.topk,
+    answers: p.sources.map((s) => ({ id: s.id, source: s.source, score: s.score })),
     note: p.note,
   })),
 };
@@ -221,7 +242,6 @@ const diagnostics = {
   invariants,
   meanRecallAtK: Number(meanRecall.toFixed(4)),
   meanPrecisionAtK: Number(meanPrecision.toFixed(4)),
-  meanLatencyMs: Number(meanLatencyMs.toFixed(4)),
   persistenceDeterministic: deterministic,
   savedIndexBytes: persistedBytes,
   sourcePreserving: 'every recovered document maps back to a corpus rule with verbatim id/source; no session/DNA/credential fields in schema or query path',
@@ -229,6 +249,16 @@ const diagnostics = {
 
 await writeFile(join(evidenceDir, 'diagnostics.json'), JSON.stringify(diagnostics, null, 2) + '\n');
 await writeFile(join(evidenceDir, 'report.json'), JSON.stringify(report, null, 2) + '\n');
+
+// ---- Transient performance artifact (gitignored): captures the real runtime
+//      latency and run timestamp so they never pollute committed evidence. ----
+const performance = {
+  note: 'transient runtime-latency evidence; NOT versioned. Committed diagnostics/report are byte-stable across clean runs.',
+  date: new Date().toISOString(),
+  meanLatencyMs: Number(meanLatencyMs.toFixed(4)),
+  perQuery: perQuery.map((p) => ({ id: p.id, elapsedMs: Number(p.elapsedMs.toFixed(4)) })),
+};
+await writeFile(join(outDir, 'performance.json'), JSON.stringify(performance, null, 2) + '\n');
 
 const passCount = invariants.filter((i) => i.pass).length;
 const failed = invariants.filter((i) => !i.pass);

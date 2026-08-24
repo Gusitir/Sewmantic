@@ -1,7 +1,6 @@
 {
   "experiment": "rag-retrieval",
   "task": "T-44",
-  "date": "2026-08-24T02:17:23.080Z",
   "engine": "orama",
   "engineVersion": "@orama/orama 2.1.1",
   "mode": "full-text BM25F",
@@ -26,7 +25,6 @@
   "metrics": {
     "meanRecallAtK": 1,
     "meanPrecisionAtK": 0.2926,
-    "meanLatencyMs": 0.3685,
     "savedIndexBytes": 73968
   },
   "persistenceDeterministic": true,
@@ -39,9 +37,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 2.5253,
-      "topIds": [
-        "RUL-001-DEN-HEM"
+      "answers": [
+        {
+          "id": "RUL-001-DEN-HEM",
+          "source": "doc://rules_pattern_making.md#s01-denim",
+          "score": 37.1398
+        }
       ],
       "note": "full-text BM25"
     },
@@ -50,9 +51,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.2286,
-      "topIds": [
-        "RUL-002-DEN-HIP"
+      "answers": [
+        {
+          "id": "RUL-002-DEN-HIP",
+          "source": "doc://rules_pattern_making.md#s02-denim-hip",
+          "score": 18.7852
+        }
       ],
       "note": "full-text BM25"
     },
@@ -61,9 +65,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.2088,
-      "topIds": [
-        "RUL-003-DEN-SEAM"
+      "answers": [
+        {
+          "id": "RUL-003-DEN-SEAM",
+          "source": "doc://rules_pattern_making.md#s03-denim-seam",
+          "score": 22.9629
+        }
       ],
       "note": "full-text BM25"
     },
@@ -72,9 +79,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.5255,
-      "topIds": [
-        "RUL-005-CAR-POCKET"
+      "answers": [
+        {
+          "id": "RUL-005-CAR-POCKET",
+          "source": "doc://rules_pattern_making.md#s05-cargo-pocket",
+          "score": 14.811
+        }
       ],
       "note": "full-text BM25"
     },
@@ -83,9 +93,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.1363,
-      "topIds": [
-        "RUL-006-CAR-BELT"
+      "answers": [
+        {
+          "id": "RUL-006-CAR-BELT",
+          "source": "doc://rules_pattern_making.md#s06-cargo-belt",
+          "score": 22.4605
+        }
       ],
       "note": "full-text BM25"
     },
@@ -94,9 +107,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.1723,
-      "topIds": [
-        "RUL-007-JKT-EASE"
+      "answers": [
+        {
+          "id": "RUL-007-JKT-EASE",
+          "source": "doc://rules_pattern_making.md#s07-jacket-ease",
+          "score": 25.0989
+        }
       ],
       "note": "full-text BM25"
     },
@@ -105,9 +121,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.2389,
-      "topIds": [
-        "RUL-008-JKT-GRAIN"
+      "answers": [
+        {
+          "id": "RUL-008-JKT-GRAIN",
+          "source": "doc://rules_pattern_making.md#s08-jacket-grain",
+          "score": 16.6474
+        }
       ],
       "note": "full-text BM25"
     },
@@ -116,9 +135,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.2085,
-      "topIds": [
-        "RUL-011-HOD-SEAM"
+      "answers": [
+        {
+          "id": "RUL-011-HOD-SEAM",
+          "source": "doc://rules_pattern_making.md#s11-hoodie-seam",
+          "score": 19.3968
+        }
       ],
       "note": "full-text BM25"
     },
@@ -127,9 +149,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.2612,
-      "topIds": [
-        "RUL-012-HOD-CUFF"
+      "answers": [
+        {
+          "id": "RUL-012-HOD-CUFF",
+          "source": "doc://rules_pattern_making.md#s12-hoodie-cuff",
+          "score": 21.8008
+        }
       ],
       "note": "full-text BM25"
     },
@@ -138,9 +163,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.2253,
-      "topIds": [
-        "RUL-013-HOD-ZIP"
+      "answers": [
+        {
+          "id": "RUL-013-HOD-ZIP",
+          "source": "doc://rules_pattern_making.md#s13-hoodie-zip",
+          "score": 22.8527
+        }
       ],
       "note": "full-text BM25"
     },
@@ -149,9 +177,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.1857,
-      "topIds": [
-        "RUL-014-TSH-GRAIN"
+      "answers": [
+        {
+          "id": "RUL-014-TSH-GRAIN",
+          "source": "doc://rules_pattern_making.md#s14-tshirt-grain",
+          "score": 20.1693
+        }
       ],
       "note": "full-text BM25"
     },
@@ -160,9 +191,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.2116,
-      "topIds": [
-        "RUL-016-SKT-PLEAT"
+      "answers": [
+        {
+          "id": "RUL-016-SKT-PLEAT",
+          "source": "doc://rules_pattern_making.md#s16-skirt-pleat",
+          "score": 24.6408
+        }
       ],
       "note": "full-text BM25"
     },
@@ -171,9 +205,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.2628,
-      "topIds": [
-        "RUL-018-VST-COLLAR"
+      "answers": [
+        {
+          "id": "RUL-018-VST-COLLAR",
+          "source": "doc://rules_pattern_making.md#s18-vest-collar",
+          "score": 25.4831
+        }
       ],
       "note": "full-text BM25"
     },
@@ -182,9 +219,12 @@
       "k": 3,
       "recallAtK": 1,
       "precisionAtK": 0.3333,
-      "elapsedMs": 0.2311,
-      "topIds": [
-        "RUL-021-DEN-ZIP"
+      "answers": [
+        {
+          "id": "RUL-021-DEN-ZIP",
+          "source": "doc://rules_pattern_making.md#s21-denim-zip",
+          "score": 20.1531
+        }
       ],
       "note": "full-text BM25"
     },
@@ -193,9 +233,12 @@
       "k": 10,
       "recallAtK": 1,
       "precisionAtK": 0.1,
-      "elapsedMs": 0.538,
-      "topIds": [
-        "RUL-001-DEN-HEM"
+      "answers": [
+        {
+          "id": "RUL-001-DEN-HEM",
+          "source": "doc://rules_pattern_making.md#s01-denim",
+          "score": 6.1105
+        }
       ],
       "note": "garment=jeans must narrow the generic \"hem\" term to the denim hem rule"
     },
@@ -204,9 +247,12 @@
       "k": 10,
       "recallAtK": 1,
       "precisionAtK": 0.1,
-      "elapsedMs": 0.2259,
-      "topIds": [
-        "RUL-008-JKT-GRAIN"
+      "answers": [
+        {
+          "id": "RUL-008-JKT-GRAIN",
+          "source": "doc://rules_pattern_making.md#s08-jacket-grain",
+          "score": 4.0128
+        }
       ],
       "note": "fabric+garment pinning desambiguates grainline rules"
     },
@@ -215,9 +261,12 @@
       "k": 5,
       "recallAtK": 1,
       "precisionAtK": 0.2,
-      "elapsedMs": 0.1186,
-      "topIds": [
-        "RUL-003-DEN-SEAM"
+      "answers": [
+        {
+          "id": "RUL-003-DEN-SEAM",
+          "source": "doc://rules_pattern_making.md#s03-denim-seam",
+          "score": 2.0059
+        }
       ],
       "note": "state=cutting surfaces only the cutting rule that carries seam allowance"
     },
@@ -226,9 +275,12 @@
       "k": 5,
       "recallAtK": 1,
       "precisionAtK": 0.2,
-      "elapsedMs": 0.1282,
-      "topIds": [
-        "RUL-005-CAR-POCKET"
+      "answers": [
+        {
+          "id": "RUL-005-CAR-POCKET",
+          "source": "doc://rules_pattern_making.md#s05-cargo-pocket",
+          "score": 2.5425
+        }
       ],
       "note": "cargoPants+canvas colocation is exact"
     }

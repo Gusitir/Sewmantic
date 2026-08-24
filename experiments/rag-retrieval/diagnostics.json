@@ -2,8 +2,8 @@
   "title": "T-44 local Orama full-text/BM25 retrieval benchmark",
   "decision": "SELECT ORAMA FULL-TEXT (BM25F, hyphen-split tokenizer): recovers every expected source on a local, deterministic, cost-free baseline. Default Orama English tokenizer keeps hyphenated compounds as single tokens (reproducible empty results for \"out\"/\"stitch\"); the tuned tokenizer resolves this while remaining pure full-text. Hybrid/vector would impose external embeddings (a declared non-goal) with no demonstrated benefit; rejected per STOP gate.",
   "engine": "orama 2.1.1 full-text BM25F",
-  "invariantsTotal": 10,
-  "invariantsPassed": 10,
+  "invariantsTotal": 12,
+  "invariantsPassed": 12,
   "invariants": [
     {
       "id": "corpus_at_least_20_rules",
@@ -21,14 +21,19 @@
       "detail": "index count=24"
     },
     {
-      "id": "every_expected_id_traces_to_corpus",
+      "id": "every_expected_id_source_traces_to_corpus",
       "pass": true,
-      "detail": "all trace"
+      "detail": "all id+source pairs trace"
     },
     {
       "id": "metadata_filters_recover_expected",
       "pass": true,
       "detail": "filter queries=4 Q15-hem-denim-filter,Q16-grain-wool-filter,Q17-seam-state-filter,Q18-pocket-cargo-preset"
+    },
+    {
+      "id": "filter_answers_satisfy_where_fields",
+      "pass": true,
+      "detail": "Q15-hem-denim-filter:true Q16-grain-wool-filter:true Q17-seam-state-filter:true Q18-pocket-cargo-preset:true"
     },
     {
       "id": "persistence_save_load_deterministic",
@@ -46,6 +51,11 @@
       "detail": "0 phantom resolution(s)"
     },
     {
+      "id": "returned_sources_match_corpus",
+      "pass": true,
+      "detail": "all returned sources equal corpus/indexed source"
+    },
+    {
       "id": "baseline_fulltext_not_deficient",
       "pass": true,
       "detail": "full-text (hyphen-split tokenizer) recovered every expected source; vector/hybrid NOT required"
@@ -58,7 +68,6 @@
   ],
   "meanRecallAtK": 1,
   "meanPrecisionAtK": 0.2926,
-  "meanLatencyMs": 0.3685,
   "persistenceDeterministic": true,
   "savedIndexBytes": 73968,
   "sourcePreserving": "every recovered document maps back to a corpus rule with verbatim id/source; no session/DNA/credential fields in schema or query path"
