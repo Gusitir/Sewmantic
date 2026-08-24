@@ -24,36 +24,52 @@ const closedModel = (points) => ({
 });
 const flattenPolygon = (rings) => new Flatten.Polygon(rings);
 
-function flattenCutIntersections(points, segment) {
-  const cut = new Flatten.Segment(Flatten.point(segment[0]), Flatten.point(segment[1]));
+function flattenCutIntersections(points, cut) {
   return points.reduce((all, point, index) => {
     const edge = new Flatten.Segment(Flatten.point(point), Flatten.point(points[(index + 1) % points.length]));
     return all.concat(cut.intersect(edge));
   }, []);
 }
 
-function makerCutIntersections(points, segment) {
-  const cut = new makerjs.paths.Line(segment[0], segment[1]);
+function makerCutIntersections(points, cut) {
   return points.reduce((all, point, index) => {
     const edge = new makerjs.paths.Line(point, points[(index + 1) % points.length]);
     return all.concat(makerjs.path.intersection(cut, edge)?.intersectionPoints || []);
   }, []);
 }
 
-function modelSegments(model, inheritedOrigin = [0, 0]) {
+function translatePoint(point, origin) {
+  return [point[0] + origin[0], point[1] + origin[1]];
+}
+
+function absoluteMakerPath(path, origin) {
+  if (path.type === makerjs.pathType.Line) {
+    return new makerjs.paths.Line(translatePoint(path.origin, origin), translatePoint(path.end, origin));
+  }
+  if (path.type === makerjs.pathType.Arc) {
+    return new makerjs.paths.Arc(translatePoint(path.origin, origin), path.radius, path.startAngle, path.endAngle);
+  }
+  throw new Error(`Unsupported Maker.js path type in geometry spike: ${path.type}`);
+}
+
+function modelPaths(model, inheritedOrigin = [0, 0]) {
   const origin = [
     inheritedOrigin[0] + (model.origin?.[0] || 0),
     inheritedOrigin[1] + (model.origin?.[1] || 0),
   ];
-  const paths = Object.values(model.paths || {}).flatMap((path) => path.type === 'line' ? [{
-    start: [path.origin[0] + origin[0], path.origin[1] + origin[1]],
-    end: [path.end[0] + origin[0], path.end[1] + origin[1]],
+  const paths = Object.values(model.paths || {}).map((path) => absoluteMakerPath(path, origin));
+  return paths.concat(Object.values(model.models || {}).flatMap((child) => modelPaths(child, origin)));
+}
+
+function modelSegments(model, inheritedOrigin = [0, 0]) {
+  return modelPaths(model, inheritedOrigin).flatMap((path) => path.type === makerjs.pathType.Line ? [{
+    start: path.origin,
+    end: path.end,
   }] : []);
-  return paths.concat(Object.values(model.models || {}).flatMap((child) => modelSegments(child, origin)));
 }
 
 function modelPathCount(model) {
-  return Object.keys(model.paths || {}).length + Object.values(model.models || {}).reduce((sum, child) => sum + modelPathCount(child), 0);
+  return modelPaths(model).length;
 }
 
 function makerModelArea(model) {
@@ -74,19 +90,36 @@ function makerModelArea(model) {
   return loops.reduce((sum, loop) => sum + Math.abs(signedArea(loop)), 0);
 }
 
-function hasUnexpectedOutlineIntersection(model) {
-  const paths = modelSegments(model);
+function inspectMakerOutlineIntersections(model) {
+  const paths = modelPaths(model);
+  let linePairsChecked = 0;
+  let arcPairsChecked = 0;
+  let unexpected = false;
   for (let left = 0; left < paths.length; left += 1) {
     for (let right = left + 1; right < paths.length; right += 1) {
-      const a = new makerjs.paths.Line(paths[left].start, paths[left].end);
-      const b = new makerjs.paths.Line(paths[right].start, paths[right].end);
-      const intersections = makerjs.path.intersection(a, b)?.intersectionPoints || [];
-      if (intersections.some((point) => ![
-        paths[left].start, paths[left].end, paths[right].start, paths[right].end,
-      ].some((endpoint) => pointKey(point) === pointKey(endpoint)))) return true;
+      const leftPath = paths[left];
+      const rightPath = paths[right];
+      if (leftPath.type === makerjs.pathType.Arc || rightPath.type === makerjs.pathType.Arc) {
+        arcPairsChecked += 1;
+      } else {
+        linePairsChecked += 1;
+      }
+      const intersections = makerjs.path.intersection(leftPath, rightPath)?.intersectionPoints || [];
+      const endpoints = [
+        ...(makerjs.point.fromPathEnds(leftPath) || []),
+        ...(makerjs.point.fromPathEnds(rightPath) || []),
+      ];
+      if (intersections.some((point) => !endpoints.some((endpoint) => pointKey(point) === pointKey(endpoint)))) {
+        unexpected = true;
+      }
     }
   }
-  return false;
+  return {
+    pathTypes: [...new Set(paths.map((path) => path.type))],
+    linePairsChecked,
+    arcPairsChecked,
+    unexpected,
+  };
 }
 
 function svgPolygons(title, layers) {
@@ -118,11 +151,40 @@ function run() {
   const flattenConcave = flattenPolygon([fixtures.concave]);
   const flattenHole = flattenPolygon([fixtures.withHole.outer, fixtures.withHole.hole]);
   const makerHole = { models: { outer: closedModel(fixtures.withHole.outer), hole: closedModel(fixtures.withHole.hole) } };
-  const flattenCut = flattenCutIntersections(fixtures.cut.polygon, fixtures.cut.segment);
-  const makerCut = makerCutIntersections(fixtures.cut.polygon, fixtures.cut.segment);
+  const flattenCut = flattenCutIntersections(
+    fixtures.cut.polygon,
+    new Flatten.Segment(Flatten.point(fixtures.cut.segment[0]), Flatten.point(fixtures.cut.segment[1]))
+  );
+  const makerCut = makerCutIntersections(
+    fixtures.cut.polygon,
+    new makerjs.paths.Line(fixtures.cut.segment[0], fixtures.cut.segment[1])
+  );
+  const curvedCutPoints = {
+    start: [-5, 15],
+    through: [20, 20],
+    end: [45, 15],
+  };
+  const curvedCut = {
+    // Same three-point arc represented by each library's native path type.
+    flatten: new Flatten.Arc(
+      Flatten.point([20, -45]),
+      65,
+      Math.atan2(60, -25),
+      Math.atan2(60, 25),
+      false
+    ),
+    maker: new makerjs.paths.Arc(curvedCutPoints.start, curvedCutPoints.through, curvedCutPoints.end),
+  };
+  const flattenCurvedCut = flattenCutIntersections(fixtures.cut.polygon, curvedCut.flatten);
+  const makerCurvedCut = makerCutIntersections(fixtures.cut.polygon, curvedCut.maker);
+  const makerCurvedMidpoint = makerjs.point.fromAngleOnCircle(
+    makerjs.angle.ofArcMiddle(curvedCut.maker),
+    curvedCut.maker
+  );
   const flattenUnion = Flatten.BooleanOperations.unify(flattenPolygon([fixtures.boolean.a]), flattenPolygon([fixtures.boolean.b]));
   const makerUnion = makerjs.model.combineUnion(closedModel(fixtures.boolean.a), closedModel(fixtures.boolean.b));
   const makerOffset = makerjs.model.outline(closedModel(fixtures.offset.polygon), fixtures.offset.margin, 0, false);
+  const makerOffsetIntersections = inspectMakerOutlineIntersections(makerOffset);
   const unionSnapshot = () => JSON.stringify({
     flatten: Flatten.BooleanOperations.unify(flattenPolygon([fixtures.boolean.a]), flattenPolygon([fixtures.boolean.b])).area(),
     maker: makerModelArea(makerjs.model.combineUnion(closedModel(fixtures.boolean.a), closedModel(fixtures.boolean.b))),
@@ -131,8 +193,23 @@ function run() {
     concave: { expectedArea: concaveArea, flattenArea: flattenConcave.area(), makerArea: polygonArea(fixtures.concave) },
     hole: { expectedArea: 1000, flattenArea: flattenHole.area(), makerSemanticArea: null },
     cut: { flattenIntersections: flattenCut.length, makerIntersections: makerCut.length },
+    curvedCut: {
+      flattenIsArc: curvedCut.flatten instanceof Flatten.Arc,
+      makerIsArc: curvedCut.maker.type === makerjs.pathType.Arc,
+      flattenMidpoint: [curvedCut.flatten.middle().x, curvedCut.flatten.middle().y],
+      makerMidpoint: makerCurvedMidpoint,
+      flattenIntersections: flattenCurvedCut.length,
+      makerIntersections: makerCurvedCut.length,
+    },
     boolean: { expectedArea: fixtures.boolean.unionArea, flattenArea: flattenUnion.area(), makerArea: makerModelArea(makerUnion) },
-    offset: { makerPathCount: modelPathCount(makerOffset), makerUnexpectedIntersection: hasUnexpectedOutlineIntersection(makerOffset), flattenNativeOffset: false },
+    offset: {
+      makerPathCount: modelPathCount(makerOffset),
+      makerPathTypes: makerOffsetIntersections.pathTypes,
+      makerLinePairsChecked: makerOffsetIntersections.linePairsChecked,
+      makerArcPairsChecked: makerOffsetIntersections.arcPairsChecked,
+      makerUnexpectedIntersection: makerOffsetIntersections.unexpected,
+      flattenNativeOffset: false,
+    },
   };
   const checks = [
     ['concave Flatten area', relativeError(values.concave.flattenArea, values.concave.expectedArea) < tolerance],
@@ -140,10 +217,16 @@ function run() {
     ['hole Flatten area', relativeError(values.hole.flattenArea, values.hole.expectedArea) < tolerance],
     ['cut Flatten intersections', values.cut.flattenIntersections === 2],
     ['cut Maker.js intersections', values.cut.makerIntersections === 2],
+    ['curved cut uses Flatten Arc', values.curvedCut.flattenIsArc && Math.abs(values.curvedCut.flattenMidpoint[1] - curvedCutPoints.start[1]) > tolerance],
+    ['curved cut uses Maker.js Arc', values.curvedCut.makerIsArc && Math.abs(values.curvedCut.makerMidpoint[1] - curvedCutPoints.start[1]) > tolerance],
+    ['curved cut Flatten intersections', values.curvedCut.flattenIntersections === 2],
+    ['curved cut Maker.js intersections', values.curvedCut.makerIntersections === 2],
     ['boolean Flatten area', relativeError(values.boolean.flattenArea, values.boolean.expectedArea) < tolerance],
     ['boolean Maker.js area', relativeError(values.boolean.makerArea, values.boolean.expectedArea) < tolerance],
     ['offset Maker.js closed output', values.offset.makerPathCount > fixtures.offset.polygon.length],
-    ['offset Maker.js no unexpected line crossing', !values.offset.makerUnexpectedIntersection],
+    ['offset Maker.js validates lines and arcs', values.offset.makerPathTypes.includes(makerjs.pathType.Line) && values.offset.makerPathTypes.includes(makerjs.pathType.Arc)],
+    ['offset Maker.js checks line/arc pairs', values.offset.makerLinePairsChecked > 0 && values.offset.makerArcPairsChecked > 0],
+    ['offset Maker.js no unexpected line/arc crossing', !values.offset.makerUnexpectedIntersection],
     ['round-trip deterministic boolean result', unionSnapshot() === unionSnapshot()],
   ];
   writeFileSync(new URL('./concave.svg', output), svgPolygons('Concave polygon (mm)', [{ label: 'concave', color: '#006d77', rings: [fixtures.concave] }]));
@@ -153,7 +236,7 @@ function run() {
   writeFileSync(new URL('./offset-makerjs.svg', output), makerjs.exporter.toSVG(makerOffset));
   values.latencyMs = Number((performance.now() - started).toFixed(3));
   console.table(checks.map(([fixture, pass]) => ({ fixture, pass })));
-  console.table([values.concave, values.hole, values.cut, values.boolean, values.offset, { latencyMs: values.latencyMs }]);
+  console.table([values.concave, values.hole, values.cut, values.curvedCut, values.boolean, values.offset, { latencyMs: values.latencyMs }]);
   console.log(`Geometry spike: ${checks.filter(([, pass]) => pass).length}/${checks.length} invariants passed`);
   if (checks.some(([, pass]) => !pass)) process.exitCode = 1;
 }
