@@ -162,6 +162,12 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Flatten.js lidera para poligonos, agujeros y booleanos. Maker.js no posee semantica de area con agujeros y se reserva como referencia de paths/export/offset.
 - Ninguna libreria fue integrada al motor de producto; T-42 queda habilitada.
 
+## 2026-08-23 - T-42 Semantic Kernel Spike APTO
+
+- Commits: `007a25a`, `894c16e`, `92830c5` y evidencia `d529f46`.
+- Gate: `npm run experiment:semantic` con 18/18 invariantes; `npm run build`; `npm test` con 556/556.
+- El kernel minimo Edge/EdgeSequence/Panel/Interface/StitchPair es viable sin nuevas dependencias y conserva IDs, wiring, medidas y diagnosticos deterministas.
+- Una correccion elimino aristas degeneradas al insertar pinzas exactamente sobre vertices. T-43 queda habilitada.
 
 
 

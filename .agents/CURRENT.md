@@ -1,13 +1,13 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T20:31:49-05:00
-source_commit: bb58a7c [T-41] validate curved cuts and arc offsets
+updated_at: 2026-08-23T20:49:02-05:00
+source_commit: d529f46 [T-42] synchronize semantic spike evidence
 assurance: Standard for architecture selection; deterministic gates per spike
 active_job: RUN THE LOOP
 active_plan: PLAN_v1.0-semantic-pattern-foundation.md
-active_task: T-42
-last_verdict: APTO T-41; Phase 9 H-03 remains NO APTO
+active_task: T-43
+last_verdict: APTO T-42; Phase 9 H-03 remains NO APTO
 backup: local-only
 ```
 
@@ -20,12 +20,12 @@ backup: local-only
 
 ## Next action
 
-1. **Ingeniero:** Ejecutar T-42 con un Obrero DeepSeek V4 Flash 0731, exigir gates y Audit Capsule, y responder al Arquitecto sin iniciar T-43/T-44.
+1. **Ingeniero:** Ejecutar T-43 con un Obrero DeepSeek V4 Flash 0731, respetar presupuesto/call cap, exigir gates y Audit Capsule, y responder al Arquitecto sin iniciar T-44.
 
 ## Blockers
 
 - Phase 9 CLOSE bloqueado por `H-03-F` (orientacion anatomica de `back_leg`) y `H-03-H` (deriva `pull_over` entre prompt y Zod).
-- Ninguno para T-42. La integracion Motor v2 permanece fuera de alcance hasta nueva confirmacion.
+- Ninguno para T-43. La integracion Motor v2 permanece fuera de alcance hasta nueva confirmacion.
 
 ## Current facts
 
@@ -36,6 +36,7 @@ backup: local-only
 - **Orquestacion verificada:** Luna MAX accesible; DeepSeek V4 Flash operativo mediante el modelo versionado `deepseek-v4-flash-0731`.
 - **Presupuesto Fireworks:** USD 10 aprobados y compartidos entre Obreros DeepSeek y pruebas internas; recarga manual a cargo del Humano.
 - **T-41 APTO:** 16/16 invariantes; Flatten.js lidera para poligonos/booleanos y Maker.js queda como referencia de dibujo/offset, sin integracion aprobada.
+- **T-42 APTO:** kernel ESM sin nuevas dependencias; Edge/Panel/Interface/StitchPair, matching, orientacion, cortes, pinzas y round-trip pasan 18/18 invariantes.
 - **Módulos Paramétricos Extendidos:** Cuellos técnicos (`stand_collar`, `shirt_collar_with_stand`), bolsillos cargo 3D con fuelle y solapa (`cargo_pocket_body`, `cargo_pocket_bellows`, `cargo_pocket_flap`), y blueprint ancla `utility_vest` (Chaleco Táctico / Safari / Cargo).
 - **Moldería Industrial & Visor 3D:** Cruces de botonadura (+20mm), marcas de ojales/botones, vistas interiores con entretela técnica (`Interfacing_Lining`), bajo en doble pico de chaleco sastre (`hem: { type: 'pointed', peak_drop_mm: 50 }`), Matriz de Inspección Ocular Multimodal de 6 Puntos y Guía de Despiece 3D interactivo en WebGL.
 
