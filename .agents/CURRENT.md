@@ -1,13 +1,13 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T23:33:57-05:00
-source_commit: 570ca3f [STATE] record foundation savepoint and Drive backups
+updated_at: 2026-08-23T23:45:49-05:00
+source_commit: 293469b [T-45] v2 domain contracts and versioned JSON serialization
 assurance: Standard; deterministic gates per task and independent Architect audit
 active_job: RUN THE LOOP
 active_plan: PLAN_v1.1-semantic-kernel-mvp.md
 active_task: T-45
-last_verdict: H-04 APTO; Phase 11 execution authorized
+last_verdict: NO APTO T-45
 backup: private GitHub + Google Drive verified
 ```
 
@@ -20,12 +20,12 @@ backup: private GitHub + Google Drive verified
 
 ## Next action
 
-1. **Ingeniero:** Ejecutar T-45 con un Obrero DeepSeek V4 Flash 0731, gates completos y Audit Capsule; no iniciar T-46.
+1. **Ingeniero:** Corregir T-45: cerrar arcos, serializacion, degeneraciones y coherencia StitchPair; responder al Arquitecto sin iniciar T-46.
 
 ## Blockers
 
 - Phase 9 CLOSE bloqueado por `H-03-F` (orientacion anatomica de `back_leg`) y `H-03-H` (deriva `pull_over` entre prompt y Zod).
-- Ninguno para T-45; los hallazgos Phase 9 no bloquean el kernel v2 aislado.
+- T-45 NO APTO: contratos permiten arco ambiguo/inconsistente, serialize sin validacion y StitchPairs/aristas degeneradas.
 
 ## Current facts
 
@@ -47,6 +47,10 @@ backup: private GitHub + Google Drive verified
 
 ## Open findings
 
+- `P11-CON-01`: falta direccion CW/CCW y validacion centro/radio/sweep en circularArc.
+- `P11-CON-01`: `serializeDocument` debe rechazar documentos invalidos antes de JSON.stringify.
+- `P11-CON-01`: edges/StitchSegments/StitchPairs requieren longitudes/rangos/coherencia positivos.
+- `P11-CON-01`: `constraintId` debe definirse como ID externo de registry o resolverse en el documento; no quedar ambiguo.
 - `H-03-F`: pernera trasera 3D espejada con tiro orientado hacia afuera.
 - `H-03-H`: el prompt ofrece `pull_over`, pero el esquema de cierre lo rechaza.
 

@@ -205,3 +205,9 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Decision `D-2026-08-23-P11`, SHA-256 `b329e034a02127f62f93f79441bab79ef35eb233c52fc695cc35d427d94880f9`.
 - Contratos fijados: mm, curvas `line/circularArc/quadraticBezier/cubicBezier`, IDs estables, GeometryAdapter y legacy authority.
 - `PLAN_v1.1-semantic-kernel-mvp.md` define T-45 a T-48 serializadas. Se inicia T-45; Phase 12 queda fuera de alcance.
+
+## 2026-08-23 - T-45 NO APTO en auditoria independiente
+
+- Commit auditado: `293469b`; gates declarados 10/10 focalizados y 566/566 globales.
+- Luna MAX verifico defectos contractuales: arco circular sin direccion/coherencia geometrica, serializer que no valida, StitchPairs degenerados y semantica ambigua de `constraintId`.
+- T-46 permanece bloqueada. Se autoriza una correccion T-45 dentro del mismo scope antes de congelar contratos.
