@@ -169,6 +169,13 @@ suites_passing: 21/21 (548/548 tests PASS)
 - El kernel minimo Edge/EdgeSequence/Panel/Interface/StitchPair es viable sin nuevas dependencias y conserva IDs, wiring, medidas y diagnosticos deterministas.
 - Una correccion elimino aristas degeneradas al insertar pinzas exactamente sobre vertices. T-43 queda habilitada.
 
+## 2026-08-23 - T-43 Patternist Harness Spike APTO
+
+- Commits: `1343875`, correccion `c9316f6` y evidencia live `1251de5`.
+- Gate: `npm run experiment:harness` con 17/17 invariantes; `npm run build`; `npm test` con 556/556.
+- Estado persistente, Zod, tool registry, max steps, transcript, revisiones y undo hash-exacto quedaron demostrados sin shell.
+- Fireworks live: una llamada Qwen 3.8 Max, 291 tokens, status pass, costo no informado por API y cero secretos persistidos.
+- Vercel AI SDK lidera por adapter Fireworks de primera parte y menor lock-in; OpenAI Agents SDK se rechaza para esta fase por adapter manual no probado. T-44 queda habilitada.
 
 
 

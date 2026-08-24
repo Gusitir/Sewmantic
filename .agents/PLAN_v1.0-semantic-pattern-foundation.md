@@ -36,7 +36,7 @@ Assurance: Standard para la decision de arquitectura; gates deterministas por sp
 |---|---|---|---|:---:|
 | **T-41** | Comparar kernel geometrico 2D con fixtures textiles | Autorizacion de ejecucion | `V1-GEO-01` | APTO |
 | **T-42** | Probar modelo semantico Edge/Panel/Interface/StitchPair | T-41 APTO | `V1-SEM-01` | APTO |
-| **T-43** | Probar harness persistente, tools, revisiones y Fireworks | Autorizacion de ejecucion | `V1-HAR-01` | READY |
+| **T-43** | Probar harness persistente, tools, revisiones y Fireworks | Autorizacion de ejecucion | `V1-HAR-01` | APTO |
 | **T-44** | Probar RAG local full-text/hibrido sobre reglas textiles | Autorizacion de ejecucion | `V1-RAG-01` | READY |
 
 Los spikes se serializan si comparten `package.json` o lockfile. El Ingeniero puede paralelizar como maximo dos Obreros DeepSeek V4 Flash 0731 solo con workspaces y staging disjuntos.
