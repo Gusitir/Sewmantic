@@ -2,7 +2,8 @@
 
 This file points to the current planning target and records the open predecessor for `pattern-ai-core`.
 
-- **Active Plan:** [`PLAN_v1.0-semantic-pattern-foundation.md`](PLAN_v1.0-semantic-pattern-foundation.md) (Active; execution authorized through stack selection)
+- **Active Plan:** [`PLAN_v1.0-semantic-pattern-foundation.md`](PLAN_v1.0-semantic-pattern-foundation.md) (Audit complete; stack selected; H-04 pending)
+- **Foundation Decision:** [`DECISION_v1-foundation-stack.md`](DECISION_v1-foundation-stack.md)
 - **Strategic Roadmap:** [`ROADMAP_v1-semantic-pattern-platform.md`](ROADMAP_v1-semantic-pattern-platform.md)
 - **Research Evidence:** [`REFERENCES_v1-open-source-foundations.md`](REFERENCES_v1-open-source-foundations.md)
 - **Planned Phase:** Phase 10.0 - Foundation Spikes (T-41 a T-44)

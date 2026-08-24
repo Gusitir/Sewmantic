@@ -49,3 +49,7 @@ Purpose: registrar evidencia de diseno y licencias antes de seleccionar dependen
 - Orama full-text con metadatos satisface el primer corpus; embeddings no son requisito inicial.
 
 Las decisiones finales pertenecen a `PLAN_v1.0-semantic-pattern-foundation.md` y requieren evidencia de sus cuatro spikes.
+
+## Final foundation selection
+
+La seleccion empirica esta en `DECISION_v1-foundation-stack.md`: Flatten.js, kernel TypeScript propio, Vercel AI SDK + Fireworks y Orama full-text. Alternativas no seleccionadas o diferidas permanecen documentadas para reevaluacion por evidencia.

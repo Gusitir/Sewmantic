@@ -67,7 +67,7 @@ Commercial Pipeline Adapter
 
 | Fase | Resultado | Barrera de salida |
 |---|---|---|
-| **10.0 - Foundation Spikes** | Seleccion empirica de geometria, kernel semantico, harness y RAG | Cuatro experimentos reproducibles y decision arquitectonica humana |
+| **10.0 - Foundation Spikes** | Seleccion empirica de geometria, kernel semantico, harness y RAG | APTO tecnico; stack seleccionado; H-04 pendiente |
 | **11.0 - Semantic Kernel MVP** | Edge/Panel/Interface/StitchPair, serializacion y restricciones base | Costuras emparejadas, cortes y offsets deterministicos |
 | **12.0 - Operators, Registry & Recipe DSL** | Operadores combinables y fuente unica de capacidades | Prompt/tipos/Zod/tools generados sin deriva contractual |
 | **13.0 - Conversational Patternist Harness** | Sesiones, tools de dominio, revisiones, undo/redo y previews | Conversacion reproducible sin perdida de decisiones |

@@ -14,6 +14,7 @@ Este índice organiza los archivos del plano de control (`.agents/`) y las rutas
 - [`PLAN_v1.0-semantic-pattern-foundation.md`](PLAN_v1.0-semantic-pattern-foundation.md): Plan de Foundation Spikes T-41 a T-44; diseño aprobado, ejecución no autorizada.
 - [`ROADMAP_v1-semantic-pattern-platform.md`](ROADMAP_v1-semantic-pattern-platform.md): Ruta estratégica del Motor Semántico, Patronista Conversacional, RAG y Capability Workshop.
 - [`REFERENCES_v1-open-source-foundations.md`](REFERENCES_v1-open-source-foundations.md): Investigación de GarmentCode, harnesses, RAG y geometría con licencias y decisiones preliminares.
+- [`DECISION_v1-foundation-stack.md`](DECISION_v1-foundation-stack.md): Selección empírica final del stack fundacional y límites para la futura integración.
 
 ### Directorio Histórico (`.agents/archive/`)
 - [`archive/PLAN_v0.1-mvp.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/archive/PLAN_v0.1-mvp.md): Fase 1.0 (MVP Geometría Base, Tiling y PDFs paginados con calibración 10x10cm).
@@ -44,4 +45,4 @@ Este índice organiza los archivos del plano de control (`.agents/`) y las rutas
 - `src/server/`: Servidor HTTP REST y frontend Web Studio (HTML, CSS, JS, Visor 2D, Visor 3D WebGL con Exploded View Slider).
 - `output/`: Entregables físicos generados (PDFs, SVGs, Modelos .glb 3D, Fichas técnicas y paquetes comerciales ZIP).
 
-Last reindexed: 2026-08-23 during PLAN v1.0 foundation design (source commit 1a9e748).
+Last reindexed: 2026-08-23 after Foundation Spikes and stack selection (source commit 1a515e1).

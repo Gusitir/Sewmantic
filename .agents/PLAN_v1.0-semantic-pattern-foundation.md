@@ -1,6 +1,6 @@
 # PLAN v1.0 - Foundation Spikes para Motor Semantico y Patronista Conversacional
 
-Status: active; execution authorized through stack selection
+Status: audit complete; stack selected; H-04 pending
 Goal: seleccionar con evidencia las fundaciones tecnicas minimas para Motor v2 sin integrar dependencias ni modificar el motor de producto actual.
 Assurance: Standard para la decision de arquitectura; gates deterministas por spike.
 
@@ -37,7 +37,7 @@ Assurance: Standard para la decision de arquitectura; gates deterministas por sp
 | **T-41** | Comparar kernel geometrico 2D con fixtures textiles | Autorizacion de ejecucion | `V1-GEO-01` | APTO |
 | **T-42** | Probar modelo semantico Edge/Panel/Interface/StitchPair | T-41 APTO | `V1-SEM-01` | APTO |
 | **T-43** | Probar harness persistente, tools, revisiones y Fireworks | Autorizacion de ejecucion | `V1-HAR-01` | APTO |
-| **T-44** | Probar RAG local full-text/hibrido sobre reglas textiles | Autorizacion de ejecucion | `V1-RAG-01` | READY |
+| **T-44** | Probar RAG local full-text/hibrido sobre reglas textiles | Autorizacion de ejecucion | `V1-RAG-01` | APTO |
 
 Los spikes se serializan si comparten `package.json` o lockfile. El Ingeniero puede paralelizar como maximo dos Obreros DeepSeek V4 Flash 0731 solo con workspaces y staging disjuntos.
 
@@ -122,4 +122,4 @@ Los spikes se serializan si comparten `package.json` o lockfile. El Ingeniero pu
 
 ## Next authorization
 
-La ejecucion T-41 a T-44 esta autorizada. El Ingeniero comienza por T-41 y responde al Arquitecto antes de abrir T-42. Tras seleccionar el stack se ejecuta STOP antes de integrar Motor v2.
+T-41 a T-44 estan APTO y el stack se selecciono en `DECISION_v1-foundation-stack.md`. Se ejecuta STOP en H-04; integrar Motor v2 requiere nueva autorizacion humana.

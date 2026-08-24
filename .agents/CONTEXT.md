@@ -177,5 +177,17 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Fireworks live: una llamada Qwen 3.8 Max, 291 tokens, status pass, costo no informado por API y cero secretos persistidos.
 - Vercel AI SDK lidera por adapter Fireworks de primera parte y menor lock-in; OpenAI Agents SDK se rechaza para esta fase por adapter manual no probado. T-44 queda habilitada.
 
+## 2026-08-23 - T-44 Local RAG Spike APTO
+
+- Commits: `9d11993`, `f98a813` y trazabilidad `2e99add`.
+- Gate: 24 reglas, 18 consultas, recall@k 1.0, 14/14 invariantes, persistencia determinista, build PASS y 556/556 tests.
+- Orama full-text BM25F con tokenizer de guion recupero todas las fuentes esperadas y respeto filtros; vector/hibrido se difiere por falta de deficiencia demostrada.
+
+## 2026-08-23 - Foundation Stack seleccionado y STOP H-04
+
+- Gate conjunto: geometry 16/16, semantic 18/18, harness 17/17, RAG 14/14, build PASS y 556/556 tests.
+- Correccion live T-43 `1a515e1`: Vercel AI SDK + Fireworks completo tool call y respuesta final en dos pasos, 855 tokens.
+- Stack seleccionado en `DECISION_v1-foundation-stack.md`.
+- STOP cumplido: no integrar Motor v2 hasta confirmacion humana H-04 y nuevo PLAN.
 
 

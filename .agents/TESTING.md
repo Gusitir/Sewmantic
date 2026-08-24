@@ -97,4 +97,4 @@ node scripts/test_fireworks_e2e_image.js
 
 | Código | Descripción de la Prueba | Criterio de Aceptación | Estado |
 | :--- | :--- | :--- | :---: |
-| **H-04** | Revisar SVGs del kernel, transcript del harness y reporte RAG. | Selección explícita de dependencias y autorización o rechazo de integración. | ⚪ [NO INICIADO] |
+| **H-04** | Revisar SVGs del kernel, transcript del harness, reporte RAG y `DECISION_v1-foundation-stack.md`. | Confirmar o ajustar el stack y autorizar/rechazar integración Motor v2. | 🟡 [LISTO PARA REVISAR] |
