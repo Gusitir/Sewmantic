@@ -1,6 +1,6 @@
 # PLAN v0.9 - Fase 9: Calibracion Geometrica 3D, Despiece y Triangulacion Homogenea
 
-Status: implementation complete (pending H-03 and CLOSE)
+Status: implementation complete; H-03 NO APTO; CLOSE blocked
 Goal: Corregir las cuatro anomalias geometricas y visuales observadas en Web Studio sin alterar los contratos de ADN parametrico ni la geometria 2D industrial ya sellada.
 Assurance: Standard para cierre de fase (puertas deterministas por tarea y auditoria independiente del hito)
 

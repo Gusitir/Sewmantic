@@ -114,6 +114,30 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Puerta final del Arquitecto: `npm run build && npm test` con 21/21 suites y 556/556 tests PASS.
 - STOP: `H-03` requiere inspeccion humana en Web Studio antes de emitir CLOSE y archivar la fase.
 
+## 2026-08-23 - H-03 NO APTO y nueva meta Motor Semantico v1
+
+- El usuario valido `H-03-A` a `H-03-E` como APTO.
+- `H-03-F` detecto que la pernera trasera 3D esta espejada al reves y orienta el tiro hacia afuera.
+- `H-03-G` se declaro N/A: Web Studio es desktop y no se solicito una version movil.
+- `H-03-H` detecto deriva contractual: `prompt_builder.ts` ofrece `closure.type: pull_over`, mientras Zod lo rechaza.
+- Phase 9 no recibe CLOSE ni archivo hasta resolver y repetir los checks fallidos.
+
+### Decision `D-2026-08-23-V1`
+
+- El Humano aprobo la direccion estrategica: Semantic Pattern Kernel, patronista conversacional persistente, tool calling, estado/revisiones fuera del modelo, RAG local, Capability Registry, Recipe DSL y Capability Workshop versionado.
+- La IA opera herramientas semanticas; nunca genera coordenadas finales ni publica capacidades nuevas en runtime.
+- Las capacidades progresan `draft -> experimental -> stable` con evidencia y aprobacion humana.
+- El pipeline comercial actual se conserva mediante adapters durante una migracion incremental de cinco familias vendibles.
+- Approval SHA-256: `9955801c27df9cc1e37a9eb67f9074765ade549fcb403565339865c466f45160`.
+- La aprobacion actual permite PLAN y documentacion; no autoriza codigo ni ejecucion de experimentos.
+
+### Investigacion open source
+
+- GarmentCode (MIT) valida Edge/Panel/Component/Interface/StitchRule y operadores que mantienen conectividad.
+- Design2GarmentCode (MIT) valida program synthesis multimodal y modificaciones conversacionales, pero evidencia el limite de un vocabulario cerrado.
+- Flatten.js (MIT), Vercel AI SDK (Apache-2.0) y Orama (Apache-2.0) son candidatos principales sujetos a spikes.
+- Seamly2D (GPLv3) queda como referencia funcional, no como dependencia aprobada.
+- La ruta completa esta en `ROADMAP_v1-semantic-pattern-platform.md`; T-41 a T-44 estan definidos en `PLAN_v1.0-semantic-pattern-foundation.md` y bloqueados hasta nueva autorizacion.
 
 
 

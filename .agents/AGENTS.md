@@ -57,7 +57,7 @@
 - **Barrera de Parada Humana (Stop Condition Obligatorio):**
   - `H-01`: Impresión física de la Página 1 a escala 100% y medición con regla del recuadro de 10x10 cm. [VERIFICADO OK]
   - `H-02`: Ensamble físico/digital de las hojas A4/Letter para validar continuidad de corte con PDFStitcher. [VERIFICADO OK]
-  - `H-03`: Inspección visual del patrón generado a partir de una imagen de referencia en el Visor 2D/3D del Web Studio. [LISTO PARA PROBAR]
+  - `H-03`: Inspección visual del patrón generado a partir de una imagen de referencia en el Visor 2D/3D del Web Studio. [NO APTO: orientación 3D de `back_leg` y deriva `pull_over` prompt/Zod]
 
 ## Workflow v3
 
@@ -95,4 +95,3 @@
 - Auto-sync static frontend files to `dist/` during build and launcher execution.
 - Maintain double-sided normals and mirrored left panels for `cutCount === 2` in 3D projection.
 - Include High-Precision Visual Feature Extraction Matrix when processing inspiration images.
-

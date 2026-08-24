@@ -1,10 +1,13 @@
-# Active Milestone Plan
+# Active Planning State
 
-This file points to the current active milestone plan for `pattern-ai-core`.
+This file points to the current planning target and records the open predecessor for `pattern-ai-core`.
 
-- **Active Plan:** [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN_v0.9-3d-geometry-and-meshing-calibration.md) (Status: implementation complete / pending H-03 and CLOSE)
-- **Active Phase:** Phase 9.0 — Calibración Geométrica 3D, Despiece y Triangulación Homogénea (T-35 a T-38)
-- **Assurance Profile:** Standard for Phase 9 milestone closure; deterministic gates per task
+- **Active Planning Plan:** [`PLAN_v1.0-semantic-pattern-foundation.md`](PLAN_v1.0-semantic-pattern-foundation.md) (Design approved; execution not authorized)
+- **Strategic Roadmap:** [`ROADMAP_v1-semantic-pattern-platform.md`](ROADMAP_v1-semantic-pattern-platform.md)
+- **Research Evidence:** [`REFERENCES_v1-open-source-foundations.md`](REFERENCES_v1-open-source-foundations.md)
+- **Planned Phase:** Phase 10.0 - Foundation Spikes (T-41 a T-44)
+- **Open Predecessor:** [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](PLAN_v0.9-3d-geometry-and-meshing-calibration.md) (Phase 9 implementation complete; `H-03` NO APTO; not closed or archived)
+- **Assurance Profile:** Standard for architecture selection; deterministic gates per spike
 - **Archived Plans:**
   - [`archive/PLAN_v0.1-mvp.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/archive/PLAN_v0.1-mvp.md) (Phase 1.0 — MVP Core Geometry, Tiling, Techpack, 10x10cm calibration)
   - [`archive/PLAN_v0.2-features.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/archive/PLAN_v0.2-features.md) (Phase 2.0 — Trouser Slopers, Custom Measurements, Etsy Bundler)

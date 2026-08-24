@@ -10,7 +10,10 @@ Este índice organiza los archivos del plano de control (`.agents/`) y las rutas
 - [`CONTEXT.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/CONTEXT.md): Crónica inmutable de decisiones, auditorías, hitos completados y handoffs.
 - [`PLAN.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN.md): Puntero al plan activo y directorio de planes archivados.
 - [`TESTING.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/TESTING.md): Matriz de pruebas automatizadas (21 suites Vitest, 556 tests), verificaciones humanas (`H-01` a `H-03`) y scripts de diagnóstico.
-- [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN_v0.9-3d-geometry-and-meshing-calibration.md): Implementación completa, pendiente `H-03` y CLOSE (Fase 9.0: Calibración Geométrica 3D, Despiece y Triangulación Homogénea).
+- [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN_v0.9-3d-geometry-and-meshing-calibration.md): Implementación completa; `H-03` NO APTO y CLOSE bloqueado (Fase 9.0).
+- [`PLAN_v1.0-semantic-pattern-foundation.md`](PLAN_v1.0-semantic-pattern-foundation.md): Plan de Foundation Spikes T-41 a T-44; diseño aprobado, ejecución no autorizada.
+- [`ROADMAP_v1-semantic-pattern-platform.md`](ROADMAP_v1-semantic-pattern-platform.md): Ruta estratégica del Motor Semántico, Patronista Conversacional, RAG y Capability Workshop.
+- [`REFERENCES_v1-open-source-foundations.md`](REFERENCES_v1-open-source-foundations.md): Investigación de GarmentCode, harnesses, RAG y geometría con licencias y decisiones preliminares.
 
 ### Directorio Histórico (`.agents/archive/`)
 - [`archive/PLAN_v0.1-mvp.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/archive/PLAN_v0.1-mvp.md): Fase 1.0 (MVP Geometría Base, Tiling y PDFs paginados con calibración 10x10cm).
@@ -41,4 +44,4 @@ Este índice organiza los archivos del plano de control (`.agents/`) y las rutas
 - `src/server/`: Servidor HTTP REST y frontend Web Studio (HTML, CSS, JS, Visor 2D, Visor 3D WebGL con Exploded View Slider).
 - `output/`: Entregables físicos generados (PDFs, SVGs, Modelos .glb 3D, Fichas técnicas y paquetes comerciales ZIP).
 
-Last reindexed: 2026-08-23 at Phase 9.0 implementation completion (source commit 1b9bd0f).
+Last reindexed: 2026-08-23 during PLAN v1.0 foundation design (source commit 1a9e748).
