@@ -155,6 +155,12 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Execution SHA-256: `a68bdfed622a4d3dab73303baef88d329d5b29c4dfcac24df4af7518a893bac0`.
 - El limite aprobado termina despues de la recomendacion de stack y `H-04`; integrar Motor v2 requiere nueva confirmacion humana.
 
+## 2026-08-23 - T-41 Geometry Adapter Spike APTO
+
+- Commits: `d1e20dd` y correccion `bb58a7c`.
+- Gate: `npm run experiment:geometry` con 16/16 invariantes; `npm run build`; `npm test` con 556/556.
+- Flatten.js lidera para poligonos, agujeros y booleanos. Maker.js no posee semantica de area con agujeros y se reserva como referencia de paths/export/offset.
+- Ninguna libreria fue integrada al motor de producto; T-42 queda habilitada.
 
 
 
