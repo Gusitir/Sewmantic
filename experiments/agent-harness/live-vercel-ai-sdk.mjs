@@ -1,7 +1,13 @@
 // T-43 optional LIVE probe using the REAL Vercel AI SDK + @ai-sdk/fireworks
 // provider path (Apache-2.0). Executes a real domain tool call (get_current_pattern)
 // with a Zod schema and verifies the tool result flows back into the SDK loop /
-// final result.
+// final result via a REAL second provider/model step.
+//
+// AI SDK 7: generateText defaults stopWhen = isStepCount(1); maxSteps is NOT a
+// supported setting and is ignored, so a tool-augmented loop would otherwise
+// collapse to a single provider call and never run a terminal assistant step.
+// This probe therefore sets the supported stopWhen: stepCountIs(2) so the tool
+// result is handed to the model in a genuine second step.
 //
 // Admissible ONLY when HARNESS_LIVE=1 and a real FIREWORKS_API_KEY is present.
 // Hard live budget: at most 2 provider calls and <= 4000 cumulative tokens.
@@ -17,7 +23,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { generateText, tool } from 'ai';
+import { generateText, tool, stepCountIs } from 'ai';
 import { createFireworks } from '@ai-sdk/fireworks';
 import { z } from 'zod';
 import 'dotenv/config';
@@ -49,8 +55,13 @@ async function runLiveVercelProbe() {
       costUsd: null,
       noSecrets: true,
       status: 'not-executed',
+      success: false,
       toolCallEmitted: false,
       toolResultReachedLoop: false,
+      finalStepHasText: false,
+      finalStepIndex: null,
+      finalStepLength: 0,
+      steps: [],
     };
   }
 
@@ -69,8 +80,11 @@ async function runLiveVercelProbe() {
       model,
       maxOutputTokens: 1024,
       temperature: 0.1,
-      // 2 steps max => initial completion + a single tool round (== <=2 provider calls).
-      maxSteps: 2,
+      // Supported AI SDK 7 stop condition: halt after 2 completed steps, i.e. the
+      // initial completion (step 1, emits the tool call) + a single tool round
+      // (step 2, receives the tool result and produces the terminal assistant
+      // text). This is exactly 2 real provider/model steps (== 2 provider calls).
+      stopWhen: stepCountIs(2),
       onStepFinish({ toolCalls: stepToolCalls, usage: stepUsage }) {
         calls += 1;
         const stepTokens = stepUsage?.totalTokens ?? 0;
@@ -118,9 +132,23 @@ async function runLiveVercelProbe() {
     const verifiedToolResultReachedLoop = !!(
       executedToolResult && toolResultPayload && toolResultPayload.ok === true && typeof toolResultPayload.rev === 'number'
     );
-    // Informational only: whether the terminal step carried assistant text. A
-    // terminal `finishReason: 'tool-calls'` step is still a valid loop return here.
+    // Whether the terminal step (step 2) carried final assistant text — proof
+    // that the tool result was actually handed back to the model and that a real
+    // second model step produced a closing answer (not a truncated tool-call loop).
     const finalStepHasText = !!(steps && steps.length && steps[steps.length - 1].text);
+
+    // Strengthened success: exactly 2 real steps/calls (within the <=2 budget),
+    // a valid get_current_pattern tool call, its executed output reached the loop,
+    // and the terminal second step returned final assistant text.
+    const success = calls === 2
+      && verifiedToolCallEmitted
+      && verifiedToolResultReachedLoop
+      && finalStepHasText
+      && status === 'pass';
+    if (!success && status === 'pass') status = 'fail';
+    if (!success && !abortReason) {
+      abortReason = 'success criteria unmet: need exactly 2 steps/calls, a valid get_current_pattern call, its executed output in the loop, and a final second-step assistant text';
+    }
 
     // ONLY safe structured evidence. Never persist/compose the model's text,
     // the prompt, or any raw provider body.
@@ -130,6 +158,7 @@ async function runLiveVercelProbe() {
       provider: 'createFireworks',
       model: modelName,
       status,
+      success,
       abortReason,
       reason: 'live Vercel probe ran with real Vercel AI SDK + @ai-sdk/fireworks provider',
       calls,
@@ -141,6 +170,8 @@ async function runLiveVercelProbe() {
       toolCallEmitted: verifiedToolCallEmitted,
       toolResultReachedLoop: verifiedToolResultReachedLoop,
       finalStepHasText,
+      finalStepIndex: steps && steps.length ? steps.length - 1 : null,
+      finalStepLength: finalStepHasText ? (steps[steps.length - 1].text?.length ?? 0) : 0,
       toolResultSummary: verifiedToolResultReachedLoop
         ? { ok: true, rev: toolResultPayload.rev ?? null, params: toolResultPayload.params ?? null, hasProvisional: toolResultPayload.hasProvisional ?? null }
         : null,
@@ -155,6 +186,7 @@ async function runLiveVercelProbe() {
       provider: 'createFireworks',
       model: modelName,
       status,
+      success: false,
       abortReason: abortReason || (err instanceof Error ? err.message : String(err)),
       reason: 'live Vercel probe attempted but did not complete cleanly',
       calls,
@@ -165,6 +197,9 @@ async function runLiveVercelProbe() {
       costUsd: null,
       toolCallEmitted: false,
       toolResultReachedLoop: false,
+      finalStepHasText: false,
+      finalStepIndex: null,
+      finalStepLength: 0,
       toolResultSummary: null,
       steps: stepsSeen,
       noSecrets: true,

@@ -172,7 +172,7 @@ console.table(invariants.map((i) => ({ id: i.id, pass: i.pass })));
 //   (aliased: npm run experiment:harness:live)
 const live = await maybeSaveVercelLiveEvidence();
 if (live.wantLive) {
-  console.log('\n--- LIVE VERDEL AI SDK + @ai-sdk/fireworks PROBE (opt-in) ---');
+  console.log('\n--- LIVE VERCEL AI SDK + @ai-sdk/fireworks PROBE (opt-in) ---');
   console.log(`${JSON.stringify(live.result, null, 2)}`);
   console.log(`live evidence persisted: ${live.file}`);
 } else {
