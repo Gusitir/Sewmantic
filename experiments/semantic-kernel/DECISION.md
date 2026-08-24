@@ -55,19 +55,21 @@ mis-oriented pair and are flagged invalid.
   is kept updated against the new length/segmentation.
 - Vertex identity is traceable via string ids on edges; no geometric vertex
   recycling is attempted yet.
-- No external service, no credentials, no new dependency. Latency is printed
-  because it is machine-dependent.
+- No external service, no credentials, no new dependency. Diagnostics are
+  deterministic and omit runtime-dependent `latencyMs`.
 
 ## T-42 Micro-correction Evidence
 
 The runner was executed in the working tree with these results:
 
-- `npm run experiment:semantic`: `17/17` invariants passed, exit code 0.
-- `npm run build`: passed.
-- `npm test`: full deterministic suite (see gate output in the Audit Capsule).
-- Diagnostics written: `panels.svg` (two cosible panels plus the mis-oriented
-  mirror) and `roundtrip.json` (full snapshot, rebuilt id sets, before/after
-  measures).
+- `npm run experiment:semantic`: `18/18` invariants passed, exit code 0.
+- All exercised edges and every `StitchPair.aLen`/`StitchPair.bLen` field have
+  strictly positive lengths.
+- `npm run build`: PASS.
+- `npm test`: `21/21` suites, `556/556` tests PASS.
+- Deterministic diagnostics written: `panels.svg` (two cosible panels plus the
+  mis-oriented mirror) and `roundtrip.json` (full snapshot, rebuilt id sets,
+  before/after measures); neither contains `latencyMs`.
 
 ## Follow-up boundary
 
