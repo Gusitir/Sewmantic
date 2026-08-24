@@ -1,0 +1,236 @@
+{
+  "experiment": "rag-retrieval",
+  "task": "T-44",
+  "date": "2026-08-24T02:17:23.080Z",
+  "engine": "orama",
+  "engineVersion": "@orama/orama 2.1.1",
+  "mode": "full-text BM25F",
+  "corpus": {
+    "version": "v1",
+    "rules": 24,
+    "fields": [
+      "id",
+      "source",
+      "garment",
+      "operator",
+      "fabric",
+      "state",
+      "body"
+    ]
+  },
+  "queries": {
+    "version": "v1",
+    "total": 18,
+    "filterQueries": 4
+  },
+  "metrics": {
+    "meanRecallAtK": 1,
+    "meanPrecisionAtK": 0.2926,
+    "meanLatencyMs": 0.3685,
+    "savedIndexBytes": 73968
+  },
+  "persistenceDeterministic": true,
+  "filtersNarrowByMetadata": true,
+  "baselineDeficiency": false,
+  "decision": "SELECT ORAMA FULL-TEXT (BM25F, hyphen-split tokenizer): recovers every expected source on a local, deterministic, cost-free baseline. Default Orama English tokenizer keeps hyphenated compounds as single tokens (reproducible empty results for \"out\"/\"stitch\"); the tuned tokenizer resolves this while remaining pure full-text. Hybrid/vector would impose external embeddings (a declared non-goal) with no demonstrated benefit; rejected per STOP gate.",
+  "perQuery": [
+    {
+      "id": "Q01-den-hem",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 2.5253,
+      "topIds": [
+        "RUL-001-DEN-HEM"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q02-hip-ease",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.2286,
+      "topIds": [
+        "RUL-002-DEN-HIP"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q03-seam-allowance",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.2088,
+      "topIds": [
+        "RUL-003-DEN-SEAM"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q04-cargo-bartack",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.5255,
+      "topIds": [
+        "RUL-005-CAR-POCKET"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q05-waistband-bias",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.1363,
+      "topIds": [
+        "RUL-006-CAR-BELT"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q06-chest-ease",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.1723,
+      "topIds": [
+        "RUL-007-JKT-EASE"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q07-back-grainline",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.2389,
+      "topIds": [
+        "RUL-008-JKT-GRAIN"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q08-hoodie-overlock",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.2085,
+      "topIds": [
+        "RUL-011-HOD-SEAM"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q09-rib-cuff",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.2612,
+      "topIds": [
+        "RUL-012-HOD-CUFF"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q10-separating-zip",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.2253,
+      "topIds": [
+        "RUL-013-HOD-ZIP"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q11-jersey-wale",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.1857,
+      "topIds": [
+        "RUL-014-TSH-GRAIN"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q12-knife-pleat",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.2116,
+      "topIds": [
+        "RUL-016-SKT-PLEAT"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q13-vest-collar",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.2628,
+      "topIds": [
+        "RUL-018-VST-COLLAR"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q14-jeans-fly-zip",
+      "k": 3,
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "elapsedMs": 0.2311,
+      "topIds": [
+        "RUL-021-DEN-ZIP"
+      ],
+      "note": "full-text BM25"
+    },
+    {
+      "id": "Q15-hem-denim-filter",
+      "k": 10,
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "elapsedMs": 0.538,
+      "topIds": [
+        "RUL-001-DEN-HEM"
+      ],
+      "note": "garment=jeans must narrow the generic \"hem\" term to the denim hem rule"
+    },
+    {
+      "id": "Q16-grain-wool-filter",
+      "k": 10,
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "elapsedMs": 0.2259,
+      "topIds": [
+        "RUL-008-JKT-GRAIN"
+      ],
+      "note": "fabric+garment pinning desambiguates grainline rules"
+    },
+    {
+      "id": "Q17-seam-state-filter",
+      "k": 5,
+      "recallAtK": 1,
+      "precisionAtK": 0.2,
+      "elapsedMs": 0.1186,
+      "topIds": [
+        "RUL-003-DEN-SEAM"
+      ],
+      "note": "state=cutting surfaces only the cutting rule that carries seam allowance"
+    },
+    {
+      "id": "Q18-pocket-cargo-preset",
+      "k": 5,
+      "recallAtK": 1,
+      "precisionAtK": 0.2,
+      "elapsedMs": 0.1282,
+      "topIds": [
+        "RUL-005-CAR-POCKET"
+      ],
+      "note": "cargoPants+canvas colocation is exact"
+    }
+  ]
+}
