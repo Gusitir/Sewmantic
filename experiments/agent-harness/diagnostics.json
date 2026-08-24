@@ -1,0 +1,228 @@
+{
+  "diagnostics": {
+    "title": "T-43 agent-harness spike (offline mock)",
+    "transcriptsBytes": 3741,
+    "turns": 17,
+    "persistedRestartByteIdentical": true,
+    "invariantsTotal": 17,
+    "invariantsPassed": 17,
+    "invariants": [
+      {
+        "id": "list_capabilities",
+        "pass": true,
+        "detail": "ok=true {\"ok\":true,\"tools\":[{\"name\":\"get_current_pattern\",\"required\":false,\"zodValidated\":true},{\"name\":\"list_capabilities\",\"required\":false,\"zodValidated\":true},{\"name\":\"apply_pattern_patch\",\"required\":true,\"zodValidated\":true},{\"name\":\"validate_pattern\",\"required\":true,\"zodValidated\":true},{\"name\":\"create"
+      },
+      {
+        "id": "get_current_pattern",
+        "pass": true,
+        "detail": "ok=true {\"ok\":true,\"rev\":0,\"params\":{\"baseBlock\":\"vest\",\"easeMm\":60,\"seamAllowanceMm\":10,\"grainlineDeg\":0,\"sizes\":[\"S\",\"M\",\"L\"],\"fabricMeters\":1.6},\"hasProvisional\":false}"
+      },
+      {
+        "id": "validate_pattern",
+        "pass": true,
+        "detail": "ok=true {\"ok\":true,\"valid\":true,\"issues\":[]}"
+      },
+      {
+        "id": "validate_pattern:invalid",
+        "pass": true,
+        "detail": "invalid ease/seam/sizes rejected by Zod: [{\"path\":\"seamAllowanceMm\",\"message\":\"Number must be greater than or equal to 0\"},{\"path\":\"sizes\",\"message\":\"Array must contain at least 1 element(s)\"}]"
+      },
+      {
+        "id": "apply_patch",
+        "pass": true,
+        "detail": "ok=true {\"ok\":true,\"params\":{\"baseBlock\":\"vest\",\"easeMm\":120,\"seamAllowanceMm\":12,\"grainlineDeg\":0,\"sizes\":[\"S\",\"M\",\"L\"],\"fabricMeters\":1.6},\"hasProvisional\":true,\"rev\":0}"
+      },
+      {
+        "id": "get_current_pattern:after_patch",
+        "pass": true,
+        "detail": "ok=true {\"ok\":true,\"rev\":0,\"params\":{\"baseBlock\":\"vest\",\"easeMm\":120,\"seamAllowanceMm\":12,\"grainlineDeg\":0,\"sizes\":[\"S\",\"M\",\"L\"],\"fabricMeters\":1.6},\"hasProvisional\":true}"
+      },
+      {
+        "id": "create_revision",
+        "pass": true,
+        "detail": "ok=true {\"ok\":true,\"rev\":1,\"hash\":\"e8ac8f68f78f31fe2c033bac70297e152319cccf01af5d5b05d8c155bd56c4a9\",\"committed\":true}"
+      },
+      {
+        "id": "apply_patch2",
+        "pass": true,
+        "detail": "ok=true {\"ok\":true,\"params\":{\"baseBlock\":\"vest\",\"easeMm\":120,\"seamAllowanceMm\":12,\"grainlineDeg\":0,\"sizes\":[\"S\",\"M\",\"L\",\"XL\"],\"fabricMeters\":2},\"hasProvisional\":true,\"rev\":1}"
+      },
+      {
+        "id": "undo_exact",
+        "pass": true,
+        "detail": "restoredHash=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 rev=0"
+      },
+      {
+        "id": "unknown_tool",
+        "pass": true,
+        "detail": "unknown tool \"undefined\" must be denied & not executed; notExecuted=true"
+      },
+      {
+        "id": "zod_invalid_patch_fabric",
+        "pass": true,
+        "detail": "negative fabric rejected; provisional unchanged=true"
+      },
+      {
+        "id": "forbidden_shell_key",
+        "pass": true,
+        "detail": "shell key denied by safety denylist; provisional unchanged conds={\"res_ok\":false,\"has_denylist\":true,\"provisional_null\":true} err=patch rejected: keys denied by safety denylist: shell"
+      },
+      {
+        "id": "transcript_gt_5_turns",
+        "pass": true,
+        "detail": "12 turns"
+      },
+      {
+        "id": "unknown_tool_never_mutates",
+        "pass": true,
+        "detail": "dispatch of unregistered tool is inert"
+      },
+      {
+        "id": "schema_has_no_freeform_keys",
+        "pass": true,
+        "detail": "16 denylisted keys incl. shell, exec, spawn, command..."
+      },
+      {
+        "id": "persistence_restart_byte_identical",
+        "pass": true,
+        "detail": "D:\\AGUSTIN\\Portafolio\\Proyectos\\Proyecto App - Generador de Patrones\\experiments\\agent-harness\\output\\persistent-state.json"
+      },
+      {
+        "id": "max_steps_bounded",
+        "pass": true,
+        "detail": "blocked after 6 steps (max 6); error=\"max_steps_exceeded (6>=6)\""
+      }
+    ],
+    "tools": [
+      "get_current_pattern",
+      "list_capabilities",
+      "validate_pattern",
+      "apply_pattern_patch",
+      "create_revision",
+      "undo_revision"
+    ],
+    "denylistedKeys": [
+      "shell",
+      "exec",
+      "spawn",
+      "command",
+      "cmd",
+      "fs",
+      "path",
+      "readfile",
+      "writefile",
+      "readdir",
+      "rm",
+      "rmrf",
+      "require",
+      "import",
+      "eval",
+      "child_process"
+    ],
+    "sdkDecision": "Vercel AI SDK has first-party @ai-sdk/fireworks (Apache-2.0). OpenAI Agents SDK has no first-party Fireworks adapter -> documented, not force-wired."
+  },
+  "transcript": [
+    {
+      "turn": 1,
+      "test": "list_capabilities",
+      "ok": true,
+      "detail": "ok=true {\"ok\":true,\"tools\":[{\"name\":\"get_current_pattern\",\"required\":false,\"zodValidated\":true},{\"name\":\"list_capabilities\",\"required\":false,\"zodValidated\":true},{\"name\":\"apply_pattern_patch\",\"required\":true,\"zodValidated\":true},{\"name\":\"va"
+    },
+    {
+      "turn": 2,
+      "test": "get_current_pattern",
+      "ok": true,
+      "detail": "ok=true {\"ok\":true,\"rev\":0,\"params\":{\"baseBlock\":\"vest\",\"easeMm\":60,\"seamAllowanceMm\":10,\"grainlineDeg\":0,\"sizes\":[\"S\",\"M\",\"L\"],\"fabricMeters\":1.6},\"hasProvisional\":false}"
+    },
+    {
+      "turn": 3,
+      "test": "validate_pattern",
+      "ok": true,
+      "detail": "ok=true {\"ok\":true,\"valid\":true,\"issues\":[]}"
+    },
+    {
+      "turn": 4,
+      "test": "validate_pattern:invalid",
+      "ok": true,
+      "detail": "invalid ease/seam/sizes rejected by Zod: [{\"path\":\"seamAllowanceMm\",\"message\":\"Number must be greater than or equal to 0\"},{\"path\":\"sizes\",\"message\":\"Array must contain at least 1 element(s)\"}]"
+    },
+    {
+      "turn": 5,
+      "test": "apply_patch",
+      "ok": true,
+      "detail": "ok=true {\"ok\":true,\"params\":{\"baseBlock\":\"vest\",\"easeMm\":120,\"seamAllowanceMm\":12,\"grainlineDeg\":0,\"sizes\":[\"S\",\"M\",\"L\"],\"fabricMeters\":1.6},\"hasProvisional\":true,\"rev\":0}"
+    },
+    {
+      "turn": 6,
+      "test": "get_current_pattern:after_patch",
+      "ok": true,
+      "detail": "ok=true {\"ok\":true,\"rev\":0,\"params\":{\"baseBlock\":\"vest\",\"easeMm\":120,\"seamAllowanceMm\":12,\"grainlineDeg\":0,\"sizes\":[\"S\",\"M\",\"L\"],\"fabricMeters\":1.6},\"hasProvisional\":true}"
+    },
+    {
+      "turn": 7,
+      "test": "create_revision",
+      "ok": true,
+      "detail": "ok=true {\"ok\":true,\"rev\":1,\"hash\":\"e8ac8f68f78f31fe2c033bac70297e152319cccf01af5d5b05d8c155bd56c4a9\",\"committed\":true}"
+    },
+    {
+      "turn": 8,
+      "test": "apply_patch2",
+      "ok": true,
+      "detail": "ok=true {\"ok\":true,\"params\":{\"baseBlock\":\"vest\",\"easeMm\":120,\"seamAllowanceMm\":12,\"grainlineDeg\":0,\"sizes\":[\"S\",\"M\",\"L\",\"XL\"],\"fabricMeters\":2},\"hasProvisional\":true,\"rev\":1}"
+    },
+    {
+      "turn": 9,
+      "test": "undo_exact",
+      "ok": true,
+      "detail": "restoredHash=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 rev=0"
+    },
+    {
+      "turn": 10,
+      "test": "unknown_tool",
+      "ok": true,
+      "detail": "unknown tool \"undefined\" must be denied & not executed; notExecuted=true"
+    },
+    {
+      "turn": 11,
+      "test": "zod_invalid_patch_fabric",
+      "ok": true,
+      "detail": "negative fabric rejected; provisional unchanged=true"
+    },
+    {
+      "turn": 12,
+      "test": "forbidden_shell_key",
+      "ok": true,
+      "detail": "shell key denied by safety denylist; provisional unchanged conds={\"res_ok\":false,\"has_denylist\":true,\"provisional_null\":true} err=patch rejected: keys denied by safety denylist: shell"
+    },
+    {
+      "turn": 13,
+      "test": "transcript_gt_5_turns",
+      "ok": true,
+      "detail": "12 turns"
+    },
+    {
+      "turn": 14,
+      "test": "unknown_tool_never_mutates",
+      "ok": true,
+      "detail": "dispatch of unregistered tool is inert"
+    },
+    {
+      "turn": 15,
+      "test": "schema_has_no_freeform_keys",
+      "ok": true,
+      "detail": "16 denylisted keys incl. shell, exec, spawn, command..."
+    },
+    {
+      "turn": 16,
+      "test": "persistence_restart_byte_identical",
+      "ok": true,
+      "detail": "D:\\AGUSTIN\\Portafolio\\Proyectos\\Proyecto App - Generador de Patrones\\experiments\\agent-harness\\output\\persistent-state.json"
+    },
+    {
+      "turn": 17,
+      "test": "max_steps_bounded",
+      "ok": true,
+      "detail": "blocked after 6 steps (max 6); error=\"max_steps_exceeded (6>=6)\""
+    }
+  ]
+}

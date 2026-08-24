@@ -9,6 +9,7 @@
     "build": "tsc && node -e \"import('node:fs').then(fs => fs.cpSync('src/server/public', 'dist/server/public', {recursive: true, force: true}))\"",
     "experiment:geometry": "node experiments/geometry-kernel/runner.mjs",
     "experiment:semantic": "node experiments/semantic-kernel/runner.mjs",
+    "experiment:harness": "node experiments/agent-harness/runner.mjs",
     "test": "vitest run",
     "start": "node dist/index.js"
   },

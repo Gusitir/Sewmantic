@@ -1,0 +1,10 @@
+{
+  "source": "https://registry.npmjs.org/{ai|@ai-sdk/openai|@ai-sdk/fireworks|openai-agents-js}",
+  "capturedDuring": "T-43 spike (offline replayable; no invention)",
+  "packages": {
+    "ai": { "latest": "7.0.77", "license": "Apache-2.0", "deps": { "@ai-sdk/gateway": "4.0.62", "@ai-sdk/provider": "4.0.7", "@ai-sdk/provider-utils": "5.0.29" }, "unpackedBytes": 6753006 },
+    "@ai-sdk/openai": { "latest": "4.0.46", "license": "Apache-2.0", "deps": { "@ai-sdk/provider": "4.0.7", "@ai-sdk/provider-utils": "5.0.29" }, "unpackedBytes": 2963556 },
+    "@ai-sdk/fireworks": { "latest": "3.0.38", "license": "Apache-2.0", "deps": { "@ai-sdk/openai-compatible": "3.0.35", "@ai-sdk/provider": "4.0.7", "@ai-sdk/provider-utils": "5.0.29" }, "unpackedBytes": 160276 },
+    "openai-agents-js": { "latest": "0.1.9", "license": "MIT", "deps": { "zod": "^3.24.2", "uuid": "^11.1.0", "axios": "^1.9.0", "dotenv": "^16.4.7", "openai": "^5.0.1", "graphviz": "^0.0.9", "@modelcontextprotocol/sdk": "^1.11.0" }, "unpackedBytes": 441745 }
+  }
+}
