@@ -1,0 +1,46 @@
+// T-45 public surface for the semantic pattern kernel (v2).
+// Single import site for domain contracts and versioned serialization.
+
+export {
+  SEMANTIC_V2_SCHEMA_VERSION,
+  MM_TOLERANCE,
+  isVertex,
+  isLineCurve,
+  isCircularArcCurve,
+  isQuadraticBezierCurve,
+  isCubicBezierCurve,
+  isCurve,
+  isEdge,
+  isEdgeSequence,
+  isPanel,
+  isComponent,
+  isInterface,
+  isStitchSegment,
+  isStitchPair,
+  isConstraintDiagnostic,
+  isPatternDocument,
+  type Vertex,
+  type Curve,
+  type LineCurve,
+  type CircularArcCurve,
+  type QuadraticBezierCurve,
+  type CubicBezierCurve,
+  type EdgeRole,
+  type Edge,
+  type EdgeSequence,
+  type Panel,
+  type Component,
+  type Interface,
+  type StitchSegment,
+  type StitchPair,
+  type DiagnosticSeverity,
+  type ConstraintDiagnostic,
+  type PatternDocument,
+} from './contracts.js';
+
+export {
+  SemanticV2Error,
+  validatePatternDocument,
+  serializeDocument,
+  deserializeDocument,
+} from './serialization.js';
