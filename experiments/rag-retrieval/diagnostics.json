@@ -2,8 +2,8 @@
   "title": "T-44 local Orama full-text/BM25 retrieval benchmark",
   "decision": "SELECT ORAMA FULL-TEXT (BM25F, hyphen-split tokenizer): recovers every expected source on a local, deterministic, cost-free baseline. Default Orama English tokenizer keeps hyphenated compounds as single tokens (reproducible empty results for \"out\"/\"stitch\"); the tuned tokenizer resolves this while remaining pure full-text. Hybrid/vector would impose external embeddings (a declared non-goal) with no demonstrated benefit; rejected per STOP gate.",
   "engine": "orama 2.1.1 full-text BM25F",
-  "invariantsTotal": 12,
-  "invariantsPassed": 12,
+  "invariantsTotal": 14,
+  "invariantsPassed": 14,
   "invariants": [
     {
       "id": "corpus_at_least_20_rules",
@@ -49,6 +49,16 @@
       "id": "no_phantom_ids_all_sources_preserved",
       "pass": true,
       "detail": "0 phantom resolution(s)"
+    },
+    {
+      "id": "hit_id_equals_hit_document_id",
+      "pass": true,
+      "detail": "every hit.id equals its hit.document.id"
+    },
+    {
+      "id": "hit_document_source_matches_corpus",
+      "pass": true,
+      "detail": "every hit.document.source equals the corpus source for hit.id"
     },
     {
       "id": "returned_sources_match_corpus",

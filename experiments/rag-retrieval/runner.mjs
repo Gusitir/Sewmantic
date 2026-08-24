@@ -91,11 +91,19 @@ function evaluate(q, res) {
   const relevantRecovered = expectedIds.filter((id) => topk.includes(id)).length;
   const recallAtK = q.expected.length > 0 ? relevantRecovered / q.expected.length : 0;
   const precisionAtK = q.k > 0 ? relevantRecovered / q.k : 0;
-  // Source-preservation: every returned hit must resolve to a corpus rule and
-  // the document must carry its original id + source verbatim (no phantoms).
+  // Source-preservation: evidenced from Orama's actual returned hit.document, not
+  // synthesized from the byId map. Persist each answer from hit.document.id/source
+  // (retaining the hit's BM25F score). Every returned hit must carry a document
+  // whose id/source trace verbatim to the indexed rule; no phantoms.
   const sources = res.hits
-    .filter((h) => byId.has(h.id))
-    .map((h) => ({ id: h.id, source: byId.get(h.id).source, score: Number(Number(h.score).toFixed(4)) }));
+    .filter((h) => byId.has(h?.document?.id ?? h.id))
+    .map((h) => {
+      const docId = h.document.id;
+      const docSource = h.document.source;
+      console.assert(h.id === docId, `hit.id ${h.id} !== hit.document.id ${docId}`);
+      console.assert(docSource === byId.get(docId)?.source, `hit.document.source ${docSource} != corpus source for ${docId}`);
+      return { id: docId, source: docSource, score: Number(Number(h.score).toFixed(4)) };
+    });
   return { topk, expectedIds, relevantRecovered, recallAtK, precisionAtK, sources };
 }
 
@@ -124,6 +132,8 @@ check('every_expected_id_source_traces_to_corpus', unmappedPairs.length === 0, u
 const filterSatisfaction = {};
 
 const perQuery = [];
+const idDocMismatches = [];   // hit.id !== hit.document.id
+const docSourceMismatches = []; // hit.document.source !== corpus source for hit.id
 let totalRecall = 0;
 let totalPrecision = 0;
 let totalElapsed = 0;
@@ -132,6 +142,14 @@ for (const q of QUERIES) {
   const { res, elapsedMs } = await runQuery(db, q);
   const ev = evaluate(q, res);
   perQuery.push({ id: q.id, ...ev, elapsedMs, note: q.note ?? 'full-text BM25' });
+  // Assert identity/source integrity on Orama's actual returned hits.
+  for (const h of res.hits) {
+    const resolvedId = h.document?.id ?? h.id;
+    if (h.id !== resolvedId) idDocMismatches.push(`${h.id}!=${resolvedId}`);
+    if (!byId.has(resolvedId) || h.document?.source !== byId.get(resolvedId)?.source) {
+      docSourceMismatches.push(`${resolvedId}:${h.document?.source}`);
+    }
+  }
   if (q.where) {
     const unmet = res.hits.filter((h) => {
       const doc = h.document ?? h;
@@ -180,6 +198,11 @@ check('persisted_bytes_present', persistedBytes > 0, `${persistedBytes} bytes wr
 //      byId map with verbatim id/source; no DNA/session fields exist at all). ----
 const phantomDocs = perQuery.flatMap((p) => p.sources).filter((s) => !byId.has(s.id));
 check('no_phantom_ids_all_sources_preserved', phantomDocs.length === 0, `${phantomDocs.length} phantom resolution(s)`);
+// Source-preservation evidenced from Orama's actual hit.document: assert that
+// each hit.id equals hit.document.id, and that hit.document.source equals the
+// corpus source registered for hit.id (no synthesized-from-byId short-circuit).
+check('hit_id_equals_hit_document_id', idDocMismatches.length === 0, idDocMismatches.join(',') || 'every hit.id equals its hit.document.id');
+check('hit_document_source_matches_corpus', docSourceMismatches.length === 0, docSourceMismatches.join(',') || 'every hit.document.source equals the corpus source for hit.id');
 // Assert every returned answer's source equals the indexed document/corpus source.
 const sourceMismatches = perQuery
   .flatMap((p) => p.sources.filter((s) => !byId.has(s.id) || byId.get(s.id).source !== s.source))
