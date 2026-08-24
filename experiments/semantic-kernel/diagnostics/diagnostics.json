@@ -1,0 +1,371 @@
+{
+  "kernelId": "T-42",
+  "panelCount": 3,
+  "sequenceCount": 6,
+  "edgeCount": 20,
+  "interfaceCount": 3,
+  "seamMeters": 260,
+  "interfaces": {
+    "I-AB-side": {
+      "id": "I-AB-side.pair",
+      "interfaceId": "I-AB-side",
+      "leftLength": 100,
+      "rightLength": 108,
+      "commonLength": 100,
+      "delta": 8,
+      "deltaExceeds": true,
+      "orientationCompatible": true,
+      "pairs": [
+        {
+          "aIndex": 0,
+          "bIndex": 0,
+          "aStart": [
+            60,
+            100
+          ],
+          "aEnd": [
+            60,
+            75
+          ],
+          "bStart": [
+            80,
+            0
+          ],
+          "bEnd": [
+            80,
+            25
+          ],
+          "aLen": 25,
+          "bLen": 25,
+          "residual": 0
+        },
+        {
+          "aIndex": 0,
+          "bIndex": 0,
+          "aStart": [
+            60,
+            75
+          ],
+          "aEnd": [
+            60,
+            50
+          ],
+          "bStart": [
+            80,
+            25
+          ],
+          "bEnd": [
+            80,
+            50
+          ],
+          "aLen": 25,
+          "bLen": 25,
+          "residual": 0
+        },
+        {
+          "aIndex": 0,
+          "bIndex": 1,
+          "aStart": [
+            60,
+            50
+          ],
+          "aEnd": [
+            60,
+            46
+          ],
+          "bStart": [
+            80,
+            50
+          ],
+          "bEnd": [
+            76,
+            50
+          ],
+          "aLen": 4,
+          "bLen": 4,
+          "residual": 0
+        },
+        {
+          "aIndex": 1,
+          "bIndex": 2,
+          "aStart": [
+            60,
+            46
+          ],
+          "aEnd": [
+            60,
+            42
+          ],
+          "bStart": [
+            76,
+            50
+          ],
+          "bEnd": [
+            80,
+            50
+          ],
+          "aLen": 4,
+          "bLen": 4,
+          "residual": 0
+        },
+        {
+          "aIndex": 1,
+          "bIndex": 3,
+          "aStart": [
+            60,
+            42
+          ],
+          "aEnd": [
+            60,
+            25
+          ],
+          "bStart": [
+            80,
+            50
+          ],
+          "bEnd": [
+            80,
+            67
+          ],
+          "aLen": 17,
+          "bLen": 17,
+          "residual": 0
+        },
+        {
+          "aIndex": 1,
+          "bIndex": 5,
+          "aStart": [
+            60,
+            25
+          ],
+          "aEnd": [
+            60,
+            17
+          ],
+          "bStart": [
+            80,
+            67
+          ],
+          "bEnd": [
+            80,
+            75
+          ],
+          "aLen": 8,
+          "bLen": 8,
+          "residual": 0
+        },
+        {
+          "aIndex": 2,
+          "bIndex": 5,
+          "aStart": [
+            60,
+            17
+          ],
+          "aEnd": [
+            60,
+            0
+          ],
+          "bStart": [
+            80,
+            75
+          ],
+          "bEnd": [
+            80,
+            92
+          ],
+          "aLen": 17,
+          "bLen": 17,
+          "residual": 0
+        }
+      ]
+    },
+    "I-AB-waist": {
+      "id": "I-AB-waist.pair",
+      "interfaceId": "I-AB-waist",
+      "leftLength": 60,
+      "rightLength": 60,
+      "commonLength": 60,
+      "delta": 0,
+      "deltaExceeds": false,
+      "orientationCompatible": true,
+      "pairs": [
+        {
+          "aIndex": 0,
+          "bIndex": 0,
+          "aStart": [
+            0,
+            0
+          ],
+          "aEnd": [
+            15,
+            0
+          ],
+          "bStart": [
+            140,
+            100
+          ],
+          "bEnd": [
+            125,
+            100
+          ],
+          "aLen": 15,
+          "bLen": 15,
+          "residual": 0
+        },
+        {
+          "aIndex": 0,
+          "bIndex": 0,
+          "aStart": [
+            15,
+            0
+          ],
+          "aEnd": [
+            30,
+            0
+          ],
+          "bStart": [
+            125,
+            100
+          ],
+          "bEnd": [
+            110,
+            100
+          ],
+          "aLen": 15,
+          "bLen": 15,
+          "residual": 0
+        },
+        {
+          "aIndex": 0,
+          "bIndex": 1,
+          "aStart": [
+            30,
+            0
+          ],
+          "aEnd": [
+            45,
+            0
+          ],
+          "bStart": [
+            110,
+            100
+          ],
+          "bEnd": [
+            95,
+            100
+          ],
+          "aLen": 15,
+          "bLen": 15,
+          "residual": 0
+        },
+        {
+          "aIndex": 1,
+          "bIndex": 2,
+          "aStart": [
+            45,
+            0
+          ],
+          "aEnd": [
+            60,
+            0
+          ],
+          "bStart": [
+            95,
+            100
+          ],
+          "bEnd": [
+            80,
+            100
+          ],
+          "aLen": 15,
+          "bLen": 15,
+          "residual": 0
+        }
+      ]
+    },
+    "I-AM-side": {
+      "id": "I-AM-side.pair",
+      "interfaceId": "I-AM-side",
+      "leftLength": 100,
+      "rightLength": 100,
+      "commonLength": 100,
+      "delta": 0,
+      "deltaExceeds": false,
+      "orientationCompatible": false,
+      "pairs": [
+        {
+          "aIndex": 0,
+          "bIndex": 0,
+          "aStart": [
+            60,
+            100
+          ],
+          "aEnd": [
+            60,
+            50
+          ],
+          "bStart": [
+            60,
+            220
+          ],
+          "bEnd": [
+            60,
+            170
+          ],
+          "aLen": 50,
+          "bLen": 50,
+          "residual": 0
+        },
+        {
+          "aIndex": 0,
+          "bIndex": 0,
+          "aStart": [
+            60,
+            50
+          ],
+          "aEnd": [
+            60,
+            25
+          ],
+          "bStart": [
+            60,
+            170
+          ],
+          "bEnd": [
+            60,
+            145
+          ],
+          "aLen": 25,
+          "bLen": 25,
+          "residual": 0
+        },
+        {
+          "aIndex": 1,
+          "bIndex": 1,
+          "aStart": [
+            60,
+            25
+          ],
+          "aEnd": [
+            60,
+            0
+          ],
+          "bStart": [
+            60,
+            145
+          ],
+          "bEnd": [
+            60,
+            120
+          ],
+          "aLen": 25,
+          "bLen": 25,
+          "residual": 0
+        }
+      ]
+    }
+  },
+  "latencyMs": 9.948,
+  "invariantsPassed": 17,
+  "invariantsTotal": 17
+}

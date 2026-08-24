@@ -1,0 +1,495 @@
+{
+  "snapshot": {
+    "edges": [
+      {
+        "id": "E-A-side-1",
+        "kind": "boundary",
+        "vertexA": "VA-a-s",
+        "vertexB": "VA-a-m",
+        "start": [
+          60,
+          100
+        ],
+        "end": [
+          60,
+          50
+        ]
+      },
+      {
+        "id": "E-A-waist-1",
+        "kind": "boundary",
+        "vertexA": "VA-a-l",
+        "vertexB": "VA-a-t",
+        "start": [
+          0,
+          0
+        ],
+        "end": [
+          30,
+          0
+        ]
+      },
+      {
+        "id": "E-A-waist-2",
+        "kind": "boundary",
+        "vertexA": "VA-a-t",
+        "vertexB": "VA-a-r",
+        "start": [
+          30,
+          0
+        ],
+        "end": [
+          60,
+          0
+        ]
+      },
+      {
+        "id": "E-B-side-1",
+        "kind": "boundary",
+        "vertexA": "VB-b-s",
+        "vertexB": "VB-s-1",
+        "start": [
+          80,
+          0
+        ],
+        "end": [
+          80,
+          25
+        ]
+      },
+      {
+        "id": "E-B-side-3",
+        "kind": "boundary",
+        "vertexA": "VB-s-2",
+        "vertexB": "VB-s-3",
+        "start": [
+          80,
+          50
+        ],
+        "end": [
+          80,
+          75
+        ]
+      },
+      {
+        "id": "E-B-side-4",
+        "kind": "boundary",
+        "vertexA": "VB-s-3",
+        "vertexB": "VB-b-t",
+        "start": [
+          80,
+          75
+        ],
+        "end": [
+          80,
+          100
+        ]
+      },
+      {
+        "id": "E-B-waist-1",
+        "kind": "boundary",
+        "vertexA": "VB-w-0",
+        "vertexB": "VB-w-1",
+        "start": [
+          140,
+          100
+        ],
+        "end": [
+          125,
+          100
+        ]
+      },
+      {
+        "id": "E-B-waist-2",
+        "kind": "boundary",
+        "vertexA": "VB-w-1",
+        "vertexB": "VB-w-2",
+        "start": [
+          125,
+          100
+        ],
+        "end": [
+          110,
+          100
+        ]
+      },
+      {
+        "id": "E-B-waist-3",
+        "kind": "boundary",
+        "vertexA": "VB-w-2",
+        "vertexB": "VB-w-3",
+        "start": [
+          110,
+          100
+        ],
+        "end": [
+          95,
+          100
+        ]
+      },
+      {
+        "id": "E-B-waist-4",
+        "kind": "boundary",
+        "vertexA": "VB-w-3",
+        "vertexB": "VB-w-4",
+        "start": [
+          95,
+          100
+        ],
+        "end": [
+          80,
+          100
+        ]
+      },
+      {
+        "id": "E-M-side-1",
+        "kind": "boundary",
+        "vertexA": "VM-side-1",
+        "vertexB": "VM-side-2",
+        "start": [
+          60,
+          220
+        ],
+        "end": [
+          60,
+          170
+        ]
+      },
+      {
+        "id": "E-M-side-2",
+        "kind": "boundary",
+        "vertexA": "VM-side-2",
+        "vertexB": "VM-side-3",
+        "start": [
+          60,
+          170
+        ],
+        "end": [
+          60,
+          120
+        ]
+      },
+      {
+        "id": "E-M-wrong-1",
+        "kind": "boundary",
+        "vertexA": "VM-w-1",
+        "vertexB": "VM-w-2",
+        "start": [
+          60,
+          220
+        ],
+        "end": [
+          60,
+          170
+        ]
+      },
+      {
+        "id": "E-M-wrong-2",
+        "kind": "boundary",
+        "vertexA": "VM-w-2",
+        "vertexB": "VM-w-3",
+        "start": [
+          60,
+          170
+        ],
+        "end": [
+          60,
+          120
+        ]
+      },
+      {
+        "id": "E-A-side-2.s1",
+        "kind": "boundary",
+        "vertexA": "VA-a-m",
+        "vertexB": "VA-a-m#VA-a-b#mid",
+        "start": [
+          60,
+          50
+        ],
+        "end": [
+          60,
+          25
+        ]
+      },
+      {
+        "id": "E-A-side-2.s2",
+        "kind": "boundary",
+        "vertexA": "VA-a-m#VA-a-b#mid",
+        "vertexB": "VA-a-b",
+        "start": [
+          60,
+          25
+        ],
+        "end": [
+          60,
+          0
+        ]
+      },
+      {
+        "id": "E-B-side-2.d1",
+        "kind": "interior",
+        "vertexA": "VB-s-1",
+        "vertexB": "VB-s-1#dart",
+        "start": [
+          80,
+          25
+        ],
+        "end": [
+          80,
+          50
+        ]
+      },
+      {
+        "id": "E-B-side-2.d2",
+        "kind": "interior",
+        "vertexA": "VB-s-1#dart",
+        "vertexB": "VB-s-2#dart",
+        "start": [
+          80,
+          50
+        ],
+        "end": [
+          76,
+          50
+        ]
+      },
+      {
+        "id": "E-B-side-2.d3",
+        "kind": "interior",
+        "vertexA": "VB-s-2#dart",
+        "vertexB": "VB-s-1#dart",
+        "start": [
+          76,
+          50
+        ],
+        "end": [
+          80,
+          50
+        ]
+      },
+      {
+        "id": "E-B-side-2.d4",
+        "kind": "interior",
+        "vertexA": "VB-s-1#dart",
+        "vertexB": "VB-s-2",
+        "start": [
+          80,
+          50
+        ],
+        "end": [
+          80,
+          50
+        ]
+      }
+    ],
+    "sequences": [
+      {
+        "id": "S-A-side",
+        "panelId": "P-A",
+        "role": "side seam (front right)",
+        "isLoop": false,
+        "edgeIds": [
+          "E-A-side-1",
+          "E-A-side-2.s1",
+          "E-A-side-2.s2"
+        ]
+      },
+      {
+        "id": "S-A-waist",
+        "panelId": "P-A",
+        "role": "waist (front)",
+        "isLoop": false,
+        "edgeIds": [
+          "E-A-waist-1",
+          "E-A-waist-2"
+        ]
+      },
+      {
+        "id": "S-B-side",
+        "panelId": "P-B",
+        "role": "side seam (back left)",
+        "isLoop": false,
+        "edgeIds": [
+          "E-B-side-1",
+          "E-B-side-2.d1",
+          "E-B-side-2.d2",
+          "E-B-side-2.d3",
+          "E-B-side-2.d4",
+          "E-B-side-3",
+          "E-B-side-4"
+        ]
+      },
+      {
+        "id": "S-B-waist",
+        "panelId": "P-B",
+        "role": "waist (back)",
+        "isLoop": false,
+        "edgeIds": [
+          "E-B-waist-1",
+          "E-B-waist-2",
+          "E-B-waist-3",
+          "E-B-waist-4"
+        ]
+      },
+      {
+        "id": "S-M-side-right",
+        "panelId": "P-M",
+        "role": "side seam (mirror, correct)",
+        "isLoop": false,
+        "edgeIds": [
+          "E-M-side-1",
+          "E-M-side-2"
+        ]
+      },
+      {
+        "id": "S-M-side-wrong",
+        "panelId": "P-M",
+        "role": "side seam (mirror, mis-oriented)",
+        "isLoop": false,
+        "edgeIds": [
+          "E-M-wrong-1",
+          "E-M-wrong-2"
+        ]
+      }
+    ],
+    "panels": [
+      {
+        "id": "P-A",
+        "name": "Front",
+        "material": "cotton",
+        "sequenceIds": [
+          "S-A-side",
+          "S-A-waist"
+        ]
+      },
+      {
+        "id": "P-B",
+        "name": "Back",
+        "material": "cotton",
+        "sequenceIds": [
+          "S-B-side",
+          "S-B-waist"
+        ]
+      },
+      {
+        "id": "P-M",
+        "name": "Mirror",
+        "material": "cotton",
+        "sequenceIds": [
+          "S-M-side-right",
+          "S-M-side-wrong"
+        ]
+      }
+    ],
+    "interfaces": [
+      {
+        "id": "I-AB-side",
+        "label": "front/back side seam",
+        "leftSequenceId": "S-A-side",
+        "rightSequenceId": "S-B-side",
+        "seamAllowance": 0
+      },
+      {
+        "id": "I-AB-waist",
+        "label": "front/back waist",
+        "leftSequenceId": "S-A-waist",
+        "rightSequenceId": "S-B-waist",
+        "seamAllowance": 0
+      },
+      {
+        "id": "I-AM-side",
+        "label": "front/mirror side (orientation probe)",
+        "leftSequenceId": "S-A-side",
+        "rightSequenceId": "S-M-side-wrong",
+        "seamAllowance": 0
+      }
+    ]
+  },
+  "rebuiltIds": {
+    "edges": [
+      "E-A-side-1",
+      "E-A-side-2.s1",
+      "E-A-side-2.s2",
+      "E-A-waist-1",
+      "E-A-waist-2",
+      "E-B-side-1",
+      "E-B-side-2.d1",
+      "E-B-side-2.d2",
+      "E-B-side-2.d3",
+      "E-B-side-2.d4",
+      "E-B-side-3",
+      "E-B-side-4",
+      "E-B-waist-1",
+      "E-B-waist-2",
+      "E-B-waist-3",
+      "E-B-waist-4",
+      "E-M-side-1",
+      "E-M-side-2",
+      "E-M-wrong-1",
+      "E-M-wrong-2"
+    ],
+    "sequences": [
+      "S-A-side",
+      "S-A-waist",
+      "S-B-side",
+      "S-B-waist",
+      "S-M-side-right",
+      "S-M-side-wrong"
+    ],
+    "panels": [
+      "P-A",
+      "P-B",
+      "P-M"
+    ],
+    "interfaces": [
+      "I-AB-side",
+      "I-AB-waist",
+      "I-AM-side"
+    ]
+  },
+  "measures": {
+    "before": {
+      "len:S-A-side": 100,
+      "len:S-A-waist": 60,
+      "len:S-B-side": 108,
+      "len:S-B-waist": 60,
+      "len:S-M-side-right": 100,
+      "len:S-M-side-wrong": 100,
+      "delta:I-AB-side": 8,
+      "orient:I-AM-side": 0
+    },
+    "after": {
+      "len:S-A-side": 100,
+      "len:S-A-waist": 60,
+      "len:S-B-side": 108,
+      "len:S-B-waist": 60,
+      "len:S-M-side-right": 100,
+      "len:S-M-side-wrong": 100,
+      "delta:I-AB-side": 8,
+      "orient:I-AM-side": 0
+    }
+  },
+  "interfaceWiring": [
+    {
+      "id": "I-AB-side",
+      "label": "front/back side seam",
+      "leftSequenceId": "S-A-side",
+      "rightSequenceId": "S-B-side",
+      "seamAllowance": 0
+    },
+    {
+      "id": "I-AB-waist",
+      "label": "front/back waist",
+      "leftSequenceId": "S-A-waist",
+      "rightSequenceId": "S-B-waist",
+      "seamAllowance": 0
+    },
+    {
+      "id": "I-AM-side",
+      "label": "front/mirror side (orientation probe)",
+      "leftSequenceId": "S-A-side",
+      "rightSequenceId": "S-M-side-wrong",
+      "seamAllowance": 0
+    }
+  ]
+}
