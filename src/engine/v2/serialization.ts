@@ -21,6 +21,7 @@ import {
   isPatternDocument,
   isStitchPair,
   isVertex,
+  MM_TOLERANCE,
   SEMANTIC_V2_SCHEMA_VERSION,
   type Component,
   type ConstraintDiagnostic,
@@ -160,6 +161,10 @@ function checkReferences(doc: PatternDocument, errors: string[]): void {
       errors.push(`stitchPair "${s.id}" references missing interface "${s.interfaceId}"`);
     }
   }
+  // `constraintId` is intentionally NOT resolved: it is an external id owned
+  // by the future Capability Registry, not a top-level entity in this
+  // document. Only `entities` (which must point at current entities) and the
+  // non-empty guard on `constraintId` are enforced here.
   for (const d of doc.diagnostics) {
     const all = new Set([
       ...ids.vertices,
@@ -175,6 +180,117 @@ function checkReferences(doc: PatternDocument, errors: string[]): void {
       if (!all.has(entity)) {
         errors.push(`diagnostic "${d.id}" references missing entity "${entity}"`);
       }
+    }
+  }
+}
+
+/** Reject degenerate line curves (start vertex === end vertex). */
+function checkDegenerateCurves(doc: PatternDocument, errors: string[]): void {
+  for (const e of doc.edges) {
+    if (e.curve.kind === 'line' && e.curve.startVertexId === e.curve.endVertexId) {
+      errors.push(
+        `edge "${e.id}" line is degenerate: startVertexId === endVertexId ("${e.curve.startVertexId}")`,
+      );
+    }
+  }
+}
+
+/**
+ * Validate circularArc geometry: start and end vertices must both lie on the
+ * circle of radiusMm centred on centerVertexId, within MM_TOLERANCE.
+ */
+function checkCircularArcGeometry(doc: PatternDocument, errors: string[]): void {
+  const byId = new Map<string, Vertex>();
+  for (const v of doc.vertices) byId.set(v.id, v);
+
+  for (const e of doc.edges) {
+    if (e.curve.kind !== 'circularArc') continue;
+    const arc = e.curve;
+    if (!(arc.sweepAngleDeg > 0 && arc.sweepAngleDeg <= 360)) {
+      errors.push(
+        `edge "${e.id}" circularArc sweepAngleDeg must be > 0 and <= 360; got ${arc.sweepAngleDeg}`,
+      );
+    }
+    const center = byId.get(arc.centerVertexId);
+    const start = byId.get(arc.startVertexId);
+    const end = byId.get(arc.endVertexId);
+    if (center && start) {
+      const d = Math.hypot(start.xMm - center.xMm, start.yMm - center.yMm);
+      if (Math.abs(d - arc.radiusMm) > MM_TOLERANCE) {
+        errors.push(
+          `edge "${e.id}" circularArc center-to-start distance ${d.toFixed(3)} differs from radiusMm ${arc.radiusMm} by more than ${MM_TOLERANCE} mm`,
+        );
+      }
+    }
+    if (center && end) {
+      const d = Math.hypot(end.xMm - center.xMm, end.yMm - center.yMm);
+      if (Math.abs(d - arc.radiusMm) > MM_TOLERANCE) {
+        errors.push(
+          `edge "${e.id}" circularArc center-to-end distance ${d.toFixed(3)} differs from radiusMm ${arc.radiusMm} by more than ${MM_TOLERANCE} mm`,
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Validate StitchSegment / StitchPair semantics: non-negative offsets,
+ * strictly increasing spans, A/B spans matching lengthMm, non-empty pairs,
+ * non-negative lengths, commonLengthMm coherent with pair coverage and
+ * deltaMm coherent with the absolute left/right difference.
+ */
+function checkStitchGeometry(doc: PatternDocument, errors: string[]): void {
+  for (const sp of doc.stitchPairs) {
+    if (sp.pairs.length === 0) {
+      errors.push(`stitchPair "${sp.id}" must contain at least one segment`);
+    }
+    if (sp.leftLengthMm < 0) {
+      errors.push(`stitchPair "${sp.id}" leftLengthMm must be >= 0; got ${sp.leftLengthMm}`);
+    }
+    if (sp.rightLengthMm < 0) {
+      errors.push(`stitchPair "${sp.id}" rightLengthMm must be >= 0; got ${sp.rightLengthMm}`);
+    }
+    if (sp.commonLengthMm < 0) {
+      errors.push(`stitchPair "${sp.id}" commonLengthMm must be >= 0; got ${sp.commonLengthMm}`);
+    }
+    if (sp.deltaMm < 0) {
+      errors.push(`stitchPair "${sp.id}" deltaMm must be >= 0; got ${sp.deltaMm}`);
+    }
+    if (Math.abs(sp.deltaMm - Math.abs(sp.leftLengthMm - sp.rightLengthMm)) > MM_TOLERANCE) {
+      errors.push(
+        `stitchPair "${sp.id}" deltaMm ${sp.deltaMm} must equal abs(leftLengthMm - rightLengthMm) within ${MM_TOLERANCE} mm`,
+      );
+    }
+
+    let coverage = 0;
+    for (const seg of sp.pairs) {
+      if (Math.min(seg.aStartMm, seg.aEndMm, seg.bStartMm, seg.bEndMm, seg.lengthMm) < 0) {
+        errors.push(`stitchPair "${sp.id}" segment offsets/lengthMm must be >= 0`);
+      }
+      if (seg.aEndMm <= seg.aStartMm) {
+        errors.push(`stitchPair "${sp.id}" segment A span must satisfy aEndMm > aStartMm`);
+      }
+      if (seg.bEndMm <= seg.bStartMm) {
+        errors.push(`stitchPair "${sp.id}" segment B span must satisfy bEndMm > bStartMm`);
+      }
+      const spanA = seg.aEndMm - seg.aStartMm;
+      const spanB = seg.bEndMm - seg.bStartMm;
+      if (Math.abs(spanA - seg.lengthMm) > MM_TOLERANCE) {
+        errors.push(
+          `stitchPair "${sp.id}" segment A span ${spanA.toFixed(3)} differs from lengthMm ${seg.lengthMm} by more than ${MM_TOLERANCE} mm`,
+        );
+      }
+      if (Math.abs(spanB - seg.lengthMm) > MM_TOLERANCE) {
+        errors.push(
+          `stitchPair "${sp.id}" segment B span ${spanB.toFixed(3)} differs from lengthMm ${seg.lengthMm} by more than ${MM_TOLERANCE} mm`,
+        );
+      }
+      coverage += spanA;
+    }
+    if (Math.abs(coverage - sp.commonLengthMm) > MM_TOLERANCE) {
+      errors.push(
+        `stitchPair "${sp.id}" commonLengthMm ${sp.commonLengthMm} must equal pair coverage ${coverage.toFixed(3)} within ${MM_TOLERANCE} mm`,
+      );
     }
   }
 }
@@ -198,6 +314,9 @@ export function validatePatternDocument(value: unknown): string[] {
 
   checkDuplicateIds(doc, errors);
   checkReferences(doc, errors);
+  checkDegenerateCurves(doc, errors);
+  checkCircularArcGeometry(doc, errors);
+  checkStitchGeometry(doc, errors);
 
   return errors;
 }
@@ -206,8 +325,19 @@ function isRecordLike(value: unknown): boolean {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/** Serialize a v2 pattern document to a JSON string. */
+/**
+ * Serialize a v2 pattern document to a JSON string.
+ *
+ * The document is fully validated first; {@link SemanticV2Error} is thrown for
+ * an unsupported schemaVersion, NaN or structural invalidity, broken
+ * references, duplicate ids, or any rejected semantic invariant (degenerate
+ * curves, invalid circularArc geometry, or inconsistent stitch data).
+ */
 export function serializeDocument(doc: PatternDocument): string {
+  const errors = validatePatternDocument(doc);
+  if (errors.length > 0) {
+    throw new SemanticV2Error(errors);
+  }
   return JSON.stringify(doc);
 }
 

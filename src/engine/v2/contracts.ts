@@ -48,7 +48,14 @@ export interface LineCurve {
   endVertexId: string;
 }
 
-/** A circular arc by centre, radius and sweep. */
+/**
+ * A circular arc by centre, radius and sweep.
+ *
+ * Direction is explicit: `clockwise` is mandatory so the arc is unambiguous.
+ * Geometry is independently verifiable: the start and end vertices must both
+ * lie on the circle of `radiusMm` centred on `centerVertexId` (checked during
+ * document validation to `MM_TOLERANCE`).
+ */
 export interface CircularArcCurve {
   kind: 'circularArc';
   /** Start vertex id (on the radius circle). */
@@ -59,8 +66,10 @@ export interface CircularArcCurve {
   centerVertexId: string;
   /** Arc radius in millimetres (> 0). */
   radiusMm: number;
-  /** Sweep angle in degrees (> 0). */
+  /** Sweep angle in degrees (> 0 and <= 360). */
   sweepAngleDeg: number;
+  /** True when the arc sweeps clockwise from start to end. */
+  clockwise: boolean;
 }
 
 /** A quadratic Bezier segment with a single control vertex. */
@@ -189,7 +198,13 @@ export type DiagnosticSeverity = 'error' | 'warning' | 'info';
 /** A typed, traceable constraint diagnostic. */
 export interface ConstraintDiagnostic {
   id: string;
-  /** Constraint id that produced the diagnostic (must resolve). */
+  /**
+   * Mandatory, non-empty external id of the constraint that produced the
+   * diagnostic. Owned by the future Capability Registry, NOT by a top-level
+   * v2 entity in this document; therefore it is never resolved during
+   * document validation (avoids a false dangling-reference report while the
+   * registry does not yet exist in Phase 11).
+   */
   constraintId: string;
   severity: DiagnosticSeverity;
   /** Entity ids the diagnostic refers to (must resolve). */
@@ -273,7 +288,9 @@ export function isCircularArcCurve(value: unknown): value is CircularArcCurve {
     isMm(value.radiusMm) &&
     value.radiusMm > 0 &&
     isMm(value.sweepAngleDeg) &&
-    value.sweepAngleDeg > 0
+    value.sweepAngleDeg > 0 &&
+    value.sweepAngleDeg <= 360 &&
+    isBoolean(value.clockwise)
   );
 }
 
