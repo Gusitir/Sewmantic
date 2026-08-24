@@ -10,14 +10,17 @@
     "experiment:geometry": "node experiments/geometry-kernel/runner.mjs",
     "experiment:semantic": "node experiments/semantic-kernel/runner.mjs",
     "experiment:harness": "node experiments/agent-harness/runner.mjs",
+    "experiment:harness:live": "node experiments/agent-harness/run-live.mjs",
     "experiment:rag": "node experiments/rag-retrieval/runner.mjs",
     "test": "vitest run",
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@ai-sdk/fireworks": "3.0.38",
     "@flatten-js/core": "1.6.14",
     "@freesewing/core": "^3.0.0",
     "@orama/orama": "^2.1.1",
+    "ai": "7.0.77",
     "archiver": "^8.0.0",
     "commander": "^12.1.0",
     "dotenv": "^16.4.7",

@@ -28,11 +28,16 @@
 
 ## Architect-verified live evidence
 
-- `HARNESS_LIVE=1`: one successful call to Qwen 3.8 Max through the Fireworks OpenAI-compatible endpoint.
-- Token usage: `90` prompt + `201` completion = `291` total tokens.
-- Status: `pass`.
-- `costUsd`: `null`, because the API does not report cost.
-- Local evidence: `output/live-fireworks.json` is ignored by Git.
+- `HARNESS_LIVE=1` (alias `npm run experiment:harness:live`): real Vercel AI SDK
+  `generateText` + `@ai-sdk/fireworks` `createFireworks` provider, model
+  `accounts/fireworks/models/qwen3p8-max`.
+- Executes the real domain tool `get_current_pattern` (Zod strict schema) and
+  verifies the tool result returns into the SDK loop / final result.
+- Live budget: `<= 2` provider calls, `<= 4000` cumulative tokens.
+- `costUsd`: `null`, because the API does not report pricing; no rate is invented.
+- Local evidence: `output/live-vercel-ai-sdk.json` (gitignored via `output/`).
+- The previous raw `fetch`/OpenAI-compatible hand-rolled adapter was removed; the
+  live path now uses only the first-party Vercel AI SDK provider.
 
 ## Provisional recommendation
 

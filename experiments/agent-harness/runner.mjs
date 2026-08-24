@@ -10,7 +10,7 @@ import {
   createInitialStore, loadStore, serializeStore, dispatch, TOOL_REGISTRY,
   FORBIDDEN_PARAM_KEYS,
 } from './harness.mjs';
-import { maybeSaveLiveEvidence } from './live-fireworks.mjs';
+import { maybeSaveVercelLiveEvidence } from './live-vercel-ai-sdk.mjs';
 import './comparative.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -167,12 +167,16 @@ writeFileSync(join(evidenceDir, 'transcript.json'), JSON.stringify(transcript, n
 console.table(invariants.map((i) => ({ id: i.id, pass: i.pass })));
 
 // Offline gate does NOT depend on live Fireworks; it runs only if enabled.
-const live = await maybeSaveLiveEvidence();
+// Live command (real Vercel AI SDK + @ai-sdk/fireworks provider, opt-in):
+//   HARNESS_LIVE=1 FIREWORKS_API_KEY=... npm run experiment:harness
+//   (aliased: npm run experiment:harness:live)
+const live = await maybeSaveVercelLiveEvidence();
 if (live.wantLive) {
-  console.log('\n--- LIVE FIREWORKS PROBE (opt-in) ---');
+  console.log('\n--- LIVE VERDEL AI SDK + @ai-sdk/fireworks PROBE (opt-in) ---');
   console.log(`${JSON.stringify(live.result, null, 2)}`);
+  console.log(`live evidence persisted: ${live.file}`);
 } else {
-  console.log('\nLive Fireworks probe skipped (HARNESS_LIVE!=1). Offline mock unaffected; see output/live-fireworks.json when enabled.');
+  console.log('\nLive Vercel probe skipped (HARNESS_LIVE!=1). Offline mock unaffected; run with HARNESS_LIVE=1 to see output/live-vercel-ai-sdk.json.');
 }
 
 const passCount = invariants.filter((i) => i.pass).length;
