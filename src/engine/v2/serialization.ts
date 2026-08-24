@@ -238,6 +238,17 @@ function checkCircularArcGeometry(doc: PatternDocument, errors: string[]): void 
  * strictly increasing spans, A/B spans matching lengthMm, non-empty pairs,
  * non-negative lengths, commonLengthMm coherent with pair coverage and
  * deltaMm coherent with the absolute left/right difference.
+ *
+ * Ordered coverage contract: the pairs must be an ordered tiling of exactly
+ * `commonLengthMm` on BOTH the A and B sequences, without gaps or overlaps
+ * beyond {@link MM_TOLERANCE}. Therefore, for a valid stitch pair:
+ *   - the first segment begins at offset 0 on each side;
+ *   - every later segment's start matches the previous segment's end on the
+ *     same side;
+ *   - the last segment's end equals commonLengthMm on each side;
+ *   - no segment end exceeds its side's length (leftLengthMm / rightLengthMm)
+ *     beyond tolerance;
+ *   - commonLengthMm never exceeds either side length beyond tolerance.
  */
 function checkStitchGeometry(doc: PatternDocument, errors: string[]): void {
   for (const sp of doc.stitchPairs) {
@@ -261,9 +272,24 @@ function checkStitchGeometry(doc: PatternDocument, errors: string[]): void {
         `stitchPair "${sp.id}" deltaMm ${sp.deltaMm} must equal abs(leftLengthMm - rightLengthMm) within ${MM_TOLERANCE} mm`,
       );
     }
+    if (sp.commonLengthMm > sp.leftLengthMm + MM_TOLERANCE) {
+      errors.push(
+        `stitchPair "${sp.id}" commonLengthMm ${sp.commonLengthMm} must not exceed leftLengthMm ${sp.leftLengthMm} by more than ${MM_TOLERANCE} mm`,
+      );
+    }
+    if (sp.commonLengthMm > sp.rightLengthMm + MM_TOLERANCE) {
+      errors.push(
+        `stitchPair "${sp.id}" commonLengthMm ${sp.commonLengthMm} must not exceed rightLengthMm ${sp.rightLengthMm} by more than ${MM_TOLERANCE} mm`,
+      );
+    }
 
-    let coverage = 0;
-    for (const seg of sp.pairs) {
+    const n = sp.pairs.length;
+    for (let i = 0; i < n; i += 1) {
+      const seg = sp.pairs[i];
+      const prev = i > 0 ? sp.pairs[i - 1] : null;
+      const isFirst = i === 0;
+      const isLast = i === n - 1;
+
       if (Math.min(seg.aStartMm, seg.aEndMm, seg.bStartMm, seg.bEndMm, seg.lengthMm) < 0) {
         errors.push(`stitchPair "${sp.id}" segment offsets/lengthMm must be >= 0`);
       }
@@ -273,6 +299,47 @@ function checkStitchGeometry(doc: PatternDocument, errors: string[]): void {
       if (seg.bEndMm <= seg.bStartMm) {
         errors.push(`stitchPair "${sp.id}" segment B span must satisfy bEndMm > bStartMm`);
       }
+      if (isFirst && Math.abs(seg.aStartMm - 0) > MM_TOLERANCE) {
+        errors.push(
+          `stitchPair "${sp.id}" first segment A must start at 0; got ${seg.aStartMm}`,
+        );
+      }
+      if (isFirst && Math.abs(seg.bStartMm - 0) > MM_TOLERANCE) {
+        errors.push(
+          `stitchPair "${sp.id}" first segment B must start at 0; got ${seg.bStartMm}`,
+        );
+      }
+      if (prev && Math.abs(seg.aStartMm - prev.aEndMm) > MM_TOLERANCE) {
+        errors.push(
+          `stitchPair "${sp.id}" segment A start ${seg.aStartMm} must match prior end ${prev.aEndMm} within ${MM_TOLERANCE} mm`,
+        );
+      }
+      if (prev && Math.abs(seg.bStartMm - prev.bEndMm) > MM_TOLERANCE) {
+        errors.push(
+          `stitchPair "${sp.id}" segment B start ${seg.bStartMm} must match prior end ${prev.bEndMm} within ${MM_TOLERANCE} mm`,
+        );
+      }
+      if (isLast && Math.abs(seg.aEndMm - sp.commonLengthMm) > MM_TOLERANCE) {
+        errors.push(
+          `stitchPair "${sp.id}" terminal segment A end ${seg.aEndMm} must equal commonLengthMm ${sp.commonLengthMm} within ${MM_TOLERANCE} mm`,
+        );
+      }
+      if (isLast && Math.abs(seg.bEndMm - sp.commonLengthMm) > MM_TOLERANCE) {
+        errors.push(
+          `stitchPair "${sp.id}" terminal segment B end ${seg.bEndMm} must equal commonLengthMm ${sp.commonLengthMm} within ${MM_TOLERANCE} mm`,
+        );
+      }
+      if (seg.aEndMm > sp.leftLengthMm + MM_TOLERANCE) {
+        errors.push(
+          `stitchPair "${sp.id}" segment A end ${seg.aEndMm} must not exceed leftLengthMm ${sp.leftLengthMm} by more than ${MM_TOLERANCE} mm`,
+        );
+      }
+      if (seg.bEndMm > sp.rightLengthMm + MM_TOLERANCE) {
+        errors.push(
+          `stitchPair "${sp.id}" segment B end ${seg.bEndMm} must not exceed rightLengthMm ${sp.rightLengthMm} by more than ${MM_TOLERANCE} mm`,
+        );
+      }
+
       const spanA = seg.aEndMm - seg.aStartMm;
       const spanB = seg.bEndMm - seg.bStartMm;
       if (Math.abs(spanA - seg.lengthMm) > MM_TOLERANCE) {
@@ -285,12 +352,6 @@ function checkStitchGeometry(doc: PatternDocument, errors: string[]): void {
           `stitchPair "${sp.id}" segment B span ${spanB.toFixed(3)} differs from lengthMm ${seg.lengthMm} by more than ${MM_TOLERANCE} mm`,
         );
       }
-      coverage += spanA;
-    }
-    if (Math.abs(coverage - sp.commonLengthMm) > MM_TOLERANCE) {
-      errors.push(
-        `stitchPair "${sp.id}" commonLengthMm ${sp.commonLengthMm} must equal pair coverage ${coverage.toFixed(3)} within ${MM_TOLERANCE} mm`,
-      );
     }
   }
 }

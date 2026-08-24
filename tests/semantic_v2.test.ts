@@ -427,6 +427,117 @@ describe('semantic v2 stitch contract', () => {
     const restored = deserializeDocument(serializeDocument(doc));
     expect(restored.stitchPairs[0].pairs.length).toBe(2);
   });
+
+  it('rejects an A-side overlap between adjacent segments', () => {
+    const doc = cloneJson(fixture());
+    const p = pair(doc);
+    p.leftLengthMm = 100;
+    p.rightLengthMm = 100;
+    p.deltaMm = 0;
+    p.deltaExceeds = false;
+    p.pairs = [
+      { aStartMm: 0, aEndMm: 40, bStartMm: 0, bEndMm: 40, lengthMm: 40 },
+      { aStartMm: 36, aEndMm: 100, bStartMm: 40, bEndMm: 100, lengthMm: 60 },
+    ];
+    p.commonLengthMm = 100;
+    expect(() => deserializeDocument(JSON.stringify(doc)))
+      .toThrowError(/A start .* must match prior end/);
+  });
+
+  it('rejects a B-side overlap between adjacent segments', () => {
+    const doc = cloneJson(fixture());
+    const p = pair(doc);
+    p.leftLengthMm = 100;
+    p.rightLengthMm = 100;
+    p.deltaMm = 0;
+    p.deltaExceeds = false;
+    p.pairs = [
+      { aStartMm: 0, aEndMm: 40, bStartMm: 0, bEndMm: 40, lengthMm: 40 },
+      { aStartMm: 40, aEndMm: 100, bStartMm: 38, bEndMm: 100, lengthMm: 60 },
+    ];
+    p.commonLengthMm = 100;
+    expect(() => deserializeDocument(JSON.stringify(doc)))
+      .toThrowError(/B start .* must match prior end/);
+  });
+
+  it('rejects an A-side gap between adjacent segments', () => {
+    const doc = cloneJson(fixture());
+    const p = pair(doc);
+    p.leftLengthMm = 100;
+    p.rightLengthMm = 100;
+    p.deltaMm = 0;
+    p.deltaExceeds = false;
+    p.pairs = [
+      { aStartMm: 0, aEndMm: 40, bStartMm: 0, bEndMm: 40, lengthMm: 40 },
+      { aStartMm: 44, aEndMm: 100, bStartMm: 40, bEndMm: 100, lengthMm: 60 },
+    ];
+    p.commonLengthMm = 104;
+    expect(() => deserializeDocument(JSON.stringify(doc)))
+      .toThrowError(/A start .* must match prior end/);
+  });
+
+  it('rejects a B-side gap between adjacent segments', () => {
+    const doc = cloneJson(fixture());
+    const p = pair(doc);
+    p.leftLengthMm = 100;
+    p.rightLengthMm = 100;
+    p.deltaMm = 0;
+    p.deltaExceeds = false;
+    p.pairs = [
+      { aStartMm: 0, aEndMm: 40, bStartMm: 0, bEndMm: 40, lengthMm: 40 },
+      { aStartMm: 40, aEndMm: 100, bStartMm: 44, bEndMm: 100, lengthMm: 60 },
+    ];
+    p.commonLengthMm = 104;
+    expect(() => deserializeDocument(JSON.stringify(doc)))
+      .toThrowError(/B start .* must match prior end/);
+  });
+
+  it('rejects a terminal end that does not match commonLengthMm', () => {
+    const doc = cloneJson(fixture());
+    const p = pair(doc);
+    p.leftLengthMm = 100;
+    p.rightLengthMm = 100;
+    p.deltaMm = 0;
+    p.deltaExceeds = false;
+    p.pairs = [
+      { aStartMm: 0, aEndMm: 40, bStartMm: 0, bEndMm: 40, lengthMm: 40 },
+      { aStartMm: 40, aEndMm: 90, bStartMm: 40, bEndMm: 90, lengthMm: 50 },
+    ];
+    p.commonLengthMm = 100;
+    expect(() => deserializeDocument(JSON.stringify(doc)))
+      .toThrowError(/terminal segment A end/);
+  });
+
+  it('rejects a commonLengthMm exceeding a side length', () => {
+    const doc = cloneJson(fixture());
+    const p = pair(doc);
+    p.leftLengthMm = 100;
+    p.rightLengthMm = 80;
+    p.deltaMm = 20;
+    p.deltaExceeds = true;
+    p.pairs = [
+      { aStartMm: 0, aEndMm: 90, bStartMm: 0, bEndMm: 90, lengthMm: 90 },
+    ];
+    p.commonLengthMm = 90;
+    expect(() => deserializeDocument(JSON.stringify(doc)))
+      .toThrowError(/must not exceed rightLengthMm/);
+  });
+
+  it('rejects a segment offset exceeding its side length', () => {
+    const doc = cloneJson(fixture());
+    const p = pair(doc);
+    p.leftLengthMm = 100;
+    p.rightLengthMm = 100;
+    p.deltaMm = 0;
+    p.deltaExceeds = false;
+    p.pairs = [
+      { aStartMm: 0, aEndMm: 40, bStartMm: 0, bEndMm: 40, lengthMm: 40 },
+      { aStartMm: 40, aEndMm: 120, bStartMm: 40, bEndMm: 100, lengthMm: 60 },
+    ];
+    p.commonLengthMm = 100;
+    expect(() => deserializeDocument(JSON.stringify(doc)))
+      .toThrowError(/A end .* must not exceed leftLengthMm/);
+  });
 });
 
 describe('semantic v2 serializeDocument validation', () => {
