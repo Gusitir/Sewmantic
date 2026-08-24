@@ -12,6 +12,7 @@ Este índice organiza los archivos del plano de control (`.agents/`) y las rutas
 - [`TESTING.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/TESTING.md): Matriz de pruebas automatizadas (21 suites Vitest, 556 tests), verificaciones humanas (`H-01` a `H-03`) y scripts de diagnóstico.
 - [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN_v0.9-3d-geometry-and-meshing-calibration.md): Implementación completa; `H-03` NO APTO y CLOSE bloqueado (Fase 9.0).
 - [`PLAN_v1.0-semantic-pattern-foundation.md`](PLAN_v1.0-semantic-pattern-foundation.md): Plan de Foundation Spikes T-41 a T-44; diseño aprobado, ejecución no autorizada.
+- [`PLAN_v1.1-semantic-kernel-mvp.md`](PLAN_v1.1-semantic-kernel-mvp.md): Plan activo Phase 11 T-45 a T-48 para kernel TypeScript, GeometryAdapter, constraints y shadow mode.
 - [`ROADMAP_v1-semantic-pattern-platform.md`](ROADMAP_v1-semantic-pattern-platform.md): Ruta estratégica del Motor Semántico, Patronista Conversacional, RAG y Capability Workshop.
 - [`REFERENCES_v1-open-source-foundations.md`](REFERENCES_v1-open-source-foundations.md): Investigación de GarmentCode, harnesses, RAG y geometría con licencias y decisiones preliminares.
 - [`DECISION_v1-foundation-stack.md`](DECISION_v1-foundation-stack.md): Selección empírica final del stack fundacional y límites para la futura integración.
@@ -45,4 +46,4 @@ Este índice organiza los archivos del plano de control (`.agents/`) y las rutas
 - `src/server/`: Servidor HTTP REST y frontend Web Studio (HTML, CSS, JS, Visor 2D, Visor 3D WebGL con Exploded View Slider).
 - `output/`: Entregables físicos generados (PDFs, SVGs, Modelos .glb 3D, Fichas técnicas y paquetes comerciales ZIP).
 
-Last reindexed: 2026-08-23 after Foundation Spikes and stack selection (source commit 1a515e1).
+Last reindexed: 2026-08-23 at Phase 11 authorization (source commit 570ca3f).

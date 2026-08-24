@@ -1,6 +1,6 @@
 # PLAN v1.0 - Foundation Spikes para Motor Semantico y Patronista Conversacional
 
-Status: audit complete; stack selected; H-04 pending
+Status: closed; stack selected; H-04 APTO
 Goal: seleccionar con evidencia las fundaciones tecnicas minimas para Motor v2 sin integrar dependencias ni modificar el motor de producto actual.
 Assurance: Standard para la decision de arquitectura; gates deterministas por spike.
 

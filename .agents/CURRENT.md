@@ -1,13 +1,13 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T23:21:57-05:00
-source_commit: 5abf95a [STATE] select semantic foundation stack and stop at H-04
-assurance: Standard for architecture selection; deterministic gates per spike
-active_job: PLAN
-active_plan: PLAN_v1.0-semantic-pattern-foundation.md
-active_task: none
-last_verdict: APTO T-41..T-44; foundation stack selected; H-04 pending
+updated_at: 2026-08-23T23:33:57-05:00
+source_commit: 570ca3f [STATE] record foundation savepoint and Drive backups
+assurance: Standard; deterministic gates per task and independent Architect audit
+active_job: RUN THE LOOP
+active_plan: PLAN_v1.1-semantic-kernel-mvp.md
+active_task: T-45
+last_verdict: H-04 APTO; Phase 11 execution authorized
 backup: private GitHub + Google Drive verified
 ```
 
@@ -20,19 +20,19 @@ backup: private GitHub + Google Drive verified
 
 ## Next action
 
-1. **Humano:** Revisar `DECISION_v1-foundation-stack.md`, confirmar H-04 y autorizar o ajustar el siguiente plan de integracion del Motor v2.
+1. **Ingeniero:** Ejecutar T-45 con un Obrero DeepSeek V4 Flash 0731, gates completos y Audit Capsule; no iniciar T-46.
 
 ## Blockers
 
 - Phase 9 CLOSE bloqueado por `H-03-F` (orientacion anatomica de `back_leg`) y `H-03-H` (deriva `pull_over` entre prompt y Zod).
-- Integracion Motor v2 no autorizada hasta confirmacion H-04 y nuevo PLAN.
+- Ninguno para T-45; los hallazgos Phase 9 no bloquean el kernel v2 aislado.
 
 ## Current facts
 
 - **Fases 1.0 a 8.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
 - **Suite Determinista:** **21/21 suites passing (556/556 tests en verde)** tras `[T-38]`.
 - **North Star v1 aprobado:** Motor Semantico + Patronista Conversacional persistente + Capability Registry/Workshop + RAG local.
-- **Foundation decision:** stack seleccionado y trazado en `DECISION_v1-foundation-stack.md`; integracion aun no autorizada.
+- **Foundation decision:** stack seleccionado en `DECISION_v1-foundation-stack.md`; Phase 11 autorizada y activa.
 - **Orquestacion verificada:** Luna MAX accesible; DeepSeek V4 Flash operativo mediante el modelo versionado `deepseek-v4-flash-0731`.
 - **Presupuesto Fireworks:** USD 10 aprobados y compartidos entre Obreros DeepSeek y pruebas internas; recarga manual a cargo del Humano.
 - **T-41 APTO:** 16/16 invariantes; Flatten.js lidera para poligonos/booleanos y Maker.js queda como referencia de dibujo/offset, sin integracion aprobada.
@@ -55,6 +55,6 @@ backup: private GitHub + Google Drive verified
 - `H-01`: Impresión física de la Página 1 a escala 100% y medición con regla del recuadro de 10x10 cm. [VERIFICADO OK]
 - `H-02`: Ensamble físico/digital de las hojas A4/Letter para validar continuidad de corte con PDFStitcher. [VERIFICADO OK]
 - `H-03`: Inspeccion visual del patron en Web Studio. [NO APTO; DOS HALLAZGOS ABIERTOS]
-- `H-04`: Revision humana del stack seleccionado tras los cuatro spikes. [LISTO PARA REVISAR]
+- `H-04`: Stack fundacional confirmado mediante autorizacion de Phase 11. [APTO]
 
 Keep this concise. History belongs in CONTEXT and Git.

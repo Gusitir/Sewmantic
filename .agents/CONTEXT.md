@@ -199,3 +199,9 @@ suites_passing: 21/21 (548/548 tests PASS)
 - ZIP SHA-256: `3038A9EBF608D763AFF7B99E105C408EE1811143B0A334AE6E019035D8930EEB`.
 - Ambos respaldos fueron abiertos/verificados; cambios locales ajenos no forman parte del savepoint y permanecieron intactos.
 
+## 2026-08-23 - H-04 APTO y autorizacion Phase 11
+
+- El Humano confirmo el stack fundacional al ordenar inicio automatico de Phase 11.
+- Decision `D-2026-08-23-P11`, SHA-256 `b329e034a02127f62f93f79441bab79ef35eb233c52fc695cc35d427d94880f9`.
+- Contratos fijados: mm, curvas `line/circularArc/quadraticBezier/cubicBezier`, IDs estables, GeometryAdapter y legacy authority.
+- `PLAN_v1.1-semantic-kernel-mvp.md` define T-45 a T-48 serializadas. Se inicia T-45; Phase 12 queda fuera de alcance.

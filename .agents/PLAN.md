@@ -2,13 +2,14 @@
 
 This file points to the current planning target and records the open predecessor for `pattern-ai-core`.
 
-- **Active Plan:** [`PLAN_v1.0-semantic-pattern-foundation.md`](PLAN_v1.0-semantic-pattern-foundation.md) (Audit complete; stack selected; H-04 pending)
+- **Active Plan:** [`PLAN_v1.1-semantic-kernel-mvp.md`](PLAN_v1.1-semantic-kernel-mvp.md) (Phase 11 active; T-45 ready)
 - **Foundation Decision:** [`DECISION_v1-foundation-stack.md`](DECISION_v1-foundation-stack.md)
 - **Strategic Roadmap:** [`ROADMAP_v1-semantic-pattern-platform.md`](ROADMAP_v1-semantic-pattern-platform.md)
 - **Research Evidence:** [`REFERENCES_v1-open-source-foundations.md`](REFERENCES_v1-open-source-foundations.md)
-- **Planned Phase:** Phase 10.0 - Foundation Spikes (T-41 a T-44)
+- **Active Phase:** Phase 11.0 - Semantic Pattern Kernel MVP (T-45 a T-48)
+- **Completed Predecessor:** [`PLAN_v1.0-semantic-pattern-foundation.md`](PLAN_v1.0-semantic-pattern-foundation.md) (T-41 a T-44 APTO; stack selected)
 - **Open Predecessor:** [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](PLAN_v0.9-3d-geometry-and-meshing-calibration.md) (Phase 9 implementation complete; `H-03` NO APTO; not closed or archived)
-- **Assurance Profile:** Standard for architecture selection; deterministic gates per spike
+- **Assurance Profile:** Standard; deterministic gates per task and independent Architect audit
 - **Archived Plans:**
   - [`archive/PLAN_v0.1-mvp.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/archive/PLAN_v0.1-mvp.md) (Phase 1.0 — MVP Core Geometry, Tiling, Techpack, 10x10cm calibration)
   - [`archive/PLAN_v0.2-features.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/archive/PLAN_v0.2-features.md) (Phase 2.0 — Trouser Slopers, Custom Measurements, Etsy Bundler)
