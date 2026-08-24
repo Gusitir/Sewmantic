@@ -48,6 +48,11 @@ function runTranscript() {
 
   for (const r of RUNS) {
     const before = JSON.stringify(state.provisional ?? null);
+    // Exact undo: capture the expected prior committed revision/hash BEFORE undo
+    // executes (it mutates state by popping provisional + committed head).
+    const undoExpectedRev = r.test === 'undo_exact'
+      ? (state.revisions[state.revisions.length - 2] ?? state.revisions[state.revisions.length - 1])
+      : null;
     const res = dispatch(state, r.name, r.args, budget);
 
     let ok = true;
@@ -60,9 +65,23 @@ function runTranscript() {
       ok = res.ok === false && res.valid === false && res.issues?.length > 0;
       detail = `invalid ease/seam/sizes rejected by Zod: ${JSON.stringify(res.issues)}`;
     } else if (r.test === 'undo_exact') {
-      // Exact undo: provisional window cleared and hash equals committed baseline.
-      ok = res.ok === true && res.restoredHash && seen.get('create_revision')?.provisionalBefore !== undefined;
-      detail = `restoredHash=${res.restoredHash} rev=${res.rev}`;
+      // Exact undo: the restored head MUST equal the expected prior revision by
+      // hash AND by serialized params — not just a truthy hash. Diagnostics carry
+      // expected vs actual hash for audit traceability.
+      const priorRev = undoExpectedRev;
+      const expectedHash = priorRev?.hash;
+      const actualHash = res.restoredHash;
+      const expectedParamsJson = JSON.stringify(priorRev?.params ?? null);
+      const headParamsJson = JSON.stringify(state.headParams ?? null);
+      const conds = {
+        ok: res.ok === true,
+        expectedPresent: !!priorRev && !!expectedHash,
+        restoredHashMatches: actualHash === expectedHash,
+        headHashMatches: state.headHash === expectedHash,
+        headParamsMatch: headParamsJson === expectedParamsJson,
+      };
+      ok = conds.ok && conds.expectedPresent && conds.restoredHashMatches && conds.headHashMatches && conds.headParamsMatch;
+      detail = `undo_exact expected=${expectedHash} actual=${actualHash} headHash=${state.headHash} conds=${JSON.stringify(conds)}`;
     } else if (r.test === 'zod_invalid_patch_fabric') {
       // Patch with invalid fabricMeters must not create a provisional.
       ok = res.ok === false && state.provisional === null && JSON.stringify(state.provisional ?? null) === before;

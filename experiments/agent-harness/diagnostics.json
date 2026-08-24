@@ -1,7 +1,7 @@
 {
   "diagnostics": {
     "title": "T-43 agent-harness spike (offline mock)",
-    "transcriptsBytes": 3741,
+    "transcriptsBytes": 3899,
     "turns": 17,
     "persistedRestartByteIdentical": true,
     "invariantsTotal": 17,
@@ -50,7 +50,7 @@
       {
         "id": "undo_exact",
         "pass": true,
-        "detail": "restoredHash=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 rev=0"
+        "detail": "undo_exact expected=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 actual=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 headHash=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 conds={\"ok\":true,\"expectedPresent\":true,\"restoredHashMatches\":true,\"headHashMatches\":true,\"headParamsMatch\":true}"
       },
       {
         "id": "unknown_tool",
@@ -174,7 +174,7 @@
       "turn": 9,
       "test": "undo_exact",
       "ok": true,
-      "detail": "restoredHash=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 rev=0"
+      "detail": "undo_exact expected=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 actual=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 headHash=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 conds={\"o"
     },
     {
       "turn": 10,

@@ -51,7 +51,7 @@
     "turn": 9,
     "test": "undo_exact",
     "ok": true,
-    "detail": "restoredHash=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 rev=0"
+    "detail": "undo_exact expected=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 actual=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 headHash=63f09083577b41865db4cba53641c0cb84337e7352453efb547968c7ee723508 conds={\"o"
   },
   {
     "turn": 10,
