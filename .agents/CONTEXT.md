@@ -211,3 +211,10 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Commit auditado: `293469b`; gates declarados 10/10 focalizados y 566/566 globales.
 - Luna MAX verifico defectos contractuales: arco circular sin direccion/coherencia geometrica, serializer que no valida, StitchPairs degenerados y semantica ambigua de `constraintId`.
 - T-46 permanece bloqueada. Se autoriza una correccion T-45 dentro del mismo scope antes de congelar contratos.
+
+## 2026-08-23 - T-45 Domain Contracts APTO
+
+- Commits: `293469b`, correccion `b743b94` y cobertura ordenada `e81533a`.
+- Gate final: 40/40 focalizados, build PASS y 596/596 tests globales.
+- Contratos congelados: cuatro curvas con arco dirigido/geometricamente coherente, serializer validado, refs/IDs estables y StitchPairs sin huecos/solapes/degeneraciones.
+- `constraintId` es un ID externo no vacio del futuro Capability Registry. T-46 queda habilitada.

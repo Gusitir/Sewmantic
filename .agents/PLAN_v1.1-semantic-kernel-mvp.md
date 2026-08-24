@@ -27,8 +27,8 @@ Assurance: Standard; gates deterministas por tarea y auditoria independiente del
 
 | Tarea | Objetivo | Dependencia | Evidence ID | Estado |
 |---|---|---|---|:---:|
-| **T-45** | Contratos TypeScript y serializacion versionada | Aprobacion P11 | `P11-CON-01` | NO APTO |
-| **T-46** | GeometryAdapter Flatten y seleccion de offset | T-45 APTO | `P11-GEO-01` | BLOCKED |
+| **T-45** | Contratos TypeScript y serializacion versionada | Aprobacion P11 | `P11-CON-01` | APTO |
+| **T-46** | GeometryAdapter Flatten y seleccion de offset | T-45 APTO | `P11-GEO-01` | READY |
 | **T-47** | Constraints y operadores con mutacion atomica | T-45/T-46 APTO | `P11-OPS-01` | BLOCKED |
 | **T-48** | Adapter legacy y shadow mode sin deriva | T-45..T-47 APTO | `P11-SHD-01` | BLOCKED |
 

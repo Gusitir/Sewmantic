@@ -1,13 +1,13 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-23T23:45:49-05:00
-source_commit: 293469b [T-45] v2 domain contracts and versioned JSON serialization
+updated_at: 2026-08-23T23:54:49-05:00
+source_commit: e81533a [T-45] strengthen ordered stitch coverage
 assurance: Standard; deterministic gates per task and independent Architect audit
 active_job: RUN THE LOOP
 active_plan: PLAN_v1.1-semantic-kernel-mvp.md
-active_task: T-45
-last_verdict: NO APTO T-45
+active_task: T-46
+last_verdict: APTO T-45
 backup: private GitHub + Google Drive verified
 ```
 
@@ -20,17 +20,18 @@ backup: private GitHub + Google Drive verified
 
 ## Next action
 
-1. **Ingeniero:** Corregir T-45: cerrar arcos, serializacion, degeneraciones y coherencia StitchPair; responder al Arquitecto sin iniciar T-46.
+1. **Ingeniero:** Ejecutar T-46 con un Obrero DeepSeek V4 Flash 0731, seleccionar offset por evidencia y responder al Arquitecto sin iniciar T-47.
 
 ## Blockers
 
 - Phase 9 CLOSE bloqueado por `H-03-F` (orientacion anatomica de `back_leg`) y `H-03-H` (deriva `pull_over` entre prompt y Zod).
-- T-45 NO APTO: contratos permiten arco ambiguo/inconsistente, serialize sin validacion y StitchPairs/aristas degeneradas.
+- Ninguno para T-46.
 
 ## Current facts
 
 - **Fases 1.0 a 8.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
 - **Suite Determinista:** **21/21 suites passing (556/556 tests en verde)** tras `[T-38]`.
+- **Phase 11 T-45 APTO:** 40 tests contractuales; suite global 22/22 y 596/596; contratos v2 congelados para GeometryAdapter.
 - **North Star v1 aprobado:** Motor Semantico + Patronista Conversacional persistente + Capability Registry/Workshop + RAG local.
 - **Foundation decision:** stack seleccionado en `DECISION_v1-foundation-stack.md`; Phase 11 autorizada y activa.
 - **Orquestacion verificada:** Luna MAX accesible; DeepSeek V4 Flash operativo mediante el modelo versionado `deepseek-v4-flash-0731`.
@@ -47,10 +48,6 @@ backup: private GitHub + Google Drive verified
 
 ## Open findings
 
-- `P11-CON-01`: falta direccion CW/CCW y validacion centro/radio/sweep en circularArc.
-- `P11-CON-01`: `serializeDocument` debe rechazar documentos invalidos antes de JSON.stringify.
-- `P11-CON-01`: edges/StitchSegments/StitchPairs requieren longitudes/rangos/coherencia positivos.
-- `P11-CON-01`: `constraintId` debe definirse como ID externo de registry o resolverse en el documento; no quedar ambiguo.
 - `H-03-F`: pernera trasera 3D espejada con tiro orientado hacia afuera.
 - `H-03-H`: el prompt ofrece `pull_over`, pero el esquema de cierre lo rechaza.
 
