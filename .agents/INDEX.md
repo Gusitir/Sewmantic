@@ -13,6 +13,7 @@ Este índice organiza los archivos del plano de control (`.agents/`) y las rutas
 - [`PLAN_v0.9-3d-geometry-and-meshing-calibration.md`](file:///d:/AGUSTIN/Portafolio/Proyectos/Proyecto%20App%20-%20Generador%20de%20Patrones/.agents/PLAN_v0.9-3d-geometry-and-meshing-calibration.md): Implementación completa; `H-03` NO APTO y CLOSE bloqueado (Fase 9.0).
 - [`PLAN_v1.0-semantic-pattern-foundation.md`](PLAN_v1.0-semantic-pattern-foundation.md): Plan de Foundation Spikes T-41 a T-44; diseño aprobado, ejecución no autorizada.
 - [`PLAN_v1.1-semantic-kernel-mvp.md`](PLAN_v1.1-semantic-kernel-mvp.md): Plan activo Phase 11 T-45 a T-48 para kernel TypeScript, GeometryAdapter, constraints y shadow mode.
+- [`PLAN_v1.2-free-blueprint-anchor.md`](PLAN_v1.2-free-blueprint-anchor.md): Plan activo T-49; blueprint ancla libre de composicion creativa (paleta completa, sin restricciones de anchor).
 - [`ROADMAP_v1-semantic-pattern-platform.md`](ROADMAP_v1-semantic-pattern-platform.md): Ruta estratégica del Motor Semántico, Patronista Conversacional, RAG y Capability Workshop.
 - [`REFERENCES_v1-open-source-foundations.md`](REFERENCES_v1-open-source-foundations.md): Investigación de GarmentCode, harnesses, RAG y geometría con licencias y decisiones preliminares.
 - [`DECISION_v1-foundation-stack.md`](DECISION_v1-foundation-stack.md): Selección empírica final del stack fundacional y límites para la futura integración.
