@@ -149,6 +149,26 @@ describe("AI Provider Subsystem & Factory (Gemini / Fireworks AI & Direct API)",
       expect(fullPrompt).toContain("Pantalón anime");
       expect(fullPrompt).toContain("[FREESEWING BASE BLUEPRINT ANCHOR: PACO");
     });
+
+    it("debe generar el contexto de composición creativa libre para el blueprint free (y sus alias)", () => {
+      // 1. free: no vacío, rol de compositor y reglas de coherencia + frontera Zod
+      const freeContext = PromptBuilder.buildBlueprintContext("free");
+      expect(freeContext.length).toBeGreaterThan(0);
+      expect(freeContext).toContain("FREESEWING FREE BLUEPRINT");
+      expect(freeContext).toContain("COMPOSER");
+      expect(freeContext.toLowerCase()).toContain("anatomical coherence");
+      expect(freeContext).toContain("Zod");
+
+      // 2. alias "libre" y "creative": mismo contenido que "free"
+      expect(PromptBuilder.buildBlueprintContext("libre")).toBe(freeContext);
+      expect(PromptBuilder.buildBlueprintContext("creative")).toBe(freeContext);
+
+      // 3. auto / none / "" / undefined siguen devolviendo ""
+      expect(PromptBuilder.buildBlueprintContext("auto")).toBe("");
+      expect(PromptBuilder.buildBlueprintContext("none")).toBe("");
+      expect(PromptBuilder.buildBlueprintContext("")).toBe("");
+      expect(PromptBuilder.buildBlueprintContext(undefined)).toBe("");
+    });
   });
 
   describe("2. MockAiProvider (Determinista Offline)", () => {

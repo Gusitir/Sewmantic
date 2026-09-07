@@ -412,6 +412,24 @@ ${rules}
           `Enforce this exact anatomical foundation in your output JSON.`
         );
 
+      case "free":
+      case "libre":
+      case "creative":
+        return (
+          `\n\n[FREESEWING FREE BLUEPRINT: CREATIVE PARAMETRIC COMPOSITION (Composición Creativa Libre)]\n` +
+          `You MUST act strictly as a PURE PARAMETRIC COMPOSER. You are NOT modifying a fixed sloper: you compose the garment freely from scratch with no anchor restrictions.\n` +
+          `Composition Freedom:\n` +
+          `- Choose ANY supported 'base_block' from the palette (menswear_torso_oversize, menswear_torso, womenswear_torso_fitted, womenswear_torso, unisex_torso, tshirt_sloper, hoodie_sloper, dress_sloper, pants_sloper, skirt_sloper) and ANY 'garment_category' ('top' | 'bottom' | 'dress' | 'set' | 'kimono' | 'haori').\n` +
+          `- Choose 'ease' freely within wide textile ranges (comfort +20-40mm, relaxed/streetwear +60-120mm, oversize +120-250mm) adapted to the intended silhouette.\n` +
+          `- Compose with ALL implemented modifications: neckline (crew, v_neck, scoop, boat, square, sweetheart, high_neck, collar, stand_collar), sleeves (set_in, drop_shoulder, raglan, kimono, sleeveless, oversized, bishop, puff), hem (straight, curved_tail, pointed, split, ribbed, cropped, drawstring, asymmetric, flared), pocket (kangaroo, welt, patch, seam, cargo, flap, hidden), hood (standard, crossover, ninja, oversized, three_piece, scuba, pointed), waistband (fitted, elastic), closure (buttons, zipper, snaps, ties, wrap, pull_over, none), trouser_legs, trouser_hem, trouser_pockets, dress_details, kimono_details, technical collars and 3D cargo pockets.\n` +
+          `Textile Coherence Rules (instead of restrictions):\n` +
+          `- Anatomical coherence: set_in or drop_shoulder sleeves MUST match the armhole and shoulder ease (drop_mm 40-80); a hood MUST match the neckline it attaches to; a button closure MUST match a front placket overlap (overlap_mm 20-30); pocket placement MUST respect the garment silhouette.\n` +
+          `- Piece coherence: all measurements MUST be mutually consistent and coherent with the selected size (sizing.size / height_mm / chest_circ_mm / waist_circ_mm / hip_circ_mm).\n` +
+          `- Units: all measurements MUST be in millimeters (mm).\n` +
+          `- HARD SCHEMA BOUNDARY (Zod): any value outside the PatternDna schema range is REJECTED and the generation FAILS. Keep every number strictly inside the documented realistic textile ranges (e.g. chest_ease_mm 0-500, bicep_ease_mm 0-300, inseam_mm 200-850, skirt_length_mm 400-900, collar_height_mm 30-60).\n` +
+          `Enforce this creative parametric composition in your output JSON.`
+        );
+
       default:
         return (
           `\n\n[FREESEWING BASE BLUEPRINT ANCHOR: ${key.toUpperCase()}]\n` +
