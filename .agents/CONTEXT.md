@@ -238,3 +238,12 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Savepoint v2: `master` y tag anotado `savepoint-v1-gemini-oauth-20260907` publicados en `Gusitir/Sewmantic` (commit `721bd63`).
 - Artefactos Drive generados localmente en `C:\Users\OnlyH\AppData\Local\Temp\opencode\backups\`: bundle Git (`...bundle`, historia completa verify PASS) y ZIP de 159 entradas (`...zip`). Pendiente subida humana a `Mi unidad/backups/` (no hay montaje local de Drive ni rclone).
 - Proximo paso acordado con el Humano: Opcion 1, blueprint anchor libre (ampliar `buildBlueprintContext()` con un anchor de libre composicion) bajo nuevo plan/diseno del Arquitecto.
+
+## 2026-09-07 - T-49 Free Blueprint Anchor APTO (Opcion 1)
+
+- Decision `D-2026-09-07-FREE` autorizada por el Humano; plan `PLAN_v1.2-free-blueprint-anchor.md`.
+- Entrega 1 `3b6e09a`: case `free`/`libre`/`creative` en `buildBlueprintContext()` (PURE PARAMETRIC COMPOSER, paleta completa, coherencia anatomica, frontera Zod), opcion `free` en selector Web Studio, test nuevo.
+- Auditoria del Ingeniero: **NO APTO** — el texto citaba valores fuera de los enums Zod (`closure: wrap/pull_over`, neckline incompleto segun lectura parcial del Ingeniero, waistband/pocket incompletos, rangos numericos desactualizados). El Obrero verifico contra el esquema y detecto que la nota del Ingeniero sobre neckline era incorrecta (`square`/`sweetheart` SI existen en `pattern_schema.ts:92-93`): la correccion `8e41cb1` usa los enums reales completos.
+- Correccion `8e41cb1` verificada por el Ingeniero contra `pattern_schema.ts` (enums y rangos: chest 0-500, bicep 0-300, waist 0-400, hip 0-400, shoulder 0-200, inseam 100-1200, skirt 100-2000, collar 0-200, waistband 10-200, overlap 0-200).
+- Gate final fresco (ejecutado por el Ingeniero): build PASS y suite 23/23 con **625/625 tests** (1 nuevo de blueprint libre).
+- Veredicto: **APTO T-49**. Dirty state preservado intacto. Sin push por el Obrero; publicado en el cierre de sesion.

@@ -25,7 +25,7 @@ Assurance: Standard; gates deterministas por tarea y auditoria del Ingeniero/Arq
 
 | Tarea | Objetivo | Dependencia | Evidence ID | Estado |
 |---|---|---|:---:|:---:|
-| **T-49** | Free blueprint anchor en prompt + selector Web Studio + tests | Aprobacion FREE | `FREE-01` | READY |
+| **T-49** | Free blueprint anchor en prompt + selector Web Studio + tests | Aprobacion FREE | `FREE-01` | APTO |
 
 ## `[T-49]` Free Blueprint Anchor
 
