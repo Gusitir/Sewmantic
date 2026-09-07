@@ -25,7 +25,7 @@ Assurance: Standard; gates deterministas por tarea y auditoria del Ingeniero/Arq
 
 | Tarea | Objetivo | Dependencia | Evidence ID | Estado |
 |---|---|---|:---:|:---:|
-| **T-50** | Repair pass con clamp a limites Zod + tests | Aprobacion REPAIR | `REPAIR-01` | READY |
+| **T-50** | Repair pass con clamp a limites Zod + tests | Aprobacion REPAIR | `REPAIR-01` | APTO |
 
 ## `[T-50]` Schema Repair Pass
 

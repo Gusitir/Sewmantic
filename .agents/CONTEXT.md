@@ -247,3 +247,10 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Correccion `8e41cb1` verificada por el Ingeniero contra `pattern_schema.ts` (enums y rangos: chest 0-500, bicep 0-300, waist 0-400, hip 0-400, shoulder 0-200, inseam 100-1200, skirt 100-2000, collar 0-200, waistband 10-200, overlap 0-200).
 - Gate final fresco (ejecutado por el Ingeniero): build PASS y suite 23/23 con **625/625 tests** (1 nuevo de blueprint libre).
 - Veredicto: **APTO T-49**. Dirty state preservado intacto. Sin push por el Obrero; publicado en el cierre de sesion.
+
+## 2026-09-07 - Cambio de modelo de orquestacion y T-50 Schema Repair APTO
+
+- El Humano informo que el modelo de desarrollo en opencode es ahora **GLM 5.3 Flash** (Arquitecto/Ingeniero); el Obrero permanece DeepSeek V4 Flash 0731. Registrado en AGENTS.md.
+- Segundo fallo en vivo del mismo root cause (`pocket.height_mm < 30` rechazaba el ADN completo). El Humano aprobo la opcion "Clamp de reparacion (Recomendado)" — decision `D-2026-09-07-REPAIR`, plan `PLAN_v1.3-schema-repair.md`.
+- Entrega T-50 `9d19248`: `sanitizeAndParseLlmJson` aplica hasta 3 pasadas de `safeParse` con clamp determinista de issues `too_small`/`too_big` numericos a los limites Zod (`clampNumberAtPath`, precision mm 0.001) y log trazable `[schema-repair] path: original -> limite`. Errores no reparables propagan el ZodError original. `parsePatternDna` permanece estricto (ADN manual/directDna sin reparacion).
+- Auditoria del Ingeniero: APTO. Verificacion propia de enums/rangos y gates frescos: build PASS y suite 23/23 con **631/631 tests** (+6 de schema-repair). Dirty state intacto.
