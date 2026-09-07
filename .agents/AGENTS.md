@@ -15,14 +15,14 @@
    - Aprobación de alcance material, decisiones irreversibles, evaluación visual y validación física.
 
 2. **Arquitecto (Lead / Planner / Milestone Closure)**:
-   - Modelo principal: **GPT-5.6 Sol**.
-   - Puede orquestar **1 asistente persistente GPT-5.6 Luna con esfuerzo MAX** para mantenimiento acotado de `.agents/`, auditorias enfocadas y micro-correcciones de bajo riesgo.
+   - Modelo principal: **GLM 5.3 Flash** (opencode).
+   - Puede orquestar **1 asistente persistente Luna (mismo modelo)** para mantenimiento acotado de `.agents/`, auditorias enfocadas y micro-correcciones de bajo riesgo.
    - Dueño de INIT, PLAN (preflight de diseño y descomposición de tareas), mantenimiento principal de `.agents/`, coherencia de arquitectura, auditoria independiente de fase y CLOSE.
    - Genera planes aprobados y diseño modular. Nunca escribe personalmente codigo de producto.
    - Controla los commits `[STATE]`, emite veredictos finales y autoriza cada avance de tarea.
 
 3. **Ingeniero (Loop Orchestration, Technical Audit & Control State)**:
-   - Modelo principal: **GPT-5.6 Terra**.
+   - Modelo principal: **GLM 5.3 Flash** (opencode).
    - Dueño de RUN THE LOOP, auditoria localizada de Obreros, REINDEX, COMPACT, HANDOFF y EXPORT DOCUMENTATION bajo el plan activo.
    - Resuelve problemas de alta complejidad lógica, contratos de datos (Zod schemas, TypeScript), matemáticas y patronaje FreeSewing v3.
    - Puede orquestar como maximo **2 Obreros DeepSeek V4 Flash 0731** mediante OpenCode y Fireworks AI.
@@ -42,6 +42,7 @@
 
 - **Asistente Luna del Arquitecto:** se reserva para correcciones rapidas donde involucrar al Ingeniero seria burocracia desproporcionada, auditorias enfocadas y mantenimiento pequeno. Una micro-correccion no puede cambiar arquitectura, contratos publicos, dependencias, migraciones ni alcance material; si aparece cualquiera de esas condiciones, se escala al Ingeniero.
 - **Evidencia para micro-correcciones:** diff enfocado, gate pertinente, commit de producto separado y revision del Arquitecto. Luna nunca se autoaprueba.
+- **Cambio de modelo de orquestacion (2026-09-07):** Arquitecto/Ingeniero migraron de GPT-5.6 Sol/Terra a **GLM 5.3 Flash** (opencode). El Obrero permanece en DeepSeek V4 Flash 0731 (Fireworks).
 - **Obreros del Ingeniero:** maximo dos sesiones DeepSeek simultaneas y solo con scopes de escritura disjuntos. Archivos compartidos, schemas, lockfiles y contratos fuerzan serializacion.
 - **Modelo Fireworks fijado:** usar `deepseek-v4-flash-0731`; el alias no versionado `deepseek-v4-flash` no esta desplegado para la cuenta verificada.
 - **Presupuesto Fireworks:** tramo operativo de **USD 10**, compartido entre los dos Obreros y pruebas internas de API. El Humano realiza recarga manual cuando se agota.

@@ -8,6 +8,7 @@ active_job: none
 active_plan: PLAN_v1.2-free-blueprint-anchor.md (T-49 APTO; cerrado) / PLAN_v1.1-semantic-kernel-mvp.md (T-47 pausada)
 active_task: none
 last_verdict: APTO T-49 (Free Blueprint Anchor)
+orchestration_model: GLM 5.3 Flash (Arquitecto/Ingeniero, opencode); Obrero: deepseek-v4-flash-0731
 backup: private GitHub + Google Drive bundle/snapshot (artefactos v2 listos, subida humana pendiente)
 ```
 
