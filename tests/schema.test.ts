@@ -4,7 +4,7 @@
  * pattern-ai-core
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   parsePatternDna,
   sanitizeAndParseLlmJson,
@@ -665,6 +665,91 @@ Espero que este patrón sea perfecto para tu confección. ¡Avisa si requieres a
       const parsed = parsePatternDna(dnaWithCustom);
       expect(parsed.custom_measurements?.chest_circumference_mm).toBe(1060);
       expect(parsed.sizing?.custom_measurements?.bicep_circumference_mm).toBe(360);
+    });
+  });
+
+  describe("5. Reparación Determinista por Clamp (schema-repair)", () => {
+    const repairedPocketDna = {
+      concept_name: "repaired_pocket_vest",
+      base_block: "menswear_torso",
+      ease: {
+        chest_ease_mm: 100,
+      },
+      modifications: {
+        pocket: {
+          type: "patch",
+          height_mm: 10,
+          width_mm: 140,
+        },
+      },
+    };
+
+    it("debe reparar un too_small real clampeando al mínimo Zod (pocket.height_mm 10 -> 30)", () => {
+      const raw = JSON.stringify(repairedPocketDna);
+      const result = sanitizeAndParseLlmJson(raw);
+      expect(result.concept_name).toBe("repaired_pocket_vest");
+      expect(result.modifications.pocket?.height_mm).toBe(30);
+      expect(result.modifications.pocket?.width_mm).toBe(140);
+    });
+
+    it("debe reparar un too_big clampeando al máximo Zod (chest_ease_mm 800 -> 500)", () => {
+      const raw = JSON.stringify({
+        concept_name: "repaired_pocket_vest",
+        base_block: "menswear_torso",
+        ease: {
+          chest_ease_mm: 800,
+        },
+      });
+      const result = sanitizeAndParseLlmJson(raw);
+      expect(result.ease.chest_ease_mm).toBe(500);
+    });
+
+    it("debe reparar en paths anidados profundos (modifications.pocket.height_mm)", () => {
+      const raw = JSON.stringify({
+        ...repairedPocketDna,
+        modifications: {
+          pocket: {
+            type: "patch",
+            height_mm: 22,
+          },
+        },
+      });
+      const result = sanitizeAndParseLlmJson(raw);
+      expect(result.modifications.pocket?.height_mm).toBe(30);
+    });
+
+    it("debe emitir un log [schema-repair] trazable por cada valor corregido", () => {
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      try {
+        const raw = JSON.stringify(repairedPocketDna);
+        sanitizeAndParseLlmJson(raw);
+        expect(logSpy).toHaveBeenCalledTimes(1);
+        const logged = logSpy.mock.calls[0][0] as string;
+        expect(logged).toContain("[schema-repair] modifications.pocket.height_mm: 10 -> 30");
+      } finally {
+        logSpy.mockRestore();
+      }
+    });
+
+    it("NO debe reparar errores estructurales: sigue lanzando concept_name is required", () => {
+      const raw = JSON.stringify({ base_block: "x" });
+      expect(() => sanitizeAndParseLlmJson(raw)).toThrow(
+        /concept_name is required/
+      );
+    });
+
+    it("parsePatternDna permanece estricto: lanza con pocket.height_mm 10 sin reparar", () => {
+      expect(() =>
+        parsePatternDna({
+          ...repairedPocketDna,
+          modifications: {
+            pocket: {
+              type: "patch",
+              height_mm: 10,
+            },
+          },
+        })
+      ).toThrow(/Pocket height must be at least 30mm/);
     });
   });
 });

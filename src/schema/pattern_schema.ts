@@ -805,8 +805,41 @@ export function extractJsonFromText(rawOutput: string): string {
   return text.substring(firstBrace, lastBrace + 1).trim();
 }
 
+type RepairBounds = { minimum?: number; maximum?: number };
+
 /**
- * Desinfecta texto crudo de LLM, extrae el JSON y valida la estructura de ADN Paramétrico
+ * Aplica clamp determinista a un número ubicado en `path` dentro de `root`,
+ * navegando objetos y arrays. Solo actúa si el valor final es un número finito.
+ * Precisión de milímetros: redondeo a 3 decimales.
+ */
+function clampNumberAtPath(
+  root: unknown,
+  path: (string | number)[],
+  bound: number,
+  isMaximum: boolean
+): { original: number; value: number } | null {
+  if (path.length === 0) return null;
+  let container: unknown = root;
+  for (let i = 0; i < path.length - 1; i++) {
+    if (container === null || typeof container !== "object") return null;
+    container = (container as Record<string | number, unknown>)[path[i]];
+  }
+  if (container === null || typeof container !== "object") return null;
+  const record = container as Record<string | number, unknown>;
+  const lastKey = path[path.length - 1];
+  const value = record[lastKey];
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  const clamped = isMaximum ? Math.min(value, bound) : Math.max(value, bound);
+  const rounded = Math.round(clamped * 1000) / 1000;
+  if (rounded === value) return null;
+  record[lastKey] = rounded;
+  return { original: value, value: rounded };
+}
+
+/**
+ * Desinfecta texto crudo de LLM, extrae el JSON y valida la estructura de ADN Paramétrico.
+ * Si el LLM devuelve valores numéricos fuera de los límites del esquema, aplica hasta
+ * 3 pasadas de reparación determinista (clamp a los límites Zod) con log trazable.
  * @param rawOutput Respuesta de LLM con posible markdown o texto envolvente
  * @returns PatternDna tipado y validado
  */
@@ -823,5 +856,40 @@ export function sanitizeAndParseLlmJson(rawOutput: string): PatternDna {
     );
   }
 
-  return parsePatternDna(parsed);
+  const MAX_REPAIR_PASSES = 3;
+  const repairs: string[] = [];
+  let current: unknown = parsed;
+  let lastError: z.ZodError | undefined;
+
+  for (let pass = 0; pass < MAX_REPAIR_PASSES; pass++) {
+    const result = PatternDnaSchema.safeParse(current);
+    if (result.success) {
+      if (repairs.length > 0) {
+        console.log(repairs.map((r) => `[schema-repair] ${r}`).join("\n"));
+      }
+      return result.data as PatternDna;
+    }
+    lastError = result.error;
+
+    let repairedInPass = 0;
+    for (const issue of result.error.issues) {
+      if (issue.code !== "too_small" && issue.code !== "too_big") continue;
+      const isMaximum = issue.code === "too_big";
+      const bounds = issue as unknown as RepairBounds;
+      const bound = isMaximum ? bounds.maximum : bounds.minimum;
+      if (typeof bound !== "number" || !Number.isFinite(bound)) continue;
+      const clamped = clampNumberAtPath(current, issue.path, bound, isMaximum);
+      if (clamped === null) continue;
+      repairs.push(
+        `${issue.path.join(".")}: ${clamped.original} -> ${clamped.value}`
+      );
+      repairedInPass++;
+    }
+
+    if (repairedInPass === 0) {
+      throw result.error;
+    }
+  }
+
+  throw lastError;
 }
