@@ -226,3 +226,15 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Gate final: geometry focalizado 20/20, Foundation geometry 16/16, build PASS y suite 23/23 con 616/616 tests.
 - API offset congelada como miter-only; round/bevel se rechazan en vez de sustituirse silenciosamente. CutLoop cubre line, circularArc, quadraticBezier y cubicBezier.
 - T-46 APTO. T-47 queda READY pero no iniciada. STOP solicitado por el Humano; proxima sesion reanuda desde T-47.
+
+## 2026-09-07 - Migracion de analisis a Gemini 3.8 Flash High (OAuth/ADC) y savepoint v2
+
+- El Humano ordeno sustituir Qwen 3.8 Max/Fireworks por Gemini 3.8 Flash High como modelo de analisis de imagenes/prompts, con API key de un proyecto Google Cloud (`gen-lang-client-0257394877`).
+- Investigacion verificada contra docs oficiales: el ID de modelo es `gemini-3.8-flash` (el sufijo High es `thinkingLevel: HIGH`); la capa OpenAI-compatible de Agent Platform exige OAuth y no acepta API keys; las claves de AI Studio quedan restringidas a `generativelanguage.googleapis.com` (`API_KEY_SERVICE_BLOCKED` contra aiplatform).
+- Implementacion `[FEAT]` commit `721bd63`: `src/ai/gemini_provider.ts` con `@google/genai@2.21.0` (generateContent nativo, multimodal inlineData, JSON estructurado, enterprise/Developer modes, ADC sin API key), factory `gemini`/`google`, CLI, `/api/status` y selector Web Studio.
+- Autenticacion final elegida: **OAuth/ADC** (`gcloud auth application-default login`, gcloud CLI 583.0.0 instalado via winget, quota project `gen-lang-client-0257394877`), `GOOGLE_GENAI_USE_ENTERPRISE=true`, `GOOGLE_CLOUD_LOCATION=global` (us-central1 no aloja el modelo).
+- Verificado en vivo: `utility_tactical_vest` generado de punta a punta con Gemini 3.8 Flash (9 entregables, 7 tallas). Hallazgo abierto: salidas del modelo ocasionalmente fuera de rango Zod (ej. `pocket.height_mm < 30`) rechazan el ADN; sin reparacion por decision del Humano (no modificar codigo).
+- Gate del checkpoint: build PASS y suite 23/23 con **624/624 tests** (8 nuevos de GeminiProvider).
+- Savepoint v2: `master` y tag anotado `savepoint-v1-gemini-oauth-20260907` publicados en `Gusitir/Sewmantic` (commit `721bd63`).
+- Artefactos Drive generados localmente en `C:\Users\OnlyH\AppData\Local\Temp\opencode\backups\`: bundle Git (`...bundle`, historia completa verify PASS) y ZIP de 159 entradas (`...zip`). Pendiente subida humana a `Mi unidad/backups/` (no hay montaje local de Drive ni rclone).
+- Proximo paso acordado con el Humano: Opcion 1, blueprint anchor libre (ampliar `buildBlueprintContext()` con un anchor de libre composicion) bajo nuevo plan/diseno del Arquitecto.

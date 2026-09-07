@@ -1,14 +1,14 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-08-24T00:34:21-05:00
-source_commit: 1869cd4 [T-46] enforce miter-only offset and complete curve cut coverage
+updated_at: 2026-09-07T12:50:00-05:00
+source_commit: 721bd63 [FEAT] Gemini 3.8 Flash High provider as default analysis model
 assurance: Standard; deterministic gates per task and independent Architect audit
 active_job: none
 active_plan: PLAN_v1.1-semantic-kernel-mvp.md
-active_task: T-47
-last_verdict: APTO T-46; session stopped by user
-backup: private GitHub + Google Drive verified
+active_task: T-47 (pausada)
+last_verdict: Savepoint v2 (gemini-oauth) publicado; 624/624 tests
+backup: private GitHub + Google Drive bundle/snapshot (artefactos listos, subida humana pendiente)
 ```
 
 ## Orchestration Roles (agents-workflow v3)
@@ -20,37 +20,34 @@ backup: private GitHub + Google Drive verified
 
 ## Next action
 
-1. **Proxima sesion / Arquitecto:** Reanudar Phase 11 y autorizar al Ingeniero a ejecutar T-47; no repetir T-45/T-46.
+1. **Arquitecto:** Diseñar la Opción 1 acordada: blueprint anchor libre en `PromptBuilder.buildBlueprintContext()` (libre composición de la paleta paramétrica completa con rangos amplios), proponer PLAN, obtener aprobación humana e implementar.
+2. **Humano:** Subir los artefactos de Drive a `Mi unidad/backups/` (`sewmantic-savepoint-v1-gemini-oauth-20260907.bundle` y `.zip` en `C:\Users\OnlyH\AppData\Local\Temp\opencode\backups\`).
 
 ## Blockers
 
 - Phase 9 CLOSE bloqueado por `H-03-F` (orientacion anatomica de `back_leg`) y `H-03-H` (deriva `pull_over` entre prompt y Zod).
-- Ninguno para T-47. Trabajo pausado por solicitud humana, no por bloqueo tecnico.
-- Dirty state preservado y fuera de Phase 11: `scripts/build_vest_blender.py`, `scripts/render_4_views_blender.py`, `IMAGENES/`, `scripts/run_mcp_bridge.py`.
+- Phase 11 T-47 pausada por decisión humana (prioridad: blueprint libre).
+- Dirty state preservado y fuera de todo scope: `scripts/build_vest_blender.py`, `scripts/render_4_views_blender.py`, `IMAGENES/`, `scripts/run_mcp_bridge.py`.
 
 ## Current facts
 
 - **Fases 1.0 a 8.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Suite Determinista:** **23/23 suites passing (616/616 tests en verde)** tras `[T-46]`.
-- **Phase 11 T-45 APTO:** 40 tests contractuales; suite global 22/22 y 596/596; contratos v2 congelados para GeometryAdapter.
-- **Phase 11 T-46 APTO:** GeometryAdapter con Flatten encapsulado; offset publico miter-only; cutLoop cubre cuatro curvas; 20 focalizados y suite 23/23, 616/616.
+- **Suite Determinista:** **23/23 suites, 624/624 tests en verde** tras el checkpoint v2 (`721bd63`).
+- **Modelo de análisis: Gemini 3.8 Flash High** sustituyó a Qwen 3.8 Max/Fireworks (commit `721bd63`):
+  - `src/ai/gemini_provider.ts` con `@google/genai@2.21.0`; ID oficial `gemini-3.8-flash` + `thinkingLevel: HIGH`.
+  - Autenticación: **OAuth/ADC** (gcloud CLI 583.0.0, `gcloud auth application-default login`, quota project `gen-lang-client-0257394877`); soporta también API key (Developer o enterprise).
+  - Configuración verificada en vivo: `GOOGLE_GENAI_USE_ENTERPRISE=true`, `GOOGLE_CLOUD_LOCATION=global` (us-central1 no aloja `gemini-3.8-flash`).
+  - Facturación: los $40 de crédito AI Plus aplican vía billing del proyecto GCP.
+- **Savepoint v2:** tag `savepoint-v1-gemini-oauth-20260907` publicado en `Gusitir/Sewmantic`; bundle + ZIP generados y verificados localmente.
+- **Phase 11 T-45/T-46 APTO** (contratos v2 congelados; GeometryAdapter miter-only). T-47 READY pero pausada.
 - **North Star v1 aprobado:** Motor Semantico + Patronista Conversacional persistente + Capability Registry/Workshop + RAG local.
-- **Foundation decision:** stack seleccionado en `DECISION_v1-foundation-stack.md`; Phase 11 autorizada y activa.
 - **Orquestacion verificada:** Luna MAX accesible; DeepSeek V4 Flash operativo mediante el modelo versionado `deepseek-v4-flash-0731`.
-- **Presupuesto Fireworks:** USD 10 aprobados y compartidos entre Obreros DeepSeek y pruebas internas; recarga manual a cargo del Humano.
-- **T-41 APTO:** 16/16 invariantes; Flatten.js lidera para poligonos/booleanos y Maker.js queda como referencia de dibujo/offset, sin integracion aprobada.
-- **T-42 APTO:** kernel ESM sin nuevas dependencias; Edge/Panel/Interface/StitchPair, matching, orientacion, cortes, pinzas y round-trip pasan 18/18 invariantes.
-- **T-43 APTO:** harness offline 17/17, estado persistente y undo exacto; Fireworks live paso 1 llamada/291 tokens. Vercel AI SDK es candidato lider.
-- **T-43 live definitivo:** Vercel AI SDK + `@ai-sdk/fireworks` ejecuto tool call y respuesta final en 2 pasos/855 tokens.
-- **T-44 APTO:** Orama full-text, 24 reglas, 18 consultas, recall@k 1.0, fuentes directas y 14/14 invariantes.
-- **Stack seleccionado:** kernel semantico TypeScript propio + Flatten adapter + Vercel AI SDK/Fireworks + Zod + JSON local versionado + Orama full-text + adapters al pipeline comercial.
-- **Savepoint fundacional:** tag `savepoint-v1-foundation-stack-20260823` publicado y respaldos bundle/ZIP verificados en Google Drive.
-- **Módulos Paramétricos Extendidos:** Cuellos técnicos (`stand_collar`, `shirt_collar_with_stand`), bolsillos cargo 3D con fuelle y solapa (`cargo_pocket_body`, `cargo_pocket_bellows`, `cargo_pocket_flap`), y blueprint ancla `utility_vest` (Chaleco Táctico / Safari / Cargo).
-- **Moldería Industrial & Visor 3D:** Cruces de botonadura (+20mm), marcas de ojales/botones, vistas interiores con entretela técnica (`Interfacing_Lining`), bajo en doble pico de chaleco sastre (`hem: { type: 'pointed', peak_drop_mm: 50 }`), Matriz de Inspección Ocular Multimodal de 6 Puntos y Guía de Despiece 3D interactivo en WebGL.
+- **Módulos Paramétricos Extendidos:** Cuellos técnicos, bolsillos cargo 3D con fuelle y solapa, blueprint ancla `utility_vest`, moldería industrial y despiece 3D WebGL.
 
 ## Open findings
 
-- `P11-GEO-01` riesgo residual: miter sin limite puede crear picos en angulos agudos; resolver antes de uso productivo sobre patrones arbitrarios.
+- Salida del LLM ocasionalmente fuera de rango Zod (ej. `modifications.pocket.height_mm < 30`) rechaza el ADN completo; opciones pendientes de decisión humana: clamp de reparación determinista, endurecer prompt, o reintento.
+- `P11-GEO-01` riesgo residual: miter sin limite puede crear picos en angulos agudos.
 - `H-03-F`: pernera trasera 3D espejada con tiro orientado hacia afuera.
 - `H-03-H`: el prompt ofrece `pull_over`, pero el esquema de cierre lo rechaza.
 
@@ -60,5 +57,6 @@ backup: private GitHub + Google Drive verified
 - `H-02`: Ensamble físico/digital de las hojas A4/Letter para validar continuidad de corte con PDFStitcher. [VERIFICADO OK]
 - `H-03`: Inspeccion visual del patron en Web Studio. [NO APTO; DOS HALLAZGOS ABIERTOS]
 - `H-04`: Stack fundacional confirmado mediante autorizacion de Phase 11. [APTO]
+- `H-05`: Migración de análisis a Gemini 3.8 Flash High con OAuth/ADC. [APTO — verificado en vivo]
 
 Keep this concise. History belongs in CONTEXT and Git.
