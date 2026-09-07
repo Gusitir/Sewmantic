@@ -344,8 +344,12 @@ export async function handleGetStatus(
     platform: `${process.platform} ${process.arch}`,
     activeProvider:
       process.env.AI_PROVIDER ||
-      (process.env.FIREWORKS_API_KEY || process.env.AI_API_KEY ? 'api' : 'mock'),
-    supportedProviders: ['api', 'mock'],
+      (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
+        ? 'gemini'
+        : process.env.FIREWORKS_API_KEY || process.env.AI_API_KEY
+        ? 'api'
+        : 'mock'),
+    supportedProviders: ['gemini', 'api', 'mock'],
     standardSizes: STANDARD_SIZES,
     supportedBlocks: [
       'menswear_torso_oversize',
@@ -965,7 +969,7 @@ export async function handlePostGenerate(
 
   const hasAttachedImage = Boolean(imagePath || body.image || body.imageData);
   const effectiveProvider =
-    provider || process.env.AI_PROVIDER || (process.env.FIREWORKS_API_KEY ? 'api' : 'mock');
+    provider || process.env.AI_PROVIDER || (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY ? 'gemini' : process.env.FIREWORKS_API_KEY ? 'api' : 'mock');
   const sizesDisplay =
     requestedSizes && requestedSizes.length > 0
       ? requestedSizes.join(', ')

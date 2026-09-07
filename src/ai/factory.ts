@@ -6,6 +6,7 @@
 
 import type { IAiProvider, AiProviderConfig } from "./base_provider.js";
 import { DirectApiProvider } from "./direct_api_provider.js";
+import { GeminiProvider } from "./gemini_provider.js";
 import { MockAiProvider } from "./mock_provider.js";
 
 /**
@@ -24,10 +25,18 @@ export class AiProviderFactory {
     const rawType =
       providerType ||
       process.env.AI_PROVIDER ||
-      (process.env.FIREWORKS_API_KEY || process.env.AI_API_KEY ? "api" : "mock");
+      (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
+        ? "gemini"
+        : process.env.FIREWORKS_API_KEY || process.env.AI_API_KEY
+        ? "api"
+        : "mock");
     const type = rawType.trim().toLowerCase();
 
     switch (type) {
+      case "gemini":
+      case "google":
+        return new GeminiProvider(config);
+
       case "api":
       case "direct_api":
       case "fireworks":
@@ -51,7 +60,7 @@ export class AiProviderFactory {
 
       default:
         throw new Error(
-          `Unsupported AI provider: "${rawType}". Supported providers are: 'api' (Fireworks AI / DeepSeek) and 'mock' (Offline).`
+          `Unsupported AI provider: "${rawType}". Supported providers are: 'gemini' (Google Cloud), 'api' (Fireworks AI / DeepSeek) and 'mock' (Offline).`
         );
     }
   }

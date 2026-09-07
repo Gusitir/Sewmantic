@@ -12,11 +12,12 @@ import {
   PromptBuilder,
   MockAiProvider,
   DirectApiProvider,
+  GeminiProvider,
   AiProviderFactory,
   parsePatternDna,
 } from "../src/index.js";
 
-describe("AI Provider Subsystem & Factory (Fireworks AI & Direct API)", () => {
+describe("AI Provider Subsystem & Factory (Gemini / Fireworks AI & Direct API)", () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
@@ -276,6 +277,8 @@ describe("AI Provider Subsystem & Factory (Fireworks AI & Direct API)", () => {
 
     it("debe usar DirectApiProvider por defecto si FIREWORKS_API_KEY está configurada", () => {
       delete process.env.AI_PROVIDER;
+      delete process.env.GOOGLE_API_KEY;
+      delete process.env.GEMINI_API_KEY;
       process.env.FIREWORKS_API_KEY = "fw_secret_123";
       const provider = AiProviderFactory.create();
       expect(provider.getProviderName()).toBe("api");
@@ -772,6 +775,136 @@ Bloque base: menswear_torso_oversize.
       await expect(provider.generatePatternDna("Test")).rejects.toThrow(
         /HTTP 401 Unauthorized/
       );
+    });
+  });
+
+  describe("5. GeminiProvider (Google Cloud Gemini 3.8 Flash High)", () => {
+    it("debe instanciar GeminiProvider cuando se solicita 'gemini' o 'google'", () => {
+      const p1 = AiProviderFactory.create("gemini", { apiKey: "gc-test-key" });
+      expect(p1.getProviderName()).toBe("gemini");
+      expect(p1).toBeInstanceOf(GeminiProvider);
+
+      const p2 = AiProviderFactory.create("google", { apiKey: "gc-test-key" });
+      expect(p2.getProviderName()).toBe("gemini");
+      expect(p2).toBeInstanceOf(GeminiProvider);
+    });
+
+    it("debe usar GeminiProvider por defecto si GOOGLE_API_KEY está configurada", () => {
+      delete process.env.AI_PROVIDER;
+      process.env.GOOGLE_API_KEY = "gc_secret_123";
+      const provider = AiProviderFactory.create();
+      expect(provider.getProviderName()).toBe("gemini");
+      expect(provider).toBeInstanceOf(GeminiProvider);
+    });
+
+    it("debe leer GOOGLE_API_KEY, modelo gemini-3.8-flash y thinking HIGH por defecto", () => {
+      delete process.env.GEMINI_API_KEY;
+      delete process.env.AI_API_KEY;
+      delete process.env.GOOGLE_CLOUD_PROJECT;
+      delete process.env.GOOGLE_GENAI_USE_ENTERPRISE;
+      process.env.GOOGLE_API_KEY = "gc-key-999";
+      delete process.env.GEMINI_MODEL;
+      delete process.env.GEMINI_THINKING_LEVEL;
+
+      const provider = new GeminiProvider();
+      expect(provider.apiKey).toBe("gc-key-999");
+      expect(provider.model).toBe("gemini-3.8-flash");
+      expect(provider.thinkingLevel).toBe("high");
+      expect(provider.useEnterprise).toBe(true);
+      expect(provider.project).toBeUndefined();
+      expect(provider.getProviderName()).toBe("gemini");
+    });
+
+    it("debe respetar GEMINI_MODEL, GEMINI_THINKING_LEVEL, proyecto y ubicación de GCP", () => {
+      process.env.GOOGLE_API_KEY = "gc-key-1";
+      process.env.GEMINI_MODEL = "gemini-3.8-flash";
+      process.env.GEMINI_THINKING_LEVEL = "LOW";
+      process.env.GOOGLE_CLOUD_PROJECT = "mi-proyecto-123";
+      process.env.GOOGLE_CLOUD_LOCATION = "us-central1";
+
+      const provider = new GeminiProvider();
+      expect(provider.model).toBe("gemini-3.8-flash");
+      expect(provider.thinkingLevel).toBe("low");
+      expect(provider.project).toBe("mi-proyecto-123");
+      expect(provider.location).toBe("us-central1");
+    });
+
+    it("debe lanzar un error claro si no se proporciona API key de Google en modo Developer", async () => {
+      delete process.env.GOOGLE_API_KEY;
+      delete process.env.GEMINI_API_KEY;
+      delete process.env.AI_API_KEY;
+      process.env.GOOGLE_GENAI_USE_ENTERPRISE = "false";
+      const provider = new GeminiProvider({ apiKey: "" });
+
+      await expect(provider.generatePatternDna("Test")).rejects.toThrow(
+        /No se encontró GOOGLE_API_KEY/
+      );
+    });
+
+    it("debe permitir modo enterprise sin API key (autenticación ADC/OAuth)", async () => {
+      delete process.env.GOOGLE_API_KEY;
+      delete process.env.GEMINI_API_KEY;
+      process.env.GOOGLE_GENAI_USE_ENTERPRISE = "true";
+      process.env.GOOGLE_CLOUD_PROJECT = "proyecto-adc";
+
+      const provider = new GeminiProvider();
+      expect(provider.apiKey).toBe("");
+      expect(provider.useEnterprise).toBe(true);
+      expect(provider.project).toBe("proyecto-adc");
+    });
+
+    it("debe lanzar un error si enterprise está activo y falta GOOGLE_CLOUD_PROJECT", async () => {
+      process.env.GOOGLE_API_KEY = "gc-key-2";
+      process.env.GOOGLE_GENAI_USE_ENTERPRISE = "true";
+      delete process.env.GOOGLE_CLOUD_PROJECT;
+      const provider = new GeminiProvider();
+
+      await expect(provider.generatePatternDna("Test")).rejects.toThrow(
+        /falta GOOGLE_CLOUD_PROJECT/
+      );
+    });
+
+    it("debe retornar PatternDna parseado desde la respuesta de generateContent", async () => {
+      process.env.GOOGLE_API_KEY = "gc-key-3";
+      process.env.GOOGLE_CLOUD_PROJECT = "proyecto-test";
+      const provider = new GeminiProvider();
+
+      const geminiClient = (
+        provider as unknown as {
+          client: { models: { generateContent: (...args: unknown[]) => Promise<unknown> } };
+        }
+      ).client;
+      const generateSpy = vi
+        .spyOn(geminiClient.models, "generateContent")
+        .mockResolvedValue({
+          text: JSON.stringify({
+            concept_name: "minimal_crew_tshirt",
+            base_block: "tshirt_sloper",
+            ease: { chest_ease_mm: 30 },
+            modifications: {
+              neckline: { type: "crew" },
+            },
+          }),
+        } as never);
+
+      const result = await provider.generatePatternDna("Camiseta minimalista");
+
+      expect(result.concept_name).toBe("minimal_crew_tshirt");
+      expect(result.base_block).toBe("tshirt_sloper");
+      expect(generateSpy).toHaveBeenCalledTimes(1);
+
+      const params = generateSpy.mock.calls[0]?.[0] as {
+        model: string;
+        config: {
+          responseMimeType: string;
+          thinkingConfig: { thinkingLevel: string };
+          systemInstruction: string;
+        };
+      };
+      expect(params.model).toBe("gemini-3.8-flash");
+      expect(params.config.responseMimeType).toBe("application/json");
+      expect(params.config.thinkingConfig.thinkingLevel).toBe("HIGH");
+      expect(params.config.systemInstruction).toContain("Reglas");
     });
   });
 });
