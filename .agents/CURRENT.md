@@ -9,7 +9,7 @@ active_plan: PLAN_v1.5-phase13-conversational-harness.md (T-54..T-56 APTO + audi
 active_task: none
 last_verdict: APTO fase (auditoria independiente Phase 13)
 orchestration_model: GLM 5.3 Flash (Arquitecto/Ingeniero, opencode); Obrero: deepseek-v4-flash-0731
-backup: private GitHub + Google Drive bundle/snapshot (artefactos v2/v3/v4 listos, subida humana pendiente)
+backup: private GitHub + Google Drive VERIFIED (4 savepoints: gemini-oauth, phase11, phase12, phase13 — SHA-256 íntegros en F:\Mi unidad\backups)
 ```
 
 ## Orchestration Roles (agents-workflow v3)
@@ -22,7 +22,6 @@ backup: private GitHub + Google Drive bundle/snapshot (artefactos v2/v3/v4 listo
 ## Next action
 
 1. **Humano:** Aprobar la apertura de **Phase 14 — Pattern Knowledge RAG** (reglas textiles locales con retrieval filtrado y trazable; corpus versionado) con nuevo plan del Arquitecto. STOP de Phase 13 cumplido.
-2. **Humano:** Subir TODOS los artefactos de Drive a `Mi unidad/backups/` en `C:\Users\OnlyH\AppData\Local\Temp\opencode\backups\`: gemini-oauth, phase11, phase12 y phase13 (bundle+zip de cada uno).
 
 ## Blockers
 
@@ -39,7 +38,7 @@ backup: private GitHub + Google Drive bundle/snapshot (artefactos v2/v3/v4 listo
 - **T-50 APTO:** repair pass determinista en `sanitizeAndParseLlmJson` (clamp a limites Zod, log `[schema-repair]`). Commit `9d19248`.
 - **T-49 APTO:** blueprint ancla libre `free`/`libre`/`creative` + opcion Web Studio. Commits `3b6e09a`/`8e41cb1`.
 - **Modelo de análisis: Gemini 3.8 Flash High** (`721bd63`): OAuth/ADC, `GOOGLE_GENAI_USE_ENTERPRISE=true`, `GOOGLE_CLOUD_LOCATION=global`. Créditos AI Plus vía billing GCP.
-- **Savepoints publicados:** v1 gemini-oauth, phase11, phase12, phase13 — tags publicados; bundles/ZIPS para Drive pendientes de subida humana.
+- **Savepoints publicados:** v1 gemini-oauth, phase11, phase12, phase13 — tags publicados y **respaldos verificados en Google Drive** (`F:\Mi unidad\backups`, SHA-256 íntegros).
 - **North Star v1 aprobado:** Patronista Conversacional (Phase 13 ✅), RAG (14), Migración de familias (15), Workshop (16), Product Readiness (17).
 - **Módulos Paramétricos Extendidos:** Cuellos técnicos, bolsillos cargo 3D con fuelle y solapa, blueprint ancla `utility_vest`, moldería industrial y despiece 3D WebGL.
 

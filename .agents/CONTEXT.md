@@ -322,3 +322,9 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Hallazgos menores sin bloqueo: preflight de resolucion de capacidades en el loop (un tool call alucinado pasa al executor y falla con historial honesto), `currentDoc` redundante en el payload de sesion, `restoreRevisionManager` sin recorte hasta proximo commit, trazabilidad de desviaciones del plan (D2 no numerada). Recomendaciones registradas para Phase 14.
 - Savepoint `savepoint-v1-phase13-conversational-harness-20260907` creado (local/remoto/artefactos Drive).
 - **STOP del plan: antes de Phase 14 (Pattern Knowledge RAG) se requiere nueva autorizacion humana.**
+
+## 2026-09-07 - Respaldo de savepoints en Google Drive verificado
+
+- Descubierto el montaje local de Google Drive for Desktop en `F:\` (etiqueta "Google Drive"); los savepoints anteriores (2026-08-23) ya residian en `F:\Mi unidad\backups\`.
+- Copiados y verificados por SHA-256 los 8 artefactos: savepoints gemini-oauth, phase11, phase12 y phase13 (bundle de historia completa + ZIP snapshot de 159/167/180/190 entradas). Todos HASH OK en Drive.
+- La accion humana de subida manual queda cerrada; futuros savepoints se copian directo a `F:\Mi unidad\backups\`.
