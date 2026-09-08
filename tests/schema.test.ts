@@ -752,4 +752,144 @@ Espero que este patrón sea perfecto para tu confección. ¡Avisa si requieres a
       ).toThrow(/Pocket height must be at least 30mm/);
     });
   });
+
+  describe("6. Enum Recovery en Reparación (T-58: sinónimos closure + deletion-trial)", () => {
+    const enumRecoveryBaseDna = {
+      concept_name: "enum_recovery_jacket",
+      base_block: "menswear_torso",
+      ease: {
+        chest_ease_mm: 100,
+      },
+      modifications: {
+        closure: {
+          type: "wrap",
+          overlap_mm: 40,
+        },
+      },
+    };
+
+    it("normaliza closure.type sinónimo 'wrap' -> 'ties' y el ADN parsea", () => {
+      const raw = JSON.stringify(enumRecoveryBaseDna);
+      const result = sanitizeAndParseLlmJson(raw);
+      expect(result.concept_name).toBe("enum_recovery_jacket");
+      expect(result.modifications.closure?.type).toBe("ties");
+      expect(result.modifications.closure?.overlap_mm).toBe(40);
+    });
+
+    it("normaliza closure.type 'PULL_OVER' -> 'none' (case/underscore-insensitive)", () => {
+      const raw = JSON.stringify({
+        ...enumRecoveryBaseDna,
+        modifications: {
+          closure: { type: "PULL_OVER" },
+        },
+      });
+      const result = sanitizeAndParseLlmJson(raw);
+      expect(result.modifications.closure?.type).toBe("none");
+    });
+
+    it("normaliza closure.type 'ZIP' -> 'zipper'", () => {
+      const raw = JSON.stringify({
+        ...enumRecoveryBaseDna,
+        modifications: {
+          closure: { type: "ZIP", zip_length_mm: 600 },
+        },
+      });
+      const result = sanitizeAndParseLlmJson(raw);
+      expect(result.modifications.closure?.type).toBe("zipper");
+      expect(result.modifications.closure?.zip_length_mm).toBe(600);
+    });
+
+    it("emite log [schema-repair] trazable del sinónimo normalizado", () => {
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      try {
+        const raw = JSON.stringify(enumRecoveryBaseDna);
+        sanitizeAndParseLlmJson(raw);
+        expect(logSpy).toHaveBeenCalledTimes(1);
+        const logged = logSpy.mock.calls[0][0] as string;
+        expect(logged).toContain(
+          '[schema-repair] modifications.closure.type: "wrap" -> "ties"'
+        );
+      } finally {
+        logSpy.mockRestore();
+      }
+    });
+
+    it("elimina la modificación completa cuando el enum es desconocido y sin sinónimo (closure)", () => {
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      try {
+        const raw = JSON.stringify({
+          ...enumRecoveryBaseDna,
+          modifications: {
+            closure: { type: "velcro", overlap_mm: 30 },
+            hem: { type: "straight" },
+          },
+        });
+        const result = sanitizeAndParseLlmJson(raw);
+        expect(result.modifications.closure).toBeUndefined();
+        expect(result.modifications.hem?.type).toBe("straight");
+        const logged = logSpy.mock.calls[0][0] as string;
+        expect(logged).toContain(
+          "[schema-repair] modifications.closure: removed (unmapped enum value)"
+        );
+      } finally {
+        logSpy.mockRestore();
+      }
+    });
+
+    it("deletion-trial anidado: neckline.type desconocido elimina neckline completa y el ADN valida", () => {
+      // Documentación de esquema real: NecklineModSchema.type es REQUERIDO (no opcional),
+      // por lo que el Intento A (eliminar solo neckline.type) deja neckline: {} que falla;
+      // el Intento B elimina progresivamente el padre `neckline`, que es .optional() en
+      // ModificationTreeSchema, dejando un ADN válido.
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      try {
+        const raw = JSON.stringify({
+          ...enumRecoveryBaseDna,
+          modifications: {
+            closure: { type: "buttons" },
+            neckline: {
+              type: "laser_collar",
+              depth_mm: 80,
+            },
+          },
+        });
+        const result = sanitizeAndParseLlmJson(raw);
+        expect(result.modifications.neckline).toBeUndefined();
+        expect(result.modifications.closure?.type).toBe("buttons");
+        const logged = logSpy.mock.calls[0][0] as string;
+        expect(logged).toContain(
+          "[schema-repair] modifications.neckline: removed (unmapped enum value)"
+        );
+      } finally {
+        logSpy.mockRestore();
+      }
+    });
+
+    it("combina clamp numérico de T-50 y enum recovery en el mismo ADN", () => {
+      const raw = JSON.stringify({
+        ...enumRecoveryBaseDna,
+        modifications: {
+          closure: { type: "knotted", overlap_mm: 40 },
+          pocket: {
+            type: "patch",
+            height_mm: 10,
+          },
+        },
+      });
+      const result = sanitizeAndParseLlmJson(raw);
+      expect(result.modifications.closure?.type).toBe("ties");
+      expect(result.modifications.pocket?.height_mm).toBe(30);
+    });
+
+    it("parsePatternDna permanece estricto: lanza con closure.type sinónimo sin reparar", () => {
+      expect(() =>
+        parsePatternDna({
+          ...enumRecoveryBaseDna,
+          modifications: {
+            closure: { type: "wrap" },
+          },
+        })
+      ).toThrow(/Invalid closure type/);
+    });
+  });
 });

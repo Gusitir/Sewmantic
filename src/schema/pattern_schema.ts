@@ -836,10 +836,130 @@ function clampNumberAtPath(
   return { original: value, value: rounded };
 }
 
+/** Path canónico del tipo de cierre dentro del árbol de modificaciones */
+const CLOSURE_TYPE_PATH = ["modifications", "closure", "type"] as const;
+
+/**
+ * Mapa de sinónimos frecuentes alucinados por LLMs -> ClosureType válido.
+ * Fuente de verdad de valores válidos: ClosureTypeSchema (NO modificar).
+ */
+const CLOSURE_TYPE_SYNONYMS: Record<string, string> = {
+  wrap: "ties",
+  wrapped: "ties",
+  wrap_around: "ties",
+  pullover: "none",
+  pull_over: "none",
+  slip_on: "none",
+  slipon: "none",
+  zip: "zipper",
+  zippers: "zipper",
+  zipper_front: "zipper",
+  button: "buttons",
+  buttons_front: "buttons",
+  buttoned: "buttons",
+  snap: "snaps",
+  snaps_front: "snaps",
+  lace: "ties",
+  lace_up: "ties",
+  lacing: "ties",
+  knot: "ties",
+  knotted: "ties",
+  hook: "custom",
+  hooks: "custom",
+  hook_and_eye: "custom",
+  belt: "custom",
+  buckled: "custom",
+};
+
+/**
+ * Normaliza modifications.closure.type a partir de sinónimos frecuentes de LLM
+ * (case / underscore / guion-insensitive) antes de la primera pasada de validación.
+ * Registra la reparación en `repairs` para el log consolidado trazable.
+ */
+function normalizeClosureTypeSynonyms(root: unknown, repairs: string[]): void {
+  let container: unknown = root;
+  for (let i = 0; i < CLOSURE_TYPE_PATH.length - 1; i++) {
+    if (container === null || typeof container !== "object") return;
+    container = (container as Record<string, unknown>)[CLOSURE_TYPE_PATH[i]];
+  }
+  if (container === null || typeof container !== "object") return;
+  const record = container as Record<string, unknown>;
+  const value = record["type"];
+  if (typeof value !== "string") return;
+  const normalized = value.trim().toLowerCase().replace(/[-\s]/g, "_");
+  const mapped = CLOSURE_TYPE_SYNONYMS[normalized];
+  if (mapped === undefined) return;
+  record["type"] = mapped;
+  repairs.push(`${CLOSURE_TYPE_PATH.join(".")}: "${value}" -> "${mapped}"`);
+}
+
+/**
+ * Elimina el valor ubicado en `path` retrocediendo `levelsUp` niveles
+ * (0 = el valor en el path, 1 = su padre, 2 = su abuelo, ...).
+ * Navega objetos y arrays; en arrays elimina por índice (splice).
+ * Retorna { removed: true } si se eliminó algo, o null si el path no es navegable.
+ */
+function deleteValueAtPath(
+  root: unknown,
+  path: (string | number)[],
+  levelsUp: number
+): { removed: true } | null {
+  if (path.length === 0) return null;
+  const target = levelsUp > 0 ? path.slice(0, path.length - levelsUp) : path;
+  if (target.length === 0) return null;
+  let container: unknown = root;
+  for (let i = 0; i < target.length - 1; i++) {
+    if (container === null || typeof container !== "object") return null;
+    const next = (container as Record<string | number, unknown>)[target[i]];
+    if (next === null || typeof next !== "object") return null;
+    container = next;
+  }
+  const record = container as Record<string | number, unknown>;
+  const lastKey = target[target.length - 1];
+  if (Array.isArray(record)) {
+    if (typeof lastKey !== "number" || lastKey < 0 || lastKey >= record.length) {
+      return null;
+    }
+    record.splice(lastKey, 1);
+    return { removed: true };
+  }
+  if (!(lastKey in record)) return null;
+  delete record[lastKey];
+  return { removed: true };
+}
+
+/**
+ * Deletion-trial para issues `invalid_enum_value` sin sinónimo mapeado:
+ * Intento A: elimina el valor en `issuePath` y re-valida.
+ * Intento B: si no valida, elimina progresivamente hacia arriba (padre, abuelo, ...)
+ * re-validando en cada paso mientras quede path. Las modificaciones son `.optional()`,
+ * por lo que eliminar el objeto completo deja un ADN válido.
+ * Registra en `repairs` únicamente el borrado que hizo validar el ADN.
+ */
+function tryEnumDeletionRecovery(
+  current: unknown,
+  issuePath: (string | number)[],
+  repairs: string[]
+): boolean {
+  for (let levelsUp = 0; levelsUp < issuePath.length; levelsUp++) {
+    const outcome = deleteValueAtPath(current, issuePath, levelsUp);
+    if (!outcome) continue;
+    const recheck = PatternDnaSchema.safeParse(current);
+    if (recheck.success) {
+      const targetPath = issuePath.slice(0, issuePath.length - levelsUp);
+      repairs.push(`${targetPath.join(".")}: removed (unmapped enum value)`);
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Desinfecta texto crudo de LLM, extrae el JSON y valida la estructura de ADN Paramétrico.
  * Si el LLM devuelve valores numéricos fuera de los límites del esquema, aplica hasta
  * 3 pasadas de reparación determinista (clamp a los límites Zod) con log trazable.
+ * Si devuelve valores de enum alucinados: normaliza sinónimos de closure.type y, para
+ * el resto de `invalid_enum_value`, aplica deletion-trial progresivo hacia arriba.
  * @param rawOutput Respuesta de LLM con posible markdown o texto envolvente
  * @returns PatternDna tipado y validado
  */
@@ -856,8 +976,10 @@ export function sanitizeAndParseLlmJson(rawOutput: string): PatternDna {
     );
   }
 
-  const MAX_REPAIR_PASSES = 3;
   const repairs: string[] = [];
+  normalizeClosureTypeSynonyms(parsed, repairs);
+
+  const MAX_REPAIR_PASSES = 3;
   let current: unknown = parsed;
   let lastError: z.ZodError | undefined;
 
@@ -884,6 +1006,18 @@ export function sanitizeAndParseLlmJson(rawOutput: string): PatternDna {
         `${issue.path.join(".")}: ${clamped.original} -> ${clamped.value}`
       );
       repairedInPass++;
+    }
+
+    for (const issue of result.error.issues) {
+      if (issue.code !== "invalid_enum_value") continue;
+      const recovered = tryEnumDeletionRecovery(current, issue.path, repairs);
+      if (!recovered) continue;
+      repairedInPass++;
+      const recheck = PatternDnaSchema.safeParse(current);
+      if (recheck.success) {
+        console.log(repairs.map((r) => `[schema-repair] ${r}`).join("\n"));
+        return recheck.data as PatternDna;
+      }
     }
 
     if (repairedInPass === 0) {
