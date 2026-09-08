@@ -413,15 +413,26 @@ export async function generatePatternPipeline(
   );
   await fs.promises.writeFile(techpackJsonPath, techpackJsonContent, 'utf-8');
 
-  // 9. Modelo 3D glTF 2.0 (.glb)
-  const glbPath = path.join(conceptOutputDir, `${conceptSlug}.glb`);
-  await generate3DGarmentModel({
-    dna,
-    parts: basePatternResult.parts,
-    concept_name: conceptSlug,
-    size: primarySize,
-    outputPath: glbPath,
-  });
+  // 9. Modelo 3D glTF 2.0 (.glb) — Degradación elegante (T-61):
+  // un fallo de triangulación/mesh 3D NO debe cancelar los entregables 2D ya generados.
+  let glbPath: string | undefined = path.join(conceptOutputDir, `${conceptSlug}.glb`);
+  try {
+    await generate3DGarmentModel({
+      dna,
+      parts: basePatternResult.parts,
+      concept_name: conceptSlug,
+      size: primarySize,
+      outputPath: glbPath,
+    });
+  } catch (error3d) {
+    const shortMessage = error3d instanceof Error ? error3d.message : String(error3d);
+    console.warn(
+      '[3D EXPORT] Modelo 3D omitido: fallo de triangulación/mesh (' +
+        shortMessage +
+        '). Los entregables 2D se generaron correctamente.'
+    );
+    glbPath = undefined;
+  }
 
   // ==========================================
   // 9. EMPAQUETADO COMERCIAL ETSY (OPCIONAL)
@@ -443,7 +454,7 @@ export async function generatePatternPipeline(
     techpackMd: techpackMdPath,
     dnaJson: dnaJsonPath,
     techpackJson: techpackJsonPath,
-    glb: glbPath,
+    ...(glbPath ? { glb: glbPath } : {}),
     ...(bundleResult
       ? {
           etsyBundleZip: bundleResult.zipPath,

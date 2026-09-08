@@ -6,7 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import {
   createEtsyBundle,
   generateEtsyListingMetadata,
@@ -21,6 +21,17 @@ import {
   PatternDna,
   initCli,
 } from '../src/index.js';
+import { generate3DGarmentModel } from '../src/engine/blender_bridge.js';
+
+// T-61: generate3DGarmentModel se envuelve en un spy transparente (implementación real
+// por defecto) para poder simular fallos de triangulación 3D en el pipeline.
+vi.mock('../src/engine/blender_bridge.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/engine/blender_bridge.js')>();
+  return {
+    ...actual,
+    generate3DGarmentModel: vi.fn(actual.generate3DGarmentModel),
+  };
+});
 
 const TEST_BUNDLER_DIR = path.resolve('tests/output_bundler_test');
 
@@ -386,5 +397,69 @@ describe('Pipeline Integration con flag --bundle', () => {
     expect(partialBundle.bundledFiles).toContain('04_Vector_Layers_SVG/partial_concept_continuous.svg');
     expect(partialBundle.bundledFiles).toContain('README_Etsy_Printing_Instructions.pdf');
     expect(fs.existsSync(partialBundle.zipPath)).toBe(true);
+  });
+});
+
+describe('Pipeline Graceful 3D Degradation (T-61)', () => {
+  it('omite el modelo 3D sin lanzar error cuando la triangulación/mesh 3D falla, preservando los entregables 2D', async () => {
+    const glbMock = vi.mocked(generate3DGarmentModel);
+    const callsBefore = glbMock.mock.calls.length;
+    glbMock.mockRejectedValueOnce(
+      new Error('Unable to triangulate polygon with ear clipping')
+    );
+
+    const degradedDir = path.join(TEST_BUNDLER_DIR, 'e2e_3d_degradation');
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const result = await generatePatternPipeline({
+        prompt: 'Straw Pirate Denim Shorts con bolsillos cargo',
+        provider: 'mock',
+        outputDir: degradedDir,
+        sizes: ['M'],
+        wasteFactor: 0.15,
+      });
+
+      expect(result.success).toBe(true);
+
+      // glb queda sin asignar (ausente del objeto files)
+      expect(result.files.glb).toBeUndefined();
+      expect('glb' in result.files).toBe(false);
+
+      // Los entregables 2D se generaron correctamente
+      expect(fs.existsSync(result.files.tiledA4Pdf)).toBe(true);
+      expect(fs.existsSync(result.files.tiledLetterPdf)).toBe(true);
+      expect(fs.existsSync(result.files.plotterA0Pdf)).toBe(true);
+      expect(fs.existsSync(result.files.continuousSvg)).toBe(true);
+      expect(fs.existsSync(result.files.techpackPdf)).toBe(true);
+      expect(fs.existsSync(result.files.techpackMd)).toBe(true);
+      expect(fs.existsSync(result.files.dnaJson)).toBe(true);
+      expect(fs.existsSync(result.files.techpackJson)).toBe(true);
+
+      // Advertencia estructurada de degradación elegante
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[3D EXPORT] Modelo 3D omitido: fallo de triangulación/mesh')
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Los entregables 2D se generaron correctamente.')
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
+
+    expect(glbMock.mock.calls.length).toBe(callsBefore + 1);
+  });
+
+  it('incluye el glb cuando el modelo 3D se genera sin fallo (caso sin degradación)', async () => {
+    const result = await generatePatternPipeline({
+      prompt: 'Oversized Hoodie Streetwear con bolsillo canguro',
+      provider: 'mock',
+      outputDir: path.join(TEST_BUNDLER_DIR, 'e2e_3d_ok'),
+      sizes: ['M'],
+      wasteFactor: 0.15,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.files.glb).toBeDefined();
+    expect(fs.existsSync(result.files.glb!)).toBe(true);
   });
 });

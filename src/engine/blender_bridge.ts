@@ -14,7 +14,7 @@ import path from 'node:path';
 import { execFile, execSync } from 'node:child_process';
 import { promisify } from 'node:util';
 import { PatternDna, FabricSpec, StandardSize } from '../types/pattern.js';
-import { PatternPart, Point2D, computeBounds } from './geometry.js';
+import { PatternPart, Point2D, computeBounds, distance } from './geometry.js';
 import { ModifiedPatternResult, modifyPattern } from './modifier.js';
 import { triangulatePolygon } from './triangulator.js';
 
@@ -647,6 +647,73 @@ export function compute3DBounds(positions: number[]): {
 }
 
 /**
+ * Limpieza de rescate previa a la triangulación (T-61): elimina vértices degenerados
+ * que bloquean el ear clipping cuando el LLM produce combinaciones de modificaciones
+ * con contornos defectuosos.
+ *
+ * 1. Elimina puntos duplicados consecutivos (distancia <= toleranceMm), incluido el
+ *    cierre del anillo último↔primero.
+ * 2. Elimina puntos colineales casi exactos (distancia del punto a la recta entre
+ *    sus vecinos <= toleranceMm).
+ * 3. Si el resultado degenera a menos de 3 puntos, retorna el array original para
+ *    que la triangulación falle de forma controlada y se maneje aguas arriba.
+ */
+function cleanupPolygonForTriangulation(points: Point2D[], toleranceMm: number = 0.01): Point2D[] {
+  if (!points || points.length < 3) {
+    return points;
+  }
+
+  // 1. Eliminar puntos duplicados consecutivos (incluido el cierre último↔primero)
+  const deduped: Point2D[] = [];
+  for (let i = 0; i < points.length; i++) {
+    const pt = points[i];
+    const prev = deduped[deduped.length - 1];
+    if (!prev || distance(prev, pt) > toleranceMm) {
+      deduped.push(pt);
+    }
+  }
+  if (deduped.length > 1 && distance(deduped[0], deduped[deduped.length - 1]) <= toleranceMm) {
+    deduped.pop();
+  }
+
+  // 2. Eliminar puntos colineales casi exactos (distancia del punto a la recta entre vecinos)
+  let cleaned = deduped;
+  let changed = true;
+  while (changed && cleaned.length > 3) {
+    changed = false;
+    const n = cleaned.length;
+    const kept: Point2D[] = [];
+    let removedInPass = 0;
+    for (let i = 0; i < n; i++) {
+      const prev = cleaned[(i - 1 + n) % n];
+      const curr = cleaned[i];
+      const next = cleaned[(i + 1) % n];
+      const baseLength = distance(prev, next);
+      let isNearlyCollinear = false;
+      if (baseLength > 1e-12) {
+        const cross =
+          (next.x - prev.x) * (curr.y - prev.y) - (next.y - prev.y) * (curr.x - prev.x);
+        isNearlyCollinear = Math.abs(cross) / baseLength <= toleranceMm;
+      }
+      // Conservar siempre al menos 3 vértices
+      if (isNearlyCollinear && n - removedInPass > 3) {
+        removedInPass++;
+        changed = true;
+        continue;
+      }
+      kept.push(curr);
+    }
+    cleaned = kept;
+  }
+
+  // 3. Si quedan < 3 puntos, retornar el array original
+  if (cleaned.length < 3) {
+    return points;
+  }
+  return cleaned;
+}
+
+/**
  * Genera la malla 3D anatómica envolvente directa a partir de piezas 2D reales de moldería FreeSewing
  * (True-to-Pattern Meshing) mediante triangulación determinista y proyección espacial paramétrica.
  * Soporta conjuntos coordinados de 2 piezas (Top + Bottom) y prendas multi-material.
@@ -782,8 +849,22 @@ export function generateTrueToPatternMesh(
     const W_half = Math.max(part.bounds?.width || width_mm, 100) / 1000;
     const H_m = height_mm / 1000;
 
-    // 2. Triangulación 2D con Ear Clipping
-    let baseIndices = triangulatePolygon(outline);
+    // 2. Triangulación 2D con Ear Clipping (con limpieza de rescate + 1 reintento, T-61)
+    let baseIndices: number[];
+    try {
+      baseIndices = triangulatePolygon(outline);
+    } catch (triangulationError) {
+      const cleanedOutline = cleanupPolygonForTriangulation(outline);
+      try {
+        baseIndices = triangulatePolygon(cleanedOutline);
+        // El polígono limpio reemplaza al original para preservar la correspondencia
+        // entre los índices triangulados y los vértices proyectados aguas abajo.
+        outline = cleanedOutline;
+      } catch {
+        // Reintento fallido: propagar el error original (comportamiento previo)
+        throw triangulationError;
+      }
+    }
     if (!baseIndices || baseIndices.length < 3) {
       baseIndices = [];
       for (let f = 1; f < outline.length - 1; f++) {

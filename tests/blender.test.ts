@@ -24,6 +24,10 @@ import {
   Garment3DOptions,
   Garment3DResult,
   PatternDna,
+  PatternPart,
+  Point2D,
+  ModifiedPatternResult,
+  triangulatePolygon,
   modifyPattern,
   MOCK_PRESETS,
 } from '../src/index.js';
@@ -1204,6 +1208,106 @@ describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
       const collarStand = collars.find((collar) => collar.name === 'collar_stand')!;
       const collarFall = collars.find((collar) => collar.name === 'collar_fall')!;
       expect(collarFall.bounds.minY).toBeCloseTo(collarStand.bounds.maxY, 8);
+    });
+  });
+
+  // =========================================================================
+  // 9. Limpieza de Rescate Pre-Triangulación (T-61)
+  //    El LLM produce combinaciones de modificaciones con siluetas que contienen
+  //    puntos duplicados consecutivos y colineales que bloquean el ear clipping.
+  // =========================================================================
+  describe('9. Polygon Cleanup Pre-pass for Ear Clipping (T-61)', () => {
+    const rescueDna: PatternDna = {
+      concept_name: 't61_polygon_cleanup_rescue',
+      garment_category: 'top',
+      base_block: 'menswear_torso',
+      ease: { chest_ease_mm: 60 },
+      modifications: {},
+    };
+
+    const buildPart = (
+      name: string,
+      outline: Point2D[],
+      width: number,
+      height: number
+    ): PatternPart => ({
+      name,
+      label: name,
+      cutCount: 1,
+      onFold: true,
+      points: {},
+      pathD: '',
+      outline,
+      bounds: { minX: 0, minY: 0, maxX: width, maxY: height, width, height },
+      width_mm: width,
+      height_mm: height,
+      area_mm2: width * height,
+      grainline: {
+        start: { x: width / 2, y: 0 },
+        end: { x: width / 2, y: height },
+        label: 'Grainline',
+      },
+      notches: [],
+    });
+
+    it('should rescue a fully collinear degenerate ring: raw ear clipping throws, mesh generation succeeds after cleanup retry', () => {
+      // Contorno degenerado determinista: todos los vértices exactamente colineales
+      // (Y=0), con punto duplicado consecutivo exacto y cierre de anillo duplicado.
+      // Sin orejas disponibles, triangulatePolygon lanza el error de producción.
+      const degenerateRing: Point2D[] = [
+        { x: 0, y: 0 },
+        { x: 80, y: 0 },
+        { x: 160, y: 0 },
+        { x: 160, y: 0 }, // punto duplicado consecutivo exacto
+        { x: 240, y: 0 },
+        { x: 320, y: 0 },
+        { x: 400, y: 0 },
+        { x: 0, y: 0 }, // cierre de anillo duplicado
+      ];
+
+      // 1. Evidencia del fallo: la triangulación directa lanza
+      expect(() => triangulatePolygon(degenerateRing)).toThrowError(
+        /Unable to triangulate polygon with ear clipping/
+      );
+
+      // 2. La malla 3D se genera gracias a la limpieza de rescate + 1 reintento
+      const pattern = {
+        parts: { front_torso: buildPart('front_torso', degenerateRing, 400, 0) },
+      } as ModifiedPatternResult;
+
+      const mesh = generateTrueToPatternMesh(pattern, rescueDna);
+      expect(mesh.vertexCount).toBeGreaterThan(0);
+      expect(mesh.triangleCount).toBeGreaterThan(0);
+      expect(mesh.positions.length).toBe(mesh.vertexCount * 3);
+      expect(mesh.positions.every(Number.isFinite)).toBe(true);
+      expect(mesh.indices.every((index) => index >= 0 && index < mesh.vertexCount)).toBe(true);
+    });
+
+    it('should generate the 3D mesh for a realistic panel silhouette with consecutive duplicate and collinear defect points', () => {
+      // Panel delantero realista (escote en V) con defectos típicos de salida LLM:
+      // un punto duplicado consecutivo exacto y un vértice colineal en el cierre.
+      const defectivePanel: Point2D[] = [
+        { x: 0, y: 650 },
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+        { x: 100, y: 0 }, // punto duplicado consecutivo exacto
+        { x: 250, y: 0 },
+        { x: 250, y: 325 }, // punto colineal exacto sobre el lateral derecho
+        { x: 250, y: 650 },
+        { x: 125, y: 500 }, // vértice del escote en V
+        { x: 0, y: 650 }, // cierre de anillo duplicado
+      ];
+
+      const pattern = {
+        parts: { front_torso: buildPart('front_torso', defectivePanel, 250, 650) },
+      } as ModifiedPatternResult;
+
+      const mesh = generateTrueToPatternMesh(pattern, rescueDna);
+      expect(mesh.vertexCount).toBeGreaterThan(0);
+      expect(mesh.triangleCount).toBeGreaterThan(0);
+      expect(mesh.positions.every(Number.isFinite)).toBe(true);
+      expect(mesh.uvs.every(Number.isFinite)).toBe(true);
+      expect(mesh.indices.every((index) => index >= 0 && index < mesh.vertexCount)).toBe(true);
     });
   });
 });
