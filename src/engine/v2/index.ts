@@ -69,6 +69,18 @@ export {
 } from './operators.js';
 
 export {
+  CapabilityRegistry,
+  CapabilityRegistryError,
+  createCapabilityRegistry,
+  type CapabilityApproval,
+  type CapabilityEntry,
+  type CapabilityErrorCode,
+  type CapabilityErrorMetadata,
+  type CapabilityOperator,
+  type CapabilityStatus,
+} from './registry.js';
+
+export {
   SHADOW_ADAPTER_FAILURE_ID,
   legacyPartsToSemanticDocument,
 } from './adapters/legacy-shadow.js';
