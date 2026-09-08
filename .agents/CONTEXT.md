@@ -254,3 +254,11 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Segundo fallo en vivo del mismo root cause (`pocket.height_mm < 30` rechazaba el ADN completo). El Humano aprobo la opcion "Clamp de reparacion (Recomendado)" — decision `D-2026-09-07-REPAIR`, plan `PLAN_v1.3-schema-repair.md`.
 - Entrega T-50 `9d19248`: `sanitizeAndParseLlmJson` aplica hasta 3 pasadas de `safeParse` con clamp determinista de issues `too_small`/`too_big` numericos a los limites Zod (`clampNumberAtPath`, precision mm 0.001) y log trazable `[schema-repair] path: original -> limite`. Errores no reparables propagan el ZodError original. `parsePatternDna` permanece estricto (ADN manual/directDna sin reparacion).
 - Auditoria del Ingeniero: APTO. Verificacion propia de enums/rangos y gates frescos: build PASS y suite 23/23 con **631/631 tests** (+6 de schema-repair). Dirty state intacto.
+
+## 2026-09-07 - T-47 Constraints & Atomic Operators APTO (Phase 11)
+
+- Reanudacion en orden de la ruta: el Humano ordeno continuar con T-47 (READY desde T-46).
+- Entrega del Obrero `8618951` (1 ciclo, sin correcciones): `src/engine/v2/constraints.ts` (`resolveStitchPair` con matching por longitud de arco y tiling ordenado; `evaluateConstraints` con diagnostics tipados `SEAM_DELTA_LIMIT` [umbral 3mm parametrizable], `ORIENTATION_INCOMPATIBLE` [tangentes anti-paralelas], `BROKEN_REFERENCE`, `NON_POSITIVE_LENGTH`) y `src/engine/v2/operators.ts` (`splitEdge` linea/arco conservando longitud, `insertDart` con +2*depth exacto, `cut` con actualizacion de interfaces; operadores puros con rechazo atomico y estado byte-identico verificado via `serializeDocument`). Exports v2 ampliados. 19 tests nuevos.
+- Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 19/19, spike T-42 18/18, build PASS, suite **24/24 con 650/650 tests**.
+- Nota de scope del kernel MVP: dart/cut solo edges lineales; splitEdge linea+arco; beziers se rechazan atomicamente (extension natural futura: de Casteljau).
+- T-48 (Legacy Adapter & Shadow Mode) queda READY: ultima tarea de Phase 11.
