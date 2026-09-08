@@ -262,3 +262,11 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 19/19, spike T-42 18/18, build PASS, suite **24/24 con 650/650 tests**.
 - Nota de scope del kernel MVP: dart/cut solo edges lineales; splitEdge linea+arco; beziers se rechazan atomicamente (extension natural futura: de Casteljau).
 - T-48 (Legacy Adapter & Shadow Mode) queda READY: ultima tarea de Phase 11.
+
+## 2026-09-07 - T-48 APTO y cierre tecnico de Phase 11
+
+- Entrega del Obrero `d6279fa` (1 ciclo): `adapters/legacy-shadow.ts` (PatternPart -> PatternDocument: panel + 2 componentes por pieza/talla, contorno a polilinea LineCurve con loop cerrado, grainline/notches preservados en metadatos, ids estables `panel-<name>-<size>`), `shadow.ts` (`runSemanticShadow`: adapter + validate + evaluateConstraints en memoria, errores v2 capturados como diagnosticos `SHADOW_ADAPTER_FAILURE` no bloqueantes), y UN seam acotado en `src/pipeline.ts` tras `modifyPatternMultiSize` con opt-in `SEMANTIC_SHADOW=on` (default OFF, try/catch, cero writes, cero reasignaciones).
+- Tests: 7 nuevos incluyendo integracion OFF vs ON con buffers byte-identicos (reloj fijado para neutralizar timestamps del techpack) y medicion informativa de overhead.
+- Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 7/7, build PASS, suite **25/25 con 657/657 tests OFF y 657/657 con SEMANTIC_SHADOW=on**.
+- Cierre tecnico de Phase 11: las 4 tareas (T-45 a T-48) APTO. APPCORE actualizado con la superficie del kernel v2 y el shadow mode. Savepoint Phase 11 creado (`savepoint-v1-phase11-semantic-kernel-20260907`).
+- STOP del plan: antes de Phase 12 (Operators, Registry & Recipe DSL) se requiere nueva autorizacion humana.

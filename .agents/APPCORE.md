@@ -1,6 +1,12 @@
 # APPCORE - Generador Paramétrico de Patrones IA
 
-Verified: 2026-08-23 at Phase 8.0 Milestone Closure (commit 14802bf, 548 tests PASS across 21 suites)
+Verified: 2026-09-07 at Phase 11 Technical Closure (commit d6279fa, 657 tests PASS across 25 suites)
+
+## Semantic Pattern Kernel v2 (integrado en shadow mode, T-45 a T-48)
+
+- **Superficie pública:** `src/engine/v2/` — `contracts.ts` (Vertex, 4 curvas tipadas, Edge, EdgeSequence, Panel, Component, Interface, StitchPair, ConstraintDiagnostic, PatternDocument con type guards), `serialization.ts` (validate/serialize/deserialize versionados), `geometry/` (adapter Flatten.js, sampler de arco, offset miter-only propio), `constraints.ts` (`resolveStitchPair`, `evaluateConstraints` con diagnostics tipados: SEAM_DELTA_LIMIT 3mm, ORIENTATION_INCOMPATIBLE, BROKEN_REFERENCE, NON_POSITIVE_LENGTH), `operators.ts` (`splitEdge`/`insertDart`/`cut` puros y atómicos, rechazo con estado byte-idéntico), `adapters/legacy-shadow.ts` + `shadow.ts`.
+- **Shadow mode (T-48):** `SEMANTIC_SHADOW=on` (default OFF) ejecuta en `src/pipeline.ts` un único seam de solo lectura: convierte las piezas legacy a snapshot semántico y calcula diagnósticos en memoria. Cero escritura, cero deriva byte en entregables OFF vs ON (verificado en tests de integración). El pipeline legacy es la única autoridad.
+- **Unidad canónica:** mm con tolerancia serializada `<= 0.001` (`MM_TOLERANCE`). Los IDs estables y la serialización versionada (`SEMANTIC_V2_SCHEMA_VERSION = 1`) son parte del contrato.
 
 ## Purpose and users
 

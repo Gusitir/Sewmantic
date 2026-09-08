@@ -1,13 +1,13 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-09-07T15:10:00-05:00
-source_commit: 8618951 [T-47] constraints and atomic operators
+updated_at: 2026-09-07T16:05:00-05:00
+source_commit: d6279fa [T-48] legacy adapter and read-only shadow mode
 assurance: Standard; deterministic gates per task and independent Architect audit
 active_job: none
-active_plan: PLAN_v1.1-semantic-kernel-mvp.md (T-47 APTO; T-48 READY) / PLAN_v1.3-schema-repair.md (cerrado)
-active_task: T-48 (READY, ultima de Phase 11)
-last_verdict: APTO T-47 (Constraints & Atomic Operators)
+active_plan: PLAN_v1.1-semantic-kernel-mvp.md (T-45..T-48 APTO; cierre tecnico de Phase 11)
+active_task: none
+last_verdict: APTO T-48 (Legacy Adapter & Shadow Mode) — Phase 11 cerrada tecnicamente
 orchestration_model: GLM 5.3 Flash (Arquitecto/Ingeniero, opencode); Obrero: deepseek-v4-flash-0731
 backup: private GitHub + Google Drive bundle/snapshot (artefactos v2 listos, subida humana pendiente)
 ```
@@ -21,27 +21,24 @@ backup: private GitHub + Google Drive bundle/snapshot (artefactos v2 listos, sub
 
 ## Next action
 
-1. **Ingeniero:** Despachar **T-48** (Legacy Adapter & Read-only Shadow Mode, ultima tarea de Phase 11) al Obrero DeepSeek; sin deriva byte en salidas legacy.
+1. **Humano:** Aprobar el cierre formal (CLOSE) de Phase 11 y autorizar el plan de **Phase 12 (Operators, Registry & Recipe DSL)** — es la fase donde "agregar partes nuevas" (cierres, bolsillos, etc.) se vuelve composición de capacidades versionadas.
 2. **Humano:** Subir los artefactos de Drive a `Mi unidad/backups/` (`sewmantic-savepoint-v1-gemini-oauth-20260907.bundle` y `.zip` en `C:\Users\OnlyH\AppData\Local\Temp\opencode\backups\`).
-3. Tras T-48 APTO: crear savepoint Phase 11 y decidir apertura de Phase 12 (Operators, Registry & Recipe DSL) con nueva autorizacion humana.
 
 ## Blockers
 
 - Phase 9 CLOSE bloqueado por `H-03-F` (orientacion anatomica de `back_leg`) y `H-03-H` (deriva `pull_over` entre prompt y Zod).
-- Phase 11 T-47 pausada por decisión humana.
 - Dirty state preservado y fuera de todo scope: `scripts/build_vest_blender.py`, `scripts/render_4_views_blender.py`, `IMAGENES/`, `scripts/run_mcp_bridge.py`.
 
 ## Current facts
 
 - **Fases 1.0 a 8.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Suite Determinista:** **24/24 suites, 650/650 tests en verde** (gates frescos tras T-47).
-- **T-47 APTO:** constraints y operadores atomicos del kernel v2 — `resolveStitchPair` (matching por arco, tiling ordenado, tolerancia 0.001mm), `evaluateConstraints` (diagnostics tipados: delta>3mm parametrizable, orientacion, refs rotas, longitudes<=0), operadores puros `splitEdge`/`insertDart`/`cut` con rechazo atomico y estado byte-identico. Commits `8618951`. 19 tests nuevos.
+- **Suite Determinista:** **25/25 suites, 657/657 tests en verde** (OFF y con SEMANTIC_SHADOW=on; gates frescos tras T-48).
+- **Phase 11 CERRADA TECNICAMENTE:** T-45 (contratos), T-46 (GeometryAdapter), T-47 (constraints & operadores atomicos), T-48 (adapter legacy + shadow mode read-only con `SEMANTIC_SHADOW=on`, byte-identico OFF/ON) — todas APTO con Audit Capsules. Kernel v2 documentado en APPCORE. Commit T-48 `d6279fa`.
 - **T-50 APTO:** repair pass determinista en `sanitizeAndParseLlmJson` — clamp a límites Zod de issues `too_small`/`too_big` numéricos (máx. 3 pasadas, log trazable `[schema-repair]`, precisión mm 0.001). `parsePatternDna` sigue estricto. Commit `9d19248`.
 - **T-49 APTO (Opcion 1):** blueprint ancla libre `free`/`libre`/`creative` — PURE PARAMETRIC COMPOSER con paleta completa (20 base_blocks, enums exactos Zod, rangos reales) + opcion `free` en Web Studio. Commits `3b6e09a`/`8e41cb1`.
 - **Modelo de análisis: Gemini 3.8 Flash High** (`721bd63`): `@google/genai@2.21.0`, OAuth/ADC (gcloud 583.0.0, quota project `gen-lang-client-0257394877`), `GOOGLE_GENAI_USE_ENTERPRISE=true`, `GOOGLE_CLOUD_LOCATION=global`. Créditos AI Plus vía billing GCP.
 - **Savepoint v2:** tag `savepoint-v1-gemini-oauth-20260907` publicado; bundle + ZIP generados y verificados localmente.
-- **Phase 11:** T-45/T-46/T-47 APTO. **T-48 READY** (ultima tarea: adapter legacy + shadow mode read-only).
-- **North Star v1 aprobado:** Motor Semantico + Patronista Conversacional persistente + Capability Registry/Workshop + RAG local. Tras Phase 11 sigue Phase 12 (Operators, Registry & Recipe DSL).
+- **North Star v1 aprobado:** Motor Semantico + Patronista Conversacional persistente + Capability Registry/Workshop + RAG local. Siguiente fase: 12 (Operators, Registry & Recipe DSL).
 - **Módulos Paramétricos Extendidos:** Cuellos técnicos, bolsillos cargo 3D con fuelle y solapa, blueprint ancla `utility_vest`, moldería industrial y despiece 3D WebGL.
 
 ## Open findings
