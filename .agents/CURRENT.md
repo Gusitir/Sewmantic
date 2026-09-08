@@ -21,11 +21,13 @@ backup: private GitHub + Google Drive VERIFIED (4 savepoints: gemini-oauth, phas
 
 ## Next action
 
-1. **Humano:** Aprobar la apertura de **Phase 14 — Pattern Knowledge RAG** (reglas textiles locales con retrieval filtrado y trazable; corpus versionado) con nuevo plan del Arquitecto. STOP de Phase 13 cumplido.
+1. **Humano:** Ejecutar `start_web_studio.bat`, regenerar un pantalón/bermuda y verificar visualmente la pernera trasera en el visor 3D (resolución de `H-03-F`).
+2. **Ingeniero:** Tras verificación humana de `H-03-F` (y si se resuelve también `H-03-H` o se decide su manejo), proceder al CLOSE de Fase 9.
+3. **Humano:** Aprobar la apertura de **Phase 14 — Pattern Knowledge RAG** con nuevo plan del Arquitecto (STOP de Phase 13 cumplido).
 
 ## Blockers
 
-- Phase 9 CLOSE bloqueado por `H-03-F` (orientacion anatomica de `back_leg`) y `H-03-H` (deriva `pull_over` entre prompt y Zod).
+- Phase 9 CLOSE bloqueado por `H-03-F` (resuelto en código, pendiente verificación humana) y `H-03-H` (deriva `pull_over` entre prompt y Zod).
 - Dirty state preservado y fuera de todo scope: `scripts/build_vest_blender.py`, `scripts/render_4_views_blender.py`, `IMAGENES/`, `scripts/run_mcp_bridge.py`.
 
 ## Current facts
@@ -44,9 +46,11 @@ backup: private GitHub + Google Drive VERIFIED (4 savepoints: gemini-oauth, phas
 
 ## Open findings
 
+- `H-03-F` RESUELTO EN CODIGO (T-57 `7044daf`): pernera trasera 3D ya no se espeja con el tiro hacia afuera — pendiente verificacion visual humana al regenerar.
 - Hallazgos menores de la auditoria Phase 13 (no bloqueantes): preflight de resolucion de capacidades en loop.ts (un tool call alucinado registra historial honesto antes de fallar), `currentDoc` redundante en el payload de sesion, `restoreRevisionManager` sin recorte hasta proximo commit, pinning de version por paso en recipes.
+- `isBackSkirt` repite el patron latente de espejado (invisible hoy, falda simetrica) — corregir por coherencia en proximo touch del bridge.
+- `front_leg` mesh tiene normales INWARD pre-existentes enmascaradas por material doubleSided — auditar convencion de orientacion de paneles (tarea futura).
 - `P11-GEO-01` riesgo residual: miter sin limite puede crear picos en angulos agudos.
-- `H-03-F`: pernera trasera 3D espejada con tiro orientado hacia afuera.
 - `H-03-H`: el prompt ofrece `pull_over`, pero el esquema de cierre lo rechaza (corregido solo en el anchor `free`).
 
 ## Human actions

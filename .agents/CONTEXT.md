@@ -328,3 +328,11 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Descubierto el montaje local de Google Drive for Desktop en `F:\` (etiqueta "Google Drive"); los savepoints anteriores (2026-08-23) ya residian en `F:\Mi unidad\backups\`.
 - Copiados y verificados por SHA-256 los 8 artefactos: savepoints gemini-oauth, phase11, phase12 y phase13 (bundle de historia completa + ZIP snapshot de 159/167/180/190 entradas). Todos HASH OK en Drive.
 - La accion humana de subida manual queda cerrada; futuros savepoints se copian directo a `F:\Mi unidad\backups\`.
+
+## 2026-09-07 - T-57 APTO: correccion H-03-F (pernera trasera espejada en 3D)
+
+- El Humano reporto de nuevo el sintoma visual; investigacion por subagente confirmo causa raiz unica: la rama `isBackLeg` de `generateTrueToPatternMesh` usaba `theta = (0.5 - u) * Math.PI` (mapeo horizontal invertido vs el front `(u - 0.5) * Math.PI`), volcando el borde de entrepierna (u=0) al lado exterior de la pierna. Defecto solo de proyeccion 3D; el patron 2D es correcto.
+- Correccion `7044daf`: theta alineado con el front en ambas copias + bookkeeping de winding (copia derecha as-is, izquierda invertida) para preservar normales outward, verificado con censo empirico por triangulo (back 77 outward/5 inward; estructura de winding igual al front). Test de regresion: entrepierna interior estricta + distribucion X del back espejo del front.
+- Hallazgos menores documentados sin bloqueo: `isBackSkirt` repite el patron latente (falda simetrica, invisible hoy); `front_leg` tiene normales INWARD pre-existentes enmascaradas por material doubleSided (tarea de seguimiento sugerida: auditar convencion de orientacion de todos los paneles).
+- Auditoria del Ingeniero: APTO con gates frescos propios — blender 27/27, build PASS, suite **31/31 con 750/750 tests**. Dirty state intacto.
+- `H-03-F` queda **resuelto en codigo, pendiente de verificacion visual humana** (regenerar pantalon y revisar pernera trasera en el visor 3D).
