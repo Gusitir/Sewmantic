@@ -24,7 +24,7 @@ Assurance: Standard; gates deterministas por tarea; auditoria de fase independie
 
 | Tarea | Objetivo | Dependencia | Evidence ID | Estado |
 |---|---|---|:---:|:---:|
-| **T-54** | Session store + revision manager (undo/redo, snapshot canonico, round-trip) | Aprobacion P13 | `P13-SES-01` | READY |
+| **T-54** | Session store + revision manager (undo/redo, snapshot canonico, round-trip) | Aprobacion P13 | `P13-SES-01` | APTO |
 | **T-55** | Capability tools bridge + bounded executor con aprobacion humana | T-54 APTO | `P13-EXE-01` | BLOCKED |
 | **T-56** | AI tool loop (Vercel AI SDK) + reproducibilidad de conversacion + modelo scripted | T-55 APTO | `P13-LOOP-01` | BLOCKED |
 

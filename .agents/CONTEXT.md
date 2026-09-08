@@ -296,3 +296,9 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Hallazgos menores sin bloqueo: sin pinning de version por paso en recipes (limitante con multiples versiones vivas), acceso a `_def` interno de Zod en derivation.ts (fragil ante upgrade mayor), clon JSON round-trip (correcto para el contrato actual). Recomendaciones registradas para Phase 13.
 - Savepoint `savepoint-v1-phase12-operators-registry-20260907` creado (local/remoto/artefactos Drive).
 - **STOP del plan: antes de Phase 13 (Conversational Patternist Harness) se requiere nueva autorizacion humana.**
+
+## 2026-09-07 - Phase 13 abierta; T-54 Session Store + Revision Manager APTO
+
+- El Humano autorizo Phase 13 con Obreros DeepSeek V4 Flash. Decision `D-2026-09-07-P13`, plan `PLAN_v1.5-phase13-conversational-harness.md` (T-54 session/revisiones, T-55 tools+executor acotado, T-56 AI tool loop con Vercel AI SDK).
+- Entrega T-54 `ab0da5a`: `src/harness/revisions.ts` (pila de snapshots `serializeDocument` con undo/redo lineal, truncado de redo, maxRevisions default 50, timestamps inyectables, ids estables `rev-<n>`) y `src/harness/session.ts` (turns/decisiones tipados con ids secuenciales, `commitRevision`, undo/redo integrados, round-trip byte-identico via `serializeSession/deserializeSession` con validacion estricta). Baseline como revision `rev-1` (decision D1 justificada). 20 tests.
+- Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 20/20, build PASS, suite **29/29 con 727/727 tests**. Dirty state intacto.
