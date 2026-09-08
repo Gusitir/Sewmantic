@@ -314,3 +314,11 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Desviacion justificada: `LanguageModelV1` no existe en `ai@7.0.77` (V2/V3/V4); `maxTokens` mapea a `maxOutputTokens`.
 - Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 8/8, build PASS, suite **31/31 con 749/749 tests**. Dirty state intacto.
 - Pendiente para el cierre formal de Phase 13: auditoria de fase independiente (sesion de auditorias dedicada) y savepoint.
+
+## 2026-09-07 - Auditoria independiente de fase: Phase 13 APTO (cierre formal)
+
+- Sesion de auditorias dedicada verifico con evidencia propia: gates frescos (harness 42/42, build PASS, suite **31/31 con 749/749 tests**), scope de los 3 commits, y la barrera de salida del ROADMAP ("Conversacion reproducible sin perdida de decisiones") CONFIRMADA: round-trip de sesion como punto fijo de serializacion con continuacion de ids secuenciales.
+- Invariantes del ROADMAP verificados por el auditor: estado canonico fuera del modelo (toolset sin execute: el modelo solo propone, executeTurn aplica), operaciones tipadas y reversibles, ejecucion acotada (maxSteps + approval gate con memoizacion), nunca exito ficticio.
+- Hallazgos menores sin bloqueo: preflight de resolucion de capacidades en el loop (un tool call alucinado pasa al executor y falla con historial honesto), `currentDoc` redundante en el payload de sesion, `restoreRevisionManager` sin recorte hasta proximo commit, trazabilidad de desviaciones del plan (D2 no numerada). Recomendaciones registradas para Phase 14.
+- Savepoint `savepoint-v1-phase13-conversational-harness-20260907` creado (local/remoto/artefactos Drive).
+- **STOP del plan: antes de Phase 14 (Pattern Knowledge RAG) se requiere nueva autorizacion humana.**
