@@ -341,6 +341,14 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Auditoria del Ingeniero: APTO con gates frescos propios — schema 55/55, build PASS, suite **31/31 con 758/758 tests**. Dirty state intacto.
 - `H-03-H` queda **resuelto en codigo, pendiente de verificacion humana en vivo** (regenerar la prenda que fallaba con cierre wrap).
 
+## 2026-09-07 - T-59 APTO: despiece simetrico de mangas en visor 3D
+
+- El Humano reporto que al subir el despiece al 100% ambas mangas se desplazaban al mismo lado. Investigacion por subagente: la causa era que ambas copias (izq/der) viven en UNA sola primitiva GLB con un unico `explodeOffset [0.25,0,0]` — el visor traslada por primitiva.
+- Correccion del Obrero `7565c4f`: `generateTrueToPatternMesh` emite DOS primitivas por manga (`<part>_right` con offset +X, `<part>_left` con -X) separadas por signo de X del bloque espejado, con bounds propios; `getFallbackExplodeOffset` del visor distingue lado; anclajes de guias de costura `armhole-right/left` (muertos desde siempre) quedan vivos. 2 tests nuevos (offsets espejados, separacion por bounds, conservacion de triangulos) + 1 test existente de viewer3d actualizado (codificaba el bug).
+- Desviacion aceptada por el Ingeniero: se toco un 4o archivo (`tests/viewer3d.test.ts`) imprescindible para puerta verde.
+- Auditoria del Ingeniero: APTO con gates frescos propios — blender+viewer 48/48, build PASS, suite **31/31 con 760/760 tests**. Dirty state intacto.
+- Pendiente verificacion visual humana del despiece simetrico.
+
 ## 2026-09-07 - T-57 APTO: correccion H-03-F (pernera trasera espejada en 3D)
 
 - El Humano reporto de nuevo el sintoma visual; investigacion por subagente confirmo causa raiz unica: la rama `isBackLeg` de `generateTrueToPatternMesh` usaba `theta = (0.5 - u) * Math.PI` (mapeo horizontal invertido vs el front `(u - 0.5) * Math.PI`), volcando el borde de entrepierna (u=0) al lado exterior de la pierna. Defecto solo de proyeccion 3D; el patron 2D es correcto.
