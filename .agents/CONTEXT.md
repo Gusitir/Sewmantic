@@ -270,3 +270,10 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 7/7, build PASS, suite **25/25 con 657/657 tests OFF y 657/657 con SEMANTIC_SHADOW=on**.
 - Cierre tecnico de Phase 11: las 4 tareas (T-45 a T-48) APTO. APPCORE actualizado con la superficie del kernel v2 y el shadow mode. Savepoint Phase 11 creado (`savepoint-v1-phase11-semantic-kernel-20260907`).
 - STOP del plan: antes de Phase 12 (Operators, Registry & Recipe DSL) se requiere nueva autorizacion humana.
+
+## 2026-09-07 - Phase 12 abierta; T-51 Capability Registry Core APTO
+
+- El Humano autorizo continuar a Phase 12 ("perfecto, continua") con rol Arquitecto/Ingeniero GLM 5.3 Flash y Obrero DeepSeek; auditorias de fase a sesion dedicada.
+- Decision `D-2026-09-07-P12`, plan `PLAN_v1.4-phase12-operators-registry.md` (T-51 registry core, T-52 operator SDK + derivacion con drift gate, T-53 recipe DSL + executor).
+- Entrega T-51 `5625c16`: `src/engine/v2/registry.ts` — `CapabilityRegistry` con registro validado (id `kernel.<name>`, semver, status, paramsSchema Zod, operador), lookup por semver numerico, `CAPABILITY_GAP`/`DUPLICATE_ENTRY`/`INVALID_ENTRY`/`INVALID_TRANSITION`/`APPROVAL_REQUIRED` tipados, promocion draft->experimental->stable con aprobacion humana obligatoria para stable, inmutabilidad por copia congelada. 23 tests.
+- Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 23/23, build PASS, suite **26/26 con 680/680 tests**. Dirty state intacto.

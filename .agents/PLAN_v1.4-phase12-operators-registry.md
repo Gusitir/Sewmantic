@@ -24,8 +24,8 @@ Assurance: Standard; gates deterministas por tarea; auditoria de fase independie
 
 | Tarea | Objetivo | Dependencia | Evidence ID | Estado |
 |---|---|---|:---:|:---:|
-| **T-51** | Capability Registry core: registro, versionado, estados y promocion con gate | Aprobacion P12 | `P12-REG-01` | READY |
-| **T-52** | Operator SDK + registro de capacidades base (splitEdge/insertDart/cut/constraints) + derivacion prompt/tool con test de drift | T-51 APTO | `P12-SDK-01` | BLOCKED |
+| **T-51** | Capability Registry core: registro, versionado, estados y promocion con gate | Aprobacion P12 | `P12-REG-01` | APTO |
+| **T-52** | Operator SDK + registro de capacidades base (splitEdge/insertDart/cut/constraints) + derivacion prompt/tool con test de drift | T-51 APTO | `P12-SDK-01` | READY |
 | **T-53** | Recipe DSL + executor atomico + 2 recetas de ejemplo + documentacion generada | T-52 APTO | `P12-RCP-01` | BLOCKED |
 
 Cierre de Phase 12: auditoria de fase independiente (sesion de auditorias dedicada), savepoint y STOP antes de Phase 13.
