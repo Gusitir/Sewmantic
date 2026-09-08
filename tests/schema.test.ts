@@ -892,4 +892,180 @@ Espero que este patrón sea perfecto para tu confección. ¡Avisa si requieres a
       ).toThrow(/Invalid closure type/);
     });
   });
+
+  describe("7. Union Recovery (T-60: sinónimos trouser_pockets + invalid_union)", () => {
+    const unionRecoveryBaseDna = {
+      concept_name: "union_recovery_shorts",
+      base_block: "menswear_torso",
+      ease: {
+        chest_ease_mm: 100,
+      },
+      modifications: {
+        trouser_pockets: {
+          type: "slash_with_coin",
+          placement_y_mm: 300,
+        },
+      },
+    };
+
+    it("caso real de producción: trouser_pockets.type 'slash_with_coin' -> 'slash' y el ADN parsea", () => {
+      const raw = JSON.stringify(unionRecoveryBaseDna);
+      const result = sanitizeAndParseLlmJson(raw);
+      expect(result.concept_name).toBe("union_recovery_shorts");
+      expect(result.modifications.trouser_pockets).toBeDefined();
+      expect(
+        (result.modifications.trouser_pockets as { type: string }).type
+      ).toBe("slash");
+      expect(
+        (result.modifications.trouser_pockets as { placement_y_mm: number })
+          .placement_y_mm
+      ).toBe(300);
+    });
+
+    it("normaliza trouser_pockets.type 'jeans_pocket' -> 'in_seam'", () => {
+      const raw = JSON.stringify({
+        ...unionRecoveryBaseDna,
+        modifications: {
+          trouser_pockets: { type: "jeans_pocket", count: 5 },
+        },
+      });
+      const result = sanitizeAndParseLlmJson(raw);
+      expect(
+        (result.modifications.trouser_pockets as { type: string }).type
+      ).toBe("in_seam");
+      expect(
+        (result.modifications.trouser_pockets as { count: number }).count
+      ).toBe(5);
+    });
+
+    it("normaliza sinónimos case/guion-insensitive ('Slashed-With-Coin' -> 'slash')", () => {
+      const raw = JSON.stringify({
+        ...unionRecoveryBaseDna,
+        modifications: {
+          trouser_pockets: { type: "Slashed-With-Coin" },
+        },
+      });
+      const result = sanitizeAndParseLlmJson(raw);
+      expect(
+        (result.modifications.trouser_pockets as { type: string }).type
+      ).toBe("slash");
+    });
+
+    it("normaliza sinónimos dentro de la rama array de la unión (coin_pocket -> slash)", () => {
+      const raw = JSON.stringify({
+        ...unionRecoveryBaseDna,
+        modifications: {
+          trouser_pockets: [
+            { type: "coin_pocket", width_mm: 150, height_mm: 120 },
+          ],
+        },
+      });
+      const result = sanitizeAndParseLlmJson(raw);
+      const pockets = result.modifications.trouser_pockets as Array<{
+        type: string;
+      }>;
+      expect(Array.isArray(pockets)).toBe(true);
+      expect(pockets[0].type).toBe("slash");
+    });
+
+    it("emite log [schema-repair] trazable del sinónimo de trouser_pockets", () => {
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      try {
+        const raw = JSON.stringify(unionRecoveryBaseDna);
+        sanitizeAndParseLlmJson(raw);
+        expect(logSpy).toHaveBeenCalledTimes(1);
+        const logged = logSpy.mock.calls[0][0] as string;
+        expect(logged).toContain(
+          '[schema-repair] modifications.trouser_pockets.type: "slash_with_coin" -> "slash"'
+        );
+      } finally {
+        logSpy.mockRestore();
+      }
+    });
+
+    it("enum desconocido sin sinónimo (magic_pocket): deletion-trial elimina trouser_pockets y el ADN valida", () => {
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      try {
+        const raw = JSON.stringify({
+          ...unionRecoveryBaseDna,
+          modifications: {
+            trouser_pockets: { type: "magic_pocket", placement_y_mm: 300 },
+          },
+        });
+        const result = sanitizeAndParseLlmJson(raw);
+        expect(result.concept_name).toBe("union_recovery_shorts");
+        expect(result.modifications.trouser_pockets).toBeUndefined();
+        const logged = logSpy.mock.calls[0][0] as string;
+        expect(logged).toContain(
+          "[schema-repair] modifications.trouser_pockets: removed (unmapped enum value)"
+        );
+      } finally {
+        logSpy.mockRestore();
+      }
+    });
+
+    it("fallback: unión no reparable sin enum anidado elimina trouser_pockets completa", () => {
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      try {
+        const raw = JSON.stringify({
+          ...unionRecoveryBaseDna,
+          modifications: {
+            trouser_pockets: "not_a_pocket",
+          },
+        });
+        const result = sanitizeAndParseLlmJson(raw);
+        expect(result.modifications.trouser_pockets).toBeUndefined();
+        const logged = logSpy.mock.calls[0][0] as string;
+        expect(logged).toContain(
+          "[schema-repair] modifications.trouser_pockets: removed (unreparable union)"
+        );
+      } finally {
+        logSpy.mockRestore();
+      }
+    });
+
+    it("coexistencia: clamp numérico (T-50) + enum recovery closure (T-58) + unión trouser_pockets en el mismo parse", () => {
+      const raw = JSON.stringify({
+        ...unionRecoveryBaseDna,
+        modifications: {
+          closure: { type: "wrap", overlap_mm: 40 },
+          pocket: {
+            type: "patch",
+            height_mm: 10,
+          },
+          trouser_pockets: { type: "slash_with_coin", placement_y_mm: 300 },
+        },
+      });
+      const result = sanitizeAndParseLlmJson(raw);
+      expect(result.modifications.closure?.type).toBe("ties");
+      expect(result.modifications.pocket?.height_mm).toBe(30);
+      expect(
+        (result.modifications.trouser_pockets as { type: string }).type
+      ).toBe("slash");
+    });
+
+    it("valores canónicos de trouser_pockets.type no se alteran", () => {
+      const raw = JSON.stringify({
+        ...unionRecoveryBaseDna,
+        modifications: {
+          trouser_pockets: { type: "cargo", width_mm: 200 },
+        },
+      });
+      const result = sanitizeAndParseLlmJson(raw);
+      expect(
+        (result.modifications.trouser_pockets as { type: string }).type
+      ).toBe("cargo");
+    });
+
+    it("parsePatternDna permanece estricto: lanza con trouser_pockets.type desconocido sin reparar", () => {
+      expect(() =>
+        parsePatternDna({
+          ...unionRecoveryBaseDna,
+          modifications: {
+            trouser_pockets: { type: "magic_pocket" },
+          },
+        })
+      ).toThrow(/Invalid trouser pocket type/);
+    });
+  });
 });

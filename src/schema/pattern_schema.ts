@@ -872,6 +872,42 @@ const CLOSURE_TYPE_SYNONYMS: Record<string, string> = {
 };
 
 /**
+ * Normaliza el campo `type` de un contenedor (objeto o array de objetos) usando un mapa
+ * de sinónimos (trim + lowercase + guiones/espacios -> underscore, case-insensitive).
+ * Registra cada reparación en `repairs` para el log consolidado trazable.
+ * Retorna la cantidad de valores normalizados.
+ */
+function normalizeTypeSynonymsInContainer(
+  container: unknown,
+  label: string,
+  synonyms: Record<string, string>,
+  repairs: string[]
+): number {
+  if (Array.isArray(container)) {
+    let count = 0;
+    container.forEach((item, index) => {
+      count += normalizeTypeSynonymsInContainer(
+        item,
+        `${label}.${index}`,
+        synonyms,
+        repairs
+      );
+    });
+    return count;
+  }
+  if (container === null || typeof container !== "object") return 0;
+  const record = container as Record<string, unknown>;
+  const value = record["type"];
+  if (typeof value !== "string") return 0;
+  const normalized = value.trim().toLowerCase().replace(/[-\s]/g, "_");
+  const mapped = synonyms[normalized];
+  if (mapped === undefined) return 0;
+  record["type"] = mapped;
+  repairs.push(`${label}.type: "${value}" -> "${mapped}"`);
+  return 1;
+}
+
+/**
  * Normaliza modifications.closure.type a partir de sinónimos frecuentes de LLM
  * (case / underscore / guion-insensitive) antes de la primera pasada de validación.
  * Registra la reparación en `repairs` para el log consolidado trazable.
@@ -883,14 +919,65 @@ function normalizeClosureTypeSynonyms(root: unknown, repairs: string[]): void {
     container = (container as Record<string, unknown>)[CLOSURE_TYPE_PATH[i]];
   }
   if (container === null || typeof container !== "object") return;
-  const record = container as Record<string, unknown>;
-  const value = record["type"];
-  if (typeof value !== "string") return;
-  const normalized = value.trim().toLowerCase().replace(/[-\s]/g, "_");
-  const mapped = CLOSURE_TYPE_SYNONYMS[normalized];
-  if (mapped === undefined) return;
-  record["type"] = mapped;
-  repairs.push(`${CLOSURE_TYPE_PATH.join(".")}: "${value}" -> "${mapped}"`);
+  normalizeTypeSynonymsInContainer(
+    container,
+    CLOSURE_TYPE_PATH.slice(0, -1).join("."),
+    CLOSURE_TYPE_SYNONYMS,
+    repairs
+  );
+}
+
+/** Path canónico del tipo de bolsillo de pantalón dentro del árbol de modificaciones */
+const TROUSER_POCKET_TYPE_PATH = [
+  "modifications",
+  "trouser_pockets",
+  "type",
+] as const;
+
+/**
+ * Mapa de sinónimos frecuentes alucinados por LLMs -> tipo válido de TrouserPocketModSchema.
+ * Fuente de verdad de valores válidos: TrouserPocketModSchema (NO modificar).
+ * Mapeo conservador documentado:
+ * - Familia slash con bolsillo de moneda (estilo jeans) -> "slash".
+ * - "jeans"/"five_pocket": los jeans clásicos llevan bolsillo en la costura (in_seam)
+ *   más traseros; se consolida al valor canónico más simple.
+ * - Familia cargo/fuelle -> "cargo"; parche trasero -> "patch_back".
+ */
+const TROUSER_POCKET_TYPE_SYNONYMS: Record<string, string> = {
+  slash_with_coin: "slash",
+  slash_with_coin_pocket: "slash",
+  coin_pocket: "slash",
+  slashed_with_coin: "slash",
+  jeans: "in_seam",
+  five_pocket: "in_seam",
+  jeans_pocket: "in_seam",
+  cargo_pocket: "cargo",
+  bellows: "cargo",
+  back_patch: "patch_back",
+  patch: "patch_back",
+};
+
+/**
+ * Normaliza modifications.trouser_pockets.type (objeto o array de objetos) a partir
+ * de sinónimos frecuentes de LLM antes de la primera pasada de validación.
+ * Registra la reparación en `repairs` para el log consolidado trazable.
+ */
+function normalizeTrouserPocketTypeSynonyms(
+  root: unknown,
+  repairs: string[]
+): void {
+  let container: unknown = root;
+  for (let i = 0; i < TROUSER_POCKET_TYPE_PATH.length - 1; i++) {
+    if (container === null || typeof container !== "object") return;
+    container = (container as Record<string, unknown>)[TROUSER_POCKET_TYPE_PATH[i]];
+  }
+  if (container === null || typeof container !== "object") return;
+  normalizeTypeSynonymsInContainer(
+    container,
+    TROUSER_POCKET_TYPE_PATH.slice(0, -1).join("."),
+    TROUSER_POCKET_TYPE_SYNONYMS,
+    repairs
+  );
 }
 
 /**
@@ -929,17 +1016,17 @@ function deleteValueAtPath(
 }
 
 /**
- * Deletion-trial para issues `invalid_enum_value` sin sinónimo mapeado:
- * Intento A: elimina el valor en `issuePath` y re-valida.
- * Intento B: si no valida, elimina progresivamente hacia arriba (padre, abuelo, ...)
- * re-validando en cada paso mientras quede path. Las modificaciones son `.optional()`,
- * por lo que eliminar el objeto completo deja un ADN válido.
+ * Deletion-trial determinista: Intento A elimina el valor en `issuePath` y re-valida;
+ * Intento B elimina progresivamente hacia arriba (padre, abuelo, ...) re-validando en
+ * cada paso mientras quede path. Las modificaciones son `.optional()`, por lo que
+ * eliminar el objeto completo deja un ADN válido.
  * Registra en `repairs` únicamente el borrado que hizo validar el ADN.
  */
-function tryEnumDeletionRecovery(
+function tryDeletionRecovery(
   current: unknown,
   issuePath: (string | number)[],
-  repairs: string[]
+  repairs: string[],
+  reason: string
 ): boolean {
   for (let levelsUp = 0; levelsUp < issuePath.length; levelsUp++) {
     const outcome = deleteValueAtPath(current, issuePath, levelsUp);
@@ -947,7 +1034,7 @@ function tryEnumDeletionRecovery(
     const recheck = PatternDnaSchema.safeParse(current);
     if (recheck.success) {
       const targetPath = issuePath.slice(0, issuePath.length - levelsUp);
-      repairs.push(`${targetPath.join(".")}: removed (unmapped enum value)`);
+      repairs.push(`${targetPath.join(".")}: removed ${reason}`);
       return true;
     }
   }
@@ -955,11 +1042,70 @@ function tryEnumDeletionRecovery(
 }
 
 /**
+ * Deletion-trial para issues `invalid_enum_value` sin sinónimo mapeado.
+ */
+function tryEnumDeletionRecovery(
+  current: unknown,
+  issuePath: (string | number)[],
+  repairs: string[]
+): boolean {
+  return tryDeletionRecovery(
+    current,
+    issuePath,
+    repairs,
+    "(unmapped enum value)"
+  );
+}
+
+/**
+ * Registro de mapas de sinónimos aplicables por ruta canónica de enum anidada en
+ * una unión (objeto | array). Clave: ruta sin índices numéricos.
+ * Fuente de verdad de valores válidos: los schemas Zod (NO modificar).
+ */
+const UNION_ENUM_SYNONYM_PATHS: Record<string, Record<string, string>> = {
+  "modifications.trouser_pockets.type": TROUSER_POCKET_TYPE_SYNONYMS,
+};
+
+/**
+ * Aplica el sinónimo mapeado para la ruta canónica de un enum anidado en una unión
+ * (p. ej. `modifications.trouser_pockets.type`, soportando índices de array).
+ * Retorna true si se aplicó una reparación.
+ */
+function applyUnionEnumSynonym(
+  root: unknown,
+  issuePath: (string | number)[],
+  repairs: string[]
+): boolean {
+  const canonical = issuePath
+    .filter((seg) => typeof seg !== "number")
+    .join(".");
+  const synonyms = UNION_ENUM_SYNONYM_PATHS[canonical];
+  if (synonyms === undefined) return false;
+  let container: unknown = root;
+  for (let i = 0; i < issuePath.length - 1; i++) {
+    if (container === null || typeof container !== "object") return false;
+    container = (container as Record<string | number, unknown>)[issuePath[i]];
+  }
+  if (container === null || typeof container !== "object") return false;
+  const before = repairs.length;
+  normalizeTypeSynonymsInContainer(
+    container,
+    issuePath.slice(0, -1).join("."),
+    synonyms,
+    repairs
+  );
+  return repairs.length > before;
+}
+
+/**
  * Desinfecta texto crudo de LLM, extrae el JSON y valida la estructura de ADN Paramétrico.
  * Si el LLM devuelve valores numéricos fuera de los límites del esquema, aplica hasta
  * 3 pasadas de reparación determinista (clamp a los límites Zod) con log trazable.
- * Si devuelve valores de enum alucinados: normaliza sinónimos de closure.type y, para
- * el resto de `invalid_enum_value`, aplica deletion-trial progresivo hacia arriba.
+ * Si devuelve valores de enum alucinados: normaliza sinónimos de closure.type y
+ * trouser_pockets.type y, para el resto de `invalid_enum_value`, aplica deletion-trial
+ * progresivo hacia arriba. Para `invalid_union` (campos que aceptan objeto o array,
+ * p. ej. modifications.trouser_pockets) recorre los issues anidados de `unionErrors`
+ * y aplica la misma estrategia; si la unión no es reparable, elimina la ruta completa.
  * @param rawOutput Respuesta de LLM con posible markdown o texto envolvente
  * @returns PatternDna tipado y validado
  */
@@ -978,6 +1124,7 @@ export function sanitizeAndParseLlmJson(rawOutput: string): PatternDna {
 
   const repairs: string[] = [];
   normalizeClosureTypeSynonyms(parsed, repairs);
+  normalizeTrouserPocketTypeSynonyms(parsed, repairs);
 
   const MAX_REPAIR_PASSES = 3;
   let current: unknown = parsed;
@@ -1012,6 +1159,49 @@ export function sanitizeAndParseLlmJson(rawOutput: string): PatternDna {
       if (issue.code !== "invalid_enum_value") continue;
       const recovered = tryEnumDeletionRecovery(current, issue.path, repairs);
       if (!recovered) continue;
+      repairedInPass++;
+      const recheck = PatternDnaSchema.safeParse(current);
+      if (recheck.success) {
+        console.log(repairs.map((r) => `[schema-repair] ${r}`).join("\n"));
+        return recheck.data as PatternDna;
+      }
+    }
+
+    for (const issue of result.error.issues) {
+      if (issue.code !== "invalid_union") continue;
+      const unionIssue = issue as unknown as { unionErrors?: z.ZodError[] };
+      const nestedIssues = (unionIssue.unionErrors ?? []).flatMap(
+        (e) => e.issues
+      );
+      let unionRepaired = false;
+      for (const nested of nestedIssues) {
+        // invalid_type anidado (array vs object): NO se repara explícitamente;
+        // al reparar el enum en la rama de objeto la unión valida por la otra rama.
+        if (nested.code !== "invalid_enum_value") continue;
+        const nestedPath = [...issue.path, ...nested.path] as (
+          | string
+          | number
+        )[];
+        if (applyUnionEnumSynonym(current, nestedPath, repairs)) {
+          unionRepaired = true;
+          continue;
+        }
+        if (tryEnumDeletionRecovery(current, nestedPath, repairs)) {
+          unionRepaired = true;
+          break;
+        }
+      }
+      if (!unionRepaired) {
+        // Fallback: unión no reparable -> deletion-trial de la ruta completa del
+        // union (campo opcional, p. ej. modifications.trouser_pockets).
+        unionRepaired = tryDeletionRecovery(
+          current,
+          issue.path,
+          repairs,
+          "(unreparable union)"
+        );
+      }
+      if (!unionRepaired) continue;
       repairedInPass++;
       const recheck = PatternDnaSchema.safeParse(current);
       if (recheck.success) {
