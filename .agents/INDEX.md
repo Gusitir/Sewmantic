@@ -14,6 +14,8 @@ Este índice organiza los archivos del plano de control (`.agents/`) y las rutas
 - [`PLAN_v1.0-semantic-pattern-foundation.md`](PLAN_v1.0-semantic-pattern-foundation.md): Plan de Foundation Spikes T-41 a T-44; diseño aprobado, ejecución no autorizada.
 - [`PLAN_v1.1-semantic-kernel-mvp.md`](PLAN_v1.1-semantic-kernel-mvp.md): Plan activo Phase 11 T-45 a T-48 para kernel TypeScript, GeometryAdapter, constraints y shadow mode.
 - [`PLAN_v1.2-free-blueprint-anchor.md`](PLAN_v1.2-free-blueprint-anchor.md): Plan activo T-49; blueprint ancla libre de composicion creativa (paleta completa, sin restricciones de anchor).
+- [`PLAN_v1.3-schema-repair.md`](PLAN_v1.3-schema-repair.md): Plan T-50; repair pass determinista de valores fuera de rango Zod (cerrado).
+- [`PLAN_v1.4-phase12-operators-registry.md`](PLAN_v1.4-phase12-operators-registry.md): Plan activo Phase 12 T-51 a T-53; Capability Registry, Operator SDK y Recipe DSL.
 - [`ROADMAP_v1-semantic-pattern-platform.md`](ROADMAP_v1-semantic-pattern-platform.md): Ruta estratégica del Motor Semántico, Patronista Conversacional, RAG y Capability Workshop.
 - [`REFERENCES_v1-open-source-foundations.md`](REFERENCES_v1-open-source-foundations.md): Investigación de GarmentCode, harnesses, RAG y geometría con licencias y decisiones preliminares.
 - [`DECISION_v1-foundation-stack.md`](DECISION_v1-foundation-stack.md): Selección empírica final del stack fundacional y límites para la futura integración.
