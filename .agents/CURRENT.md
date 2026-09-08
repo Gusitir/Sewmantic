@@ -1,15 +1,16 @@
 # CURRENT - Generador Paramétrico de Patrones IA
 
 ```yaml
-updated_at: 2026-09-07T18:20:00-05:00
-source_commit: beb095c [T-56] conversational AI tool loop
-assurance: Standard; deterministic gates per task + independent phase audit (dedicated session)
+updated_at: 2026-09-08T05:00:00-05:00
+source_commit: e6863d3 [STATE] T-62 APTO: back leg self-intersection fixed
+assurance: Standard; deterministic gates per task + independent phase audits (dedicated session)
 active_job: none
-active_plan: PLAN_v1.5-phase13-conversational-harness.md (T-54..T-56 APTO + auditoria de fase APTO; cierre formal de Phase 13)
+active_plan: PLAN_v1.5 (Phase 13 cerrada con auditoria APTO) / PLAN_v1.6, v1.7, v1.8 (correcciones cerradas) / PLAN_v1.9 (T-62 APTO, pendiente verificacion visual humana)
 active_task: none
-last_verdict: APTO fase (auditoria independiente Phase 13)
+last_verdict: APTO T-62 (back leg self-intersection fix)
 orchestration_model: GLM 5.3 Flash (Arquitecto/Ingeniero, opencode); Obrero: deepseek-v4-flash-0731
-backup: private GitHub + Google Drive VERIFIED (4 savepoints: gemini-oauth, phase11, phase12, phase13 — SHA-256 íntegros en F:\Mi unidad\backups)
+backup: private GitHub + Google Drive VERIFIED (4 savepoints en F:\Mi unidad\backups; el trabajo posterior a phase13 esta en GitHub pendiente de siguiente savepoint)
+```
 ```
 
 ## Orchestration Roles (agents-workflow v3)
@@ -21,18 +22,31 @@ backup: private GitHub + Google Drive VERIFIED (4 savepoints: gemini-oauth, phas
 
 ## Next action
 
-1. **Humano:** Ejecutar `start_web_studio.bat` y regenerar la prenda con cierre cruzado/wrap que fallaba — `H-03-H` resuelto en código (T-58): el log mostrará `[schema-repair] modifications.closure.type: "wrap" -> "ties"` y la generación completará.
-2. **Humano/Ingeniero:** Con `H-03-F` y `H-03-H` verificados, proceder al **CLOSE de Fase 9** y decidir apertura de **Phase 14 — Pattern Knowledge RAG** (STOP de Phase 13 cumplido).
+1. **Humano:** Ejecutar `start_web_studio.bat` y regenerar la bermuda "straw pirate denim shorts" — verificar visualmente: (a) pernera trasera limpia sin auto-intersecciones (T-62), (b) cierre wrap reparado a ties en consola `[schema-repair]` (T-58), (c) despiece simétrico de mangas en prendas con mangas (T-59).
+2. **Humano/Ingeniero:** Con las verificaciones visuales OK, proceder al **CLOSE de Fase 9** (H-03-F verificado, H-03-H y síntomas asociados resueltos en código) y al **savepoint** del trabajo post-phase13.
+3. **Humano:** Autorizar **Phase 14 — Pattern Knowledge RAG** con nuevo plan del Arquitecto (STOP de Phase 13 cumplido).
 
 ## Blockers
 
-- Phase 9 CLOSE bloqueado por `H-03-H` — RESUELTO EN CÓDIGO (T-58 `86432ea`), pendiente verificación humana en vivo.
+- Ninguno técnico. `H-03-F` verificado OK; `H-03-H` resuelto en código (T-58) pendiente verificación humana en vivo; síntoma de triangulación resuelto por degradación elegante (T-61) y causa raíz corregida (T-62).
 - Dirty state preservado y fuera de todo scope: `scripts/build_vest_blender.py`, `scripts/render_4_views_blender.py`, `IMAGENES/`, `scripts/run_mcp_bridge.py`.
 
 ## Current facts
 
 - **Fases 1.0 a 8.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Suite Determinista:** **31/31 suites, 758/758 tests en verde** (gates frescos tras T-58).
+- **Suite Determinista:** **31/31 suites, 776/776 tests en verde** (gates frescos tras T-62).
+- **Sesión 2026-09-07/08 (9 tareas APTO + 3 auditorías de fase + 2 correcciones H-03):**
+  - Migración de análisis a Gemini 3.8 Flash High con OAuth/ADC (`721bd63`), verificado en vivo.
+  - T-49 blueprint libre `free`/`libre`/`creative` (`3b6e09a`/`8e41cb1`).
+  - T-50 clamp numérico en repair pass (`9d19248`); T-58 sinónimos de closure (`86432ea`); T-60 union recovery (`0155cac`) — las 3 clases de fallo del LLM cubiertas con log `[schema-repair]`.
+  - Phase 12 cerrada: T-51/T-52/T-53 Capability Registry + Operator SDK + derivación sin deriva + Recipe DSL (`5625c16`/`276be1a`/`ee75ff1`), auditoría independiente APTO.
+  - Phase 13 cerrada: T-54/T-55/T-56 session store + tools bridge + AI tool loop con Vercel AI SDK (`ab0da5a`/`75a9018`/`beb095c`), auditoría independiente APTO.
+  - T-57 fix `H-03-F` pernera trasera espejada (`7044daf`) — VERIFICADO OK por el Humano.
+  - T-59 despiece simétrico de mangas (`7565c4f`) — pendiente verificación humana.
+  - T-61 degradación elegante 3D (`30cbbbe`); T-62 causa raíz del patrón cruzado (`387c635`) — pendiente verificación humana.
+- **Savepoints en Drive (SHA-256 íntegros):** v1 gemini-oauth, phase11, phase12, phase13. El trabajo posterior (T-57 a T-62) está en GitHub `master`; siguiente savepoint al cierre de Fase 9.
+- **North Star v1 aprobado:** Patronista Conversacional (Phase 13 ✅), RAG (14), Migración de familias (15), Workshop (16), Product Readiness (17).
+- **Módulos Paramétricos Extendidos:** Cuellos técnicos, bolsillos cargo 3D con fuelle y solapa, blueprint ancla `utility_vest`, moldería industrial y despiece 3D WebGL.
 - **Phase 13 CERRADA TECNICAMENTE (auditoria independiente APTO):** T-54 session store + revision manager (`ab0da5a`), T-55 capability tools bridge + bounded executor atomico (`75a9018`), T-56 AI tool loop con Vercel AI SDK y round-trip reproducible (`beb095c`). 42 tests nuevos. Barrera de salida "Conversacion reproducible sin perdida de decisiones" CONFIRMADA.
 - **Phase 12 CERRADA TECNICAMENTE (auditoria independiente APTO):** T-51 Capability Registry core (`5625c16`), T-52 Operator SDK + 4 capacidades base `kernel.*` + derivacion prompt/tools con drift gate (`276be1a`), T-53 Recipe DSL + executor atomico + fixtures (`ee75ff1`). Barrera de salida verificada: "Prompt/tipos/Zod/tools generados sin deriva contractual".
 - **Phase 11 CERRADA TECNICAMENTE:** T-45 a T-48 APTO. Kernel v2 en shadow mode read-only (`SEMANTIC_SHADOW=on`, byte-identico).
