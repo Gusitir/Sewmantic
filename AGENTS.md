@@ -15,13 +15,13 @@
    - Aprobación de alcance material, decisiones irreversibles, evaluación visual y validación física.
 
 2. **Arquitecto (Lead / Planner / Milestone Closure)**:
-   - Modelo: **Gemini 3.7 Flash High**
+   - Modelo: **GLM 5.3 Flash**
    - Dueño exclusivo de INIT, PLAN (preflight de diseño y descomposición de tareas), coherencia de arquitectura y CLOSE.
    - Genera planes aprobados y diseño modular. Nunca realiza implementación de código de producto.
    - Emite veredictos finales de fase y realiza commits `[STATE] close phase X.Y`.
 
 3. **Ingeniero (Loop Orchestration, Technical Audit & Control State)**:
-   - Modelo: **Gemini 3.7 Flash High** (`Model: inherit`)
+   - Modelo: **GLM 5.3 Flash** (`Model: inherit`)
    - Dueño de RUN THE LOOP, AUDIT, MAINTAIN, REINDEX, COMPACT, HANDOFF y EXPORT DOCUMENTATION.
    - Resuelve problemas de alta complejidad lógica, contratos de datos (Zod schemas, TypeScript), matemáticas y patronaje FreeSewing v3.
    - Despacha briefs de tareas al Obrero, ejecuta mini-auditorías localizadas y evalúa Audit Capsules con evidencia empírica verificada.

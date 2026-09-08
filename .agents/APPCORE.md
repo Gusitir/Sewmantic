@@ -1,12 +1,14 @@
 # APPCORE - Generador Paramétrico de Patrones IA
 
-Verified: 2026-09-07 at Phase 11 Technical Closure (commit d6279fa, 657 tests PASS across 25 suites)
+Verified: 2026-09-08 at MAINTAIN reindex (commit 5fc85b8, 776 tests PASS across 31 suites)
 
 ## Semantic Pattern Kernel v2 (integrado en shadow mode, T-45 a T-48)
 
 - **Superficie pública:** `src/engine/v2/` — `contracts.ts` (Vertex, 4 curvas tipadas, Edge, EdgeSequence, Panel, Component, Interface, StitchPair, ConstraintDiagnostic, PatternDocument con type guards), `serialization.ts` (validate/serialize/deserialize versionados), `geometry/` (adapter Flatten.js, sampler de arco, offset miter-only propio), `constraints.ts` (`resolveStitchPair`, `evaluateConstraints` con diagnostics tipados: SEAM_DELTA_LIMIT 3mm, ORIENTATION_INCOMPATIBLE, BROKEN_REFERENCE, NON_POSITIVE_LENGTH), `operators.ts` (`splitEdge`/`insertDart`/`cut` puros y atómicos, rechazo con estado byte-idéntico), `adapters/legacy-shadow.ts` + `shadow.ts`.
 - **Shadow mode (T-48):** `SEMANTIC_SHADOW=on` (default OFF) ejecuta en `src/pipeline.ts` un único seam de solo lectura: convierte las piezas legacy a snapshot semántico y calcula diagnósticos en memoria. Cero escritura, cero deriva byte en entregables OFF vs ON (verificado en tests de integración). El pipeline legacy es la única autoridad.
 - **Unidad canónica:** mm con tolerancia serializada `<= 0.001` (`MM_TOLERANCE`). Los IDs estables y la serialización versionada (`SEMANTIC_V2_SCHEMA_VERSION = 1`) son parte del contrato.
+- **Capability Registry & Recipe DSL (Phase 12, T-51 a T-53):** `src/engine/v2/registry.ts` (registro y descubrimiento de operadores con validación de firmas y resolución de dependencias), `src/engine/v2/capabilities/` (Operator SDK: `base`, `derivation`, `operator-sdk`) y `src/engine/v2/recipes.ts` (DSL declarativo para componer operadores atómicos).
+- **Patternist Harness (Phase 13, T-54 a T-56):** `src/harness/` — `session.ts` + `revisions.ts` (sesión conversacional e historial de revisiones del documento), `tools.ts` + `executor.ts` (herramientas y executor seguro de acciones) y `loop.ts` (loop conversacional del Patronista).
 
 ## Purpose and users
 
@@ -64,7 +66,7 @@ pattern-ai-core/
 │   ├── CURRENT.md                     # Estado activo del proyecto, veredicto y siguiente acción
 │   ├── CONTEXT.md                     # Crónica de decisiones, auditorías e hitos archivados
 │   ├── PLAN.md                        # Puntero al plan activo / borrador
-│   └── TESTING.md                     # Matriz de pruebas (21 suites, 548 tests) y verificaciones
+│   └── TESTING.md                     # Matriz de pruebas (31 suites, 776 tests) y verificaciones
 ├── scripts/                           # Automatizaciones mecánicas (Node.js & Python)
 │   ├── test_fireworks_call.js         # Diagnóstico directo de Fireworks API con Qwen 3.8 Max
 │   ├── test_fireworks_e2e_image.js    # Prueba E2E de generación multimodal por imagen
@@ -93,7 +95,9 @@ pattern-ai-core/
 │   │   ├── calibration_box.ts         # Generador del recuadro de calibración 10x10 cm
 │   │   ├── exporter.ts                # Renderizado SVG y conversión a PDF continuo/paginado
 │   │   ├── tech_sheet.ts              # Ficha técnica industrial (PDF, MD, JSON) con guía de 4 pasos
-│   │   └── etsy_bundler.ts            # Empaquetador de ZIP comercial en 7 carpetas y metadatos Etsy
+│   │   ├── etsy_bundler.ts            # Empaquetador de ZIP comercial en 7 carpetas y metadatos Etsy
+│   │   └── v2/                        # Kernel Semántico v2 (contratos, geometría, constraints, operadores, registry, recipes)
+│   ├── harness/                       # Patternist Harness conversacional (Phase 13: session, revisions, tools, executor, loop)
 │   ├── utils/
 │   │   └── tiler.ts                   # Motor de corte vectorial en grilla A4/Letter con cruces
 │   └── server/                        # Servidor API REST Local y Web Studio Dashboard
