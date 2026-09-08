@@ -289,3 +289,10 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Entrega del Obrero `ee75ff1` (1 ciclo): `src/engine/v2/recipes.ts` — `executeRecipe(registry, recipe, doc, options?)` con Recipe DSL Zod (`recipe.<name>`, semver, steps `[{capability, params}]`), preflight de existencia y draft-gate (`DRAFT_CAPABILITY_FORBIDDEN` por defecto, `allowDraft` explicito), ejecucion ordenada sobre clon profundo con rollback byte-identico y `failedStep`, diagnostics consolidados. Fixtures `fixtures/recipes/haori-fusion.v1.json` y `vest-welt.v1.json` componiendo las 4 capacidades base. 9 tests.
 - Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 9/9, build PASS, suite **28/28 con 707/707 tests**. Dirty state intacto.
 - Pendiente para el cierre formal de Phase 12: auditoria de fase independiente (sesion de auditorias dedicada) y savepoint.
+
+## 2026-09-07 - Auditoria independiente de fase: Phase 12 APTO (cierre formal)
+
+- Sesion de auditorias dedicada verifico con evidencia propia: gates frescos (focalizados 50/50, build PASS, suite **28/28 con 707/707 tests**), scope de los 3 commits, y la barrera de salida del ROADMAP ("Prompt/tipos/Zod/tools generados sin deriva contractual") CONFIRMADA: derivacion 100% desde el registry sin capacidades hardcodeadas, drift gate fail-closed con prueba negativa, params Zod espejo campo a campo de los operadores T-47.
+- Hallazgos menores sin bloqueo: sin pinning de version por paso en recipes (limitante con multiples versiones vivas), acceso a `_def` interno de Zod en derivation.ts (fragil ante upgrade mayor), clon JSON round-trip (correcto para el contrato actual). Recomendaciones registradas para Phase 13.
+- Savepoint `savepoint-v1-phase12-operators-registry-20260907` creado (local/remoto/artefactos Drive).
+- **STOP del plan: antes de Phase 13 (Conversational Patternist Harness) se requiere nueva autorizacion humana.**
