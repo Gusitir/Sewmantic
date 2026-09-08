@@ -81,6 +81,20 @@ export {
 } from './registry.js';
 
 export {
+  CapabilityDerivationError,
+  CapabilityOperatorRejection,
+  defineKernelCapability,
+  generatePromptFragment,
+  generateToolSchemas,
+  registerBaseCapabilities,
+  runCapability,
+  type CapabilityToolSchema,
+  type JsonSchemaNode,
+  type KernelCapabilityDefinition,
+  type KernelDocOperator,
+} from './capabilities/index.js';
+
+export {
   SHADOW_ADAPTER_FAILURE_ID,
   legacyPartsToSemanticDocument,
 } from './adapters/legacy-shadow.js';

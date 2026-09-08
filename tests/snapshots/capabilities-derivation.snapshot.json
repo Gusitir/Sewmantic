@@ -1,0 +1,182 @@
+{
+  "toolSchemas": [
+    {
+      "id": "kernel.cut",
+      "description": "Cut an open interval out of a line border edge, removing exactly lengthMm from every referencing sequence.",
+      "status": "experimental",
+      "params": {
+        "type": "object",
+        "properties": {
+          "edgeId": {
+            "type": "string"
+          },
+          "lengthMm": {
+            "type": "number"
+          },
+          "atMm": {
+            "type": "number"
+          },
+          "pointAId": {
+            "type": "string"
+          },
+          "pointBId": {
+            "type": "string"
+          },
+          "edgeIdA": {
+            "type": "string"
+          },
+          "edgeIdB": {
+            "type": "string"
+          },
+          "maxSeamDeltaMm": {
+            "type": "number"
+          },
+          "sample": {
+            "type": "object",
+            "properties": {
+              "toleranceMm": {
+                "type": "number"
+              },
+              "maxSegments": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "required": [
+          "edgeId",
+          "lengthMm"
+        ]
+      }
+    },
+    {
+      "id": "kernel.evaluate-constraints",
+      "description": "Read-only evaluation of the typed constraint set over every interface; returns the constraint diagnostics without mutating the document.",
+      "status": "experimental",
+      "params": {
+        "type": "object",
+        "properties": {
+          "maxSeamDeltaMm": {
+            "type": "number"
+          },
+          "sample": {
+            "type": "object",
+            "properties": {
+              "toleranceMm": {
+                "type": "number"
+              },
+              "maxSegments": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "kernel.insert-dart",
+      "description": "Insert a closed dart on a line border edge, adding exactly 2 * depthMm to every referencing sequence.",
+      "status": "experimental",
+      "params": {
+        "type": "object",
+        "properties": {
+          "edgeId": {
+            "type": "string"
+          },
+          "depthMm": {
+            "type": "number"
+          },
+          "atMm": {
+            "type": "number"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "left",
+              "right"
+            ]
+          },
+          "pointVertexId": {
+            "type": "string"
+          },
+          "apexVertexId": {
+            "type": "string"
+          },
+          "legInEdgeId": {
+            "type": "string"
+          },
+          "legOutEdgeId": {
+            "type": "string"
+          },
+          "edgeIdA": {
+            "type": "string"
+          },
+          "edgeIdB": {
+            "type": "string"
+          },
+          "maxSeamDeltaMm": {
+            "type": "number"
+          },
+          "sample": {
+            "type": "object",
+            "properties": {
+              "toleranceMm": {
+                "type": "number"
+              },
+              "maxSegments": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "required": [
+          "edgeId",
+          "depthMm"
+        ]
+      }
+    },
+    {
+      "id": "kernel.split-edge",
+      "description": "Split one edge into two edges at an arc-length offset, replacing it in every referencing sequence.",
+      "status": "experimental",
+      "params": {
+        "type": "object",
+        "properties": {
+          "edgeId": {
+            "type": "string"
+          },
+          "atMm": {
+            "type": "number"
+          },
+          "vertexId": {
+            "type": "string"
+          },
+          "edgeIdA": {
+            "type": "string"
+          },
+          "edgeIdB": {
+            "type": "string"
+          },
+          "maxSeamDeltaMm": {
+            "type": "number"
+          },
+          "sample": {
+            "type": "object",
+            "properties": {
+              "toleranceMm": {
+                "type": "number"
+              },
+              "maxSegments": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "required": [
+          "edgeId"
+        ]
+      }
+    }
+  ],
+  "promptFragment": "kernel capabilities:\n- kernel.cut v0.1.0 [experimental]: Cut an open interval out of a line border edge, removing exactly lengthMm from every referencing sequence.\n  params: edgeId: string; lengthMm: number; atMm: number (optional); pointAId: string (optional); pointBId: string (optional); edgeIdA: string (optional); edgeIdB: string (optional); maxSeamDeltaMm: number (optional); sample: object{toleranceMm:number, maxSegments:number} (optional)\n- kernel.evaluate-constraints v0.1.0 [experimental]: Read-only evaluation of the typed constraint set over every interface; returns the constraint diagnostics without mutating the document.\n  params: maxSeamDeltaMm: number (optional); sample: object{toleranceMm:number, maxSegments:number} (optional)\n- kernel.insert-dart v0.1.0 [experimental]: Insert a closed dart on a line border edge, adding exactly 2 * depthMm to every referencing sequence.\n  params: edgeId: string; depthMm: number; atMm: number (optional); side: enum<left|right> (optional); pointVertexId: string (optional); apexVertexId: string (optional); legInEdgeId: string (optional); legOutEdgeId: string (optional); edgeIdA: string (optional); edgeIdB: string (optional); maxSeamDeltaMm: number (optional); sample: object{toleranceMm:number, maxSegments:number} (optional)\n- kernel.split-edge v0.1.0 [experimental]: Split one edge into two edges at an arc-length offset, replacing it in every referencing sequence.\n  params: edgeId: string; atMm: number (optional); vertexId: string (optional); edgeIdA: string (optional); edgeIdB: string (optional); maxSeamDeltaMm: number (optional); sample: object{toleranceMm:number, maxSegments:number} (optional)"
+}
