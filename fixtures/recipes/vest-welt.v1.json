@@ -1,0 +1,37 @@
+{
+  "id": "recipe.vest-welt",
+  "version": "1.0.0",
+  "description": "Symmetric welt pocket openings: remove a 20 mm interval from the lower right border and the matching 20 mm interval from the left border, keeping the side seam balanced.",
+  "steps": [
+    {
+      "capability": "kernel.cut",
+      "params": {
+        "edgeId": "eR1",
+        "lengthMm": 20,
+        "atMm": 15,
+        "maxSeamDeltaMm": 25,
+        "pointAId": "vWeltRightA",
+        "pointBId": "vWeltRightB",
+        "edgeIdA": "eWeltRightBefore",
+        "edgeIdB": "eWeltRightAfter"
+      }
+    },
+    {
+      "capability": "kernel.cut",
+      "params": {
+        "edgeId": "eL0",
+        "lengthMm": 20,
+        "atMm": 40,
+        "maxSeamDeltaMm": 25,
+        "pointAId": "vWeltLeftA",
+        "pointBId": "vWeltLeftB",
+        "edgeIdA": "eWeltLeftBefore",
+        "edgeIdB": "eWeltLeftAfter"
+      }
+    },
+    {
+      "capability": "kernel.evaluate-constraints",
+      "params": {}
+    }
+  ]
+}

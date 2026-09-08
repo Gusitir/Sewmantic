@@ -1,0 +1,38 @@
+{
+  "id": "recipe.haori-fusion",
+  "version": "1.0.0",
+  "description": "Haori-inspired front opening: split the left border at 40 mm, open a 15 mm dart on the upper segment and re-evaluate the seam constraints with a 30 mm tolerance.",
+  "steps": [
+    {
+      "capability": "kernel.split-edge",
+      "params": {
+        "edgeId": "eL0",
+        "atMm": 40,
+        "vertexId": "vHaoriSplit",
+        "edgeIdA": "eHaoriUpper",
+        "edgeIdB": "eHaoriLower"
+      }
+    },
+    {
+      "capability": "kernel.insert-dart",
+      "params": {
+        "edgeId": "eHaoriUpper",
+        "depthMm": 15,
+        "atMm": 20,
+        "maxSeamDeltaMm": 30,
+        "pointVertexId": "vHaoriDartPoint",
+        "apexVertexId": "vHaoriDartApex",
+        "legInEdgeId": "eHaoriDartLegIn",
+        "legOutEdgeId": "eHaoriDartLegOut",
+        "edgeIdA": "eHaoriDartBefore",
+        "edgeIdB": "eHaoriDartAfter"
+      }
+    },
+    {
+      "capability": "kernel.evaluate-constraints",
+      "params": {
+        "maxSeamDeltaMm": 30
+      }
+    }
+  ]
+}

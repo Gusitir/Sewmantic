@@ -95,6 +95,17 @@ export {
 } from './capabilities/index.js';
 
 export {
+  executeRecipe,
+  type Recipe,
+  type RecipeExecutionOptions,
+  type RecipeRejection,
+  type RecipeRejectionCode,
+  type RecipeResult,
+  type RecipeStep,
+  type RecipeSuccess,
+} from './recipes.js';
+
+export {
   SHADOW_ADAPTER_FAILURE_ID,
   legacyPartsToSemanticDocument,
 } from './adapters/legacy-shadow.js';
