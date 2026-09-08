@@ -302,3 +302,8 @@ suites_passing: 21/21 (548/548 tests PASS)
 - El Humano autorizo Phase 13 con Obreros DeepSeek V4 Flash. Decision `D-2026-09-07-P13`, plan `PLAN_v1.5-phase13-conversational-harness.md` (T-54 session/revisiones, T-55 tools+executor acotado, T-56 AI tool loop con Vercel AI SDK).
 - Entrega T-54 `ab0da5a`: `src/harness/revisions.ts` (pila de snapshots `serializeDocument` con undo/redo lineal, truncado de redo, maxRevisions default 50, timestamps inyectables, ids estables `rev-<n>`) y `src/harness/session.ts` (turns/decisiones tipados con ids secuenciales, `commitRevision`, undo/redo integrados, round-trip byte-identico via `serializeSession/deserializeSession` con validacion estricta). Baseline como revision `rev-1` (decision D1 justificada). 20 tests.
 - Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 20/20, build PASS, suite **29/29 con 727/727 tests**. Dirty state intacto.
+
+## 2026-09-07 - T-55 Capability Tools Bridge + Bounded Executor APTO
+
+- Entrega del Obrero `75a9018` (1 ciclo): `src/harness/tools.ts` (`capabilityToTool` con draft gating y normalizacion de rechazos, `registryToTools` id-sorted) y `src/harness/executor.ts` (`executeTurn` con variante atomica: todos los pasos sobre clon en memoria, UNA revision consolidada + turn resumen + decision solo si todo tiene exito; preflight maxSteps/CAPABILITY_GAP/draft/aprobacion humana antes de ejecutar). 14 tests.
+- Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 14/14, build PASS, suite **30/30 con 741/741 tests**. Dirty state intacto.
