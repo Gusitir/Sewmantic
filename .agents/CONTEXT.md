@@ -334,6 +334,13 @@ suites_passing: 21/21 (548/548 tests PASS)
 - El Humano regenero pantalon/bermuda y confirmo: "el pantalon/bermuda ya funciona correctamente" — la pernera trasera ya apunta con el tiro hacia la entrepierna. `H-03-F` cerrado.
 - `H-03` queda con un unico hallazgo abierto: `H-03-H` (enum `closure.type` alucinado, ej. `wrap`), siendo atendido por T-58 (PLAN v1.6, `D-2026-09-07-ENUM`).
 
+## 2026-09-07 - T-58 APTO: Enum Recovery (H-03-H resuelto en codigo)
+
+- Entrega del Obrero `86432ea` (1 ciclo): mapa de 26 sinonimos para `modifications.closure.type` con normalizacion case/underscore-insensitive (`wrap->ties`, `pullover->none`, `zip->zipper`, ...) aplicada pre-validacion; `deleteValueAtPath` + `tryEnumDeletionRecovery` para `invalid_enum_value` sin sinonimo (deletion-trial del valor y progresivo hacia arriba, re-parseando en cada paso); log trazable consolidado; clamps numericos de T-50 intactos; `parsePatternDna` estricto sin cambios. 8 tests.
+- Hallazgo util de la entrega: `NecklineModSchema.type` es REQUERIDO, por lo que el deletion-trial elimina la modificacion completa (neckline) en vez del campo — comportamiento correcto documentado en test.
+- Auditoria del Ingeniero: APTO con gates frescos propios — schema 55/55, build PASS, suite **31/31 con 758/758 tests**. Dirty state intacto.
+- `H-03-H` queda **resuelto en codigo, pendiente de verificacion humana en vivo** (regenerar la prenda que fallaba con cierre wrap).
+
 ## 2026-09-07 - T-57 APTO: correccion H-03-F (pernera trasera espejada en 3D)
 
 - El Humano reporto de nuevo el sintoma visual; investigacion por subagente confirmo causa raiz unica: la rama `isBackLeg` de `generateTrueToPatternMesh` usaba `theta = (0.5 - u) * Math.PI` (mapeo horizontal invertido vs el front `(u - 0.5) * Math.PI`), volcando el borde de entrepierna (u=0) al lado exterior de la pierna. Defecto solo de proyeccion 3D; el patron 2D es correcto.

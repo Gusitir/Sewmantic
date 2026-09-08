@@ -21,18 +21,18 @@ backup: private GitHub + Google Drive VERIFIED (4 savepoints: gemini-oauth, phas
 
 ## Next action
 
-1. **Ingeniero:** Despachar **T-58 — Enum Recovery** (PLAN v1.6, `D-2026-09-07-ENUM`): reparación de `invalid_enum_value` en la repair pass (sinónimos closure + deletion-trial genérico) — último bloqueo para el CLOSE de Fase 9.
-2. **Humano:** Tras T-48/T-58 APTO: proceder al **CLOSE de Fase 9** y decidir apertura de **Phase 14 — Pattern Knowledge RAG** con nuevo plan del Arquitecto (STOP de Phase 13 cumplido).
+1. **Humano:** Ejecutar `start_web_studio.bat` y regenerar la prenda con cierre cruzado/wrap que fallaba — `H-03-H` resuelto en código (T-58): el log mostrará `[schema-repair] modifications.closure.type: "wrap" -> "ties"` y la generación completará.
+2. **Humano/Ingeniero:** Con `H-03-F` y `H-03-H` verificados, proceder al **CLOSE de Fase 9** y decidir apertura de **Phase 14 — Pattern Knowledge RAG** (STOP de Phase 13 cumplido).
 
 ## Blockers
 
-- Phase 9 CLOSE bloqueado por `H-03-H` (deriva `pull_over`/`wrap` entre prompt y Zod) — T-58 en ejecución. `H-03-F` ya VERIFICADO OK por el Humano.
+- Phase 9 CLOSE bloqueado por `H-03-H` — RESUELTO EN CÓDIGO (T-58 `86432ea`), pendiente verificación humana en vivo.
 - Dirty state preservado y fuera de todo scope: `scripts/build_vest_blender.py`, `scripts/render_4_views_blender.py`, `IMAGENES/`, `scripts/run_mcp_bridge.py`.
 
 ## Current facts
 
 - **Fases 1.0 a 8.0 Completadas y Selladas en `.agents/archive/` con veredicto APTO.**
-- **Suite Determinista:** **31/31 suites, 749/749 tests en verde** (gates frescos tras T-56).
+- **Suite Determinista:** **31/31 suites, 758/758 tests en verde** (gates frescos tras T-58).
 - **Phase 13 CERRADA TECNICAMENTE (auditoria independiente APTO):** T-54 session store + revision manager (`ab0da5a`), T-55 capability tools bridge + bounded executor atomico (`75a9018`), T-56 AI tool loop con Vercel AI SDK y round-trip reproducible (`beb095c`). 42 tests nuevos. Barrera de salida "Conversacion reproducible sin perdida de decisiones" CONFIRMADA.
 - **Phase 12 CERRADA TECNICAMENTE (auditoria independiente APTO):** T-51 Capability Registry core (`5625c16`), T-52 Operator SDK + 4 capacidades base `kernel.*` + derivacion prompt/tools con drift gate (`276be1a`), T-53 Recipe DSL + executor atomico + fixtures (`ee75ff1`). Barrera de salida verificada: "Prompt/tipos/Zod/tools generados sin deriva contractual".
 - **Phase 11 CERRADA TECNICAMENTE:** T-45 a T-48 APTO. Kernel v2 en shadow mode read-only (`SEMANTIC_SHADOW=on`, byte-identico).
@@ -45,11 +45,12 @@ backup: private GitHub + Google Drive VERIFIED (4 savepoints: gemini-oauth, phas
 
 ## Open findings
 
-- `H-03-H` (ACTIVO, T-58): `invalid_enum_value` en enums alucinados por el LLM (ej. `closure.type: "wrap"`) rechaza el ADN — PLAN v1.6 con normalización de sinónimos + deletion-trial genérico.
+- `H-03-H` (T-58 `86432ea`): resuelto en código — normalización de sinónimos de closure + deletion-trial genérico para enums alucinados. Pendiente verificación humana en vivo.
 - Hallazgos menores de la auditoria Phase 13 (no bloqueantes): preflight de resolucion de capacidades en loop.ts (un tool call alucinado registra historial honesto antes de fallar), `currentDoc` redundante en el payload de sesion, `restoreRevisionManager` sin recorte hasta proximo commit, pinning de version por paso en recipes.
 - `isBackSkirt` repite el patron latente de espejado (invisible hoy, falda simetrica) — corregir por coherencia en proximo touch del bridge.
 - `front_leg` mesh tiene normales INWARD pre-existentes enmascaradas por material doubleSided — auditar convencion de orientacion de paneles (tarea futura).
 - `P11-GEO-01` riesgo residual: miter sin limite puede crear picos en angulos agudos.
+- T-58 pregunta abierta: incorporar sinónimos para otros enums (neckline/sleeve/hood) en T futuro — hoy solo closure.type normaliza.
 
 ## Human actions
 
