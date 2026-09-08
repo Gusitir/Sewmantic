@@ -45,6 +45,7 @@ backup: private GitHub + Google Drive VERIFIED (4 savepoints: gemini-oauth, phas
 
 ## Open findings
 
+- Triangulación 3D: contornos genuinamente auto-intersectados (combinaciones extremas del LLM) no producen .glb — ahora con degradación elegante (T-61): los entregables 2D se conservan y el resto se omite con warning. Resolución raíz (boolean-union/limpieza profunda) requiere tarea futura.
 - `H-03-H` (T-58) y union recovery (T-60): resueltos en código — sinónimos de closure/trouser_pockets + deletion-trial + union recovery. Pendiente verificación humana en vivo (regenerar la bermuda "straw pirate denim shorts").
 - Hallazgos menores de la auditoria Phase 13 (no bloqueantes): preflight de resolucion de capacidades en loop.ts (un tool call alucinado registra historial honesto antes de fallar), `currentDoc` redundante en el payload de sesion, `restoreRevisionManager` sin recorte hasta proximo commit, pinning de version por paso en recipes.
 - `isBackSkirt` repite el patron latente de espejado (invisible hoy, falda simetrica) — corregir por coherencia en proximo touch del bridge.

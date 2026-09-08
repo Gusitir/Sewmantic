@@ -329,6 +329,15 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Copiados y verificados por SHA-256 los 8 artefactos: savepoints gemini-oauth, phase11, phase12 y phase13 (bundle de historia completa + ZIP snapshot de 159/167/180/190 entradas). Todos HASH OK en Drive.
 - La accion humana de subida manual queda cerrada; futuros savepoints se copian directo a `F:\Mi unidad\backups\`.
 
+## 2026-09-08 - T-61 APTO: 3D Graceful Degradation + Polygon Cleanup
+
+- El Humano reporto cuarto fallo en vivo ("straw pirate denim shorts", tallas S-2XL): tras repair pass exitosa (`[schema-repair] trouser_pockets removed`), la triangulacion ear-clipping de una pieza con contorno degenerado lanzo y **cancelo TODA la generacion**, perdiendo entregables 2D ya escritos. Decision `D-2026-09-08-3D`, plan `PLAN_v1.8-3d-graceful-degradation.md`.
+- Entrega del Obrero `30cbbbe` (1 ciclo): (1) seam del modelo 3D en `src/pipeline.ts` con try/catch — fallo de triangulacion/mesh deja `glb` ausente con `console.warn` claro y conserva los 8 entregables 2D; (2) helper `cleanupPolygonForTriangulation` en `blender_bridge.ts` (dedupe consecutivo + colineales, tolerancia 0.01mm) con un reintento antes de propagar; en exito del reintento reasigna `outline` para preservar correspondencia UV.
+- Evidencia empirica del Obrero: 1881/3000 poligonos auto-intersectados aleatorios lanzan el error y NINGUNO es rescatable por limpieza (los auto-intersectados reales requieren tarea futura de boolean-union); anillos colineales degenerados SI se rescatan (test incluido).
+- Desviaciones aceptadas: reasignacion de outline post-limpieza (preserva UVs), vi.mock+importOriginal para mock ESM fiable en Vitest 2.
+- Auditoria del Ingeniero: APTO con gates frescos propios — blender+bundler 50/50, build PASS, suite **31/31 con 774/774 tests**. Dirty state intacto.
+- Nota: `stats.generatedFilesCount` no descuenta el glb omitido (cosmetico, sin test que lo afirme).
+
 ## 2026-09-07 - T-60 APTO: Union Recovery (tercera clase de fallo cubierta)
 
 - El Humano reporto un tercer fallo en vivo ("straw pirate denim shorts"): `invalid_union` en `modifications.trouter_pockets` (acepta objeto o array) con `type: "slash_with_coin"` alucinado — las pasadas T-50/T-58 no cubren issues anidados de uniones.
