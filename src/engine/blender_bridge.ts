@@ -1234,12 +1234,14 @@ export function generateTrueToPatternMesh(
         panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
       }
     } else if (isBackLeg) {
-      // Pierna Trasera Pantalón/Bermuda
+      // Pierna Trasera Pantalón/Bermuda (misma parametrización theta que la pierna frontal;
+      // el reflejo en Z del cilindro invierte la orientación, por eso la copia derecha
+      // usa los índices base y la izquierda los invierte para normales hacia afuera)
       for (let k = 0; k < outline.length; k++) {
         const pt = outline[k];
         const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
         const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
-        const theta = (0.5 - u) * Math.PI;
+        const theta = (u - 0.5) * Math.PI;
         const legR = 0.09 - 0.015 * v;
 
         const X = LEG_CENTER_X + legR * Math.sin(theta);
@@ -1249,9 +1251,7 @@ export function generateTrueToPatternMesh(
         panelPositions.push(X, Y, Z);
         panelUvs.push(u, v);
       }
-      for (let i = 0; i < baseIndices.length; i += 3) {
-        panelIndices.push(baseIndices[i], baseIndices[i + 2], baseIndices[i + 1]);
-      }
+      panelIndices.push(...baseIndices);
 
       // Pierna Trasera Izquierda
       const vOffset = outline.length;
@@ -1259,7 +1259,7 @@ export function generateTrueToPatternMesh(
         const pt = outline[k];
         const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
         const v = Math.min(Math.max((pt.y - minY) / height_mm, 0), 1);
-        const theta = (0.5 - u) * Math.PI;
+        const theta = (u - 0.5) * Math.PI;
         const legR = 0.09 - 0.015 * v;
 
         const X = -LEG_CENTER_X - legR * Math.sin(theta);
@@ -1270,7 +1270,7 @@ export function generateTrueToPatternMesh(
         panelUvs.push(1.0 - u, v);
       }
       for (let i = 0; i < baseIndices.length; i += 3) {
-        panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 1] + vOffset, baseIndices[i + 2] + vOffset);
+        panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
       }
     } else if (isFrontSkirt) {
       // Falda Delantera Cónica Evasé

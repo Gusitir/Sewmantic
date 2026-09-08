@@ -595,6 +595,88 @@ describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
       expect(skirtMesh.triangleCount).toBeGreaterThan(10);
     });
 
+    it('should project back leg crotch edge (u=0) to the inner side of each leg with outward normals (H-03-F regression)', () => {
+      const pantsDna: PatternDna = {
+        concept_name: 'back_leg_crotch_orientation_test',
+        garment_category: 'bottom',
+        base_block: 'pants_sloper',
+        ease: { chest_ease_mm: 0, waist_ease_mm: 40, hip_ease_mm: 80 },
+        modifications: {
+          trouser_legs: { type: 'straight', length_type: 'full' },
+          waistband: { type: 'fitted', height_mm: 40 },
+        },
+      };
+
+      const pattern = modifyPattern(pantsDna, 'M');
+      const mesh = generateTrueToPatternMesh(pattern, pantsDna);
+      const frontLeg = mesh.primitives!.find((p) => p.name === 'front_leg');
+      const backLeg = mesh.primitives!.find((p) => p.name === 'back_leg');
+      expect(frontLeg).toBeDefined();
+      expect(backLeg).toBeDefined();
+
+      const LEG_CENTER_X = 0.10;
+
+      // Media de X entre vértices del borde de entrepierna (u≈0 en espacio de patrón)
+      // para una copia: copySign=+1 copia derecha (uv u directo), -1 copia izquierda (uv 1-u)
+      const crotchMeanX = (prim: GarmentPrimitive3D, copySign: 1 | -1): number => {
+        let sum = 0;
+        let count = 0;
+        for (let i = 0; i < prim.vertexCount; i++) {
+          const x = prim.positions[i * 3];
+          const u = prim.uvs[i * 2];
+          if (x * copySign <= 0) continue;
+          const isCrotchEdge = copySign > 0 ? u < 0.1 : u > 0.9;
+          if (!isCrotchEdge) continue;
+          sum += x;
+          count++;
+        }
+        expect(count).toBeGreaterThan(0);
+        return sum / count;
+      };
+
+      // Conteo de caras con normal hacia afuera vs hacia adentro del eje de la pierna
+      const faceOrientationCensus = (prim: GarmentPrimitive3D, copySign: 1 | -1, axisZ: number) => {
+        let outward = 0;
+        let inward = 0;
+        for (let t = 0; t < prim.indices.length; t += 3) {
+          const ids = [prim.indices[t], prim.indices[t + 1], prim.indices[t + 2]].map((i) => i * 3);
+          const P = ids.map((o) => [prim.positions[o], prim.positions[o + 1], prim.positions[o + 2]]);
+          if (!P.every((p) => p[0] * copySign > 0)) continue;
+          const e1 = [P[1][0] - P[0][0], P[1][1] - P[0][1], P[1][2] - P[0][2]];
+          const e2 = [P[2][0] - P[0][0], P[2][1] - P[0][1], P[2][2] - P[0][2]];
+          const n = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+          const cx = (P[0][0] + P[1][0] + P[2][0]) / 3;
+          const cz = (P[0][2] + P[1][2] + P[2][2]) / 3;
+          const radial = [cx - copySign * LEG_CENTER_X, 0, cz - axisZ];
+          const d = n[0] * radial[0] + n[1] * radial[1] + n[2] * radial[2];
+          if (d > 1e-12) outward++;
+          else if (d < -1e-12) inward++;
+        }
+        return { outward, inward };
+      };
+
+      // 1. El borde de entrepierna (u=0, donde viven crotch_tip/knee_in/hem_in) debe caer
+      //    en el lado INTERIOR de cada pierna (X estrictamente dentro de ±LEG_CENTER_X)
+      const backRightCrotchX = crotchMeanX(backLeg!, 1);
+      const backLeftCrotchX = crotchMeanX(backLeg!, -1);
+      expect(backRightCrotchX).toBeLessThan(LEG_CENTER_X - 0.04);
+      expect(backLeftCrotchX).toBeGreaterThan(-(LEG_CENTER_X - 0.04));
+
+      // 2. La distribución X del back debe ser espejo del front respecto del centro de pierna
+      const frontRightCrotchX = crotchMeanX(frontLeg!, 1);
+      const frontLeftCrotchX = crotchMeanX(frontLeg!, -1);
+      expect(Math.abs(backRightCrotchX - frontRightCrotchX)).toBeLessThan(0.01);
+      expect(Math.abs(backLeftCrotchX - frontLeftCrotchX)).toBeLessThan(0.01);
+
+      // 3. Winding compensado: normales de back_leg dominan hacia afuera en ambas copias
+      const backRightFaces = faceOrientationCensus(backLeg!, 1, -0.015);
+      const backLeftFaces = faceOrientationCensus(backLeg!, -1, -0.015);
+      expect(backRightFaces.outward + backRightFaces.inward).toBeGreaterThan(0);
+      expect(backLeftFaces.outward + backLeftFaces.inward).toBeGreaterThan(0);
+      expect(backRightFaces.outward).toBeGreaterThan(backRightFaces.inward);
+      expect(backLeftFaces.outward).toBeGreaterThan(backLeftFaces.inward);
+    });
+
     it('should export Pattern to glTF 2.0 .glb via exportPatternToGlb and buildGlbBuffer', () => {
       const vestDna: PatternDna = {
         concept_name: 'glb_export_pattern_test',
