@@ -62,6 +62,8 @@ import {
   generateEtsyPrintingGuidePdf,
 } from './engine/etsy_bundler.js';
 import { generate3DGarmentModel } from './engine/blender_bridge.js';
+import type { PatternPart } from './engine/geometry.js';
+import { runSemanticShadow } from './engine/v2/index.js';
 
 export {
   createEtsyBundle,
@@ -304,6 +306,30 @@ export async function generatePatternPipeline(
     throw new Error(
       `No se pudo generar geometría para la talla primaria '${primarySize}'.`
     );
+  }
+
+  // ==========================================
+  // 3.b SEMANTIC SHADOW (T-48) — solo lectura, opt-in
+  // ==========================================
+  // Ejercita el kernel semántico v2 sobre un snapshot en memoria de las
+  // piezas legacy (todas las tallas). Se activa únicamente con
+  // SEMANTIC_SHADOW=on; nunca escribe datos, nunca reasigna variables del
+  // pipeline y nunca altera las salidas. El pipeline legacy sigue siendo la
+  // única autoridad.
+  if (process.env.SEMANTIC_SHADOW === 'on') {
+    try {
+      const shadowParts: PatternPart[] = [];
+      const shadowSizes: StandardSize[] = [];
+      for (const [size, sizeResult] of sizeMap) {
+        for (const part of Object.values(sizeResult.parts)) {
+          shadowParts.push(part);
+          shadowSizes.push(size);
+        }
+      }
+      runSemanticShadow(shadowParts, shadowSizes);
+    } catch {
+      // Modo shadow: ningún fallo del kernel v2 bloquea o altera el pipeline.
+    }
   }
 
   // ==========================================

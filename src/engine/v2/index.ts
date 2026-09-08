@@ -67,3 +67,13 @@ export {
   type OperatorRejection,
   type OperatorRejectionCode,
 } from './operators.js';
+
+export {
+  SHADOW_ADAPTER_FAILURE_ID,
+  legacyPartsToSemanticDocument,
+} from './adapters/legacy-shadow.js';
+
+export {
+  runSemanticShadow,
+  type SemanticShadowResult,
+} from './shadow.js';
