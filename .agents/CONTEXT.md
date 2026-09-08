@@ -329,6 +329,14 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Copiados y verificados por SHA-256 los 8 artefactos: savepoints gemini-oauth, phase11, phase12 y phase13 (bundle de historia completa + ZIP snapshot de 159/167/180/190 entradas). Todos HASH OK en Drive.
 - La accion humana de subida manual queda cerrada; futuros savepoints se copian directo a `F:\Mi unidad\backups\`.
 
+## 2026-09-08 - T-62 APTO: Back Leg Self-Intersection (causa raiz del patron cruzado)
+
+- El Humano reporto con captura que el patron 2D de "straw pirate denim shorts" se dibuja auto-intersectado (pernera trasera con curva de tiro cruzando el bajo) — confirmado por el Obrero: doble conteo de `lengthDelta` en `trousers.ts` (`hemY = kneeDepth + 25 + lengthDelta` con `kneeDepth` ya derivado de `inseam + lengthDelta`) invertia el contorno con inseams explicitos cortos; secundario: biseccion del tiro trasero sin cota inferior.
+- Correccion `387c635`: (1) opcion `explicit_inseam_mm` — con largo explicito el bajo queda en `crotchDepth + inseam` (semantica correcta del parametro, preservando legacy sin inseam explicito); (2) biseccion del tiro trasero acotada (`highY <= backInseamTarget.y - 60`); (3) `modifier.ts` pasa `explicit_inseam_mm` desde el ADN. Test de regresion con el ADN real del fallo en 5 tallas + matriz de 36 combos extremos (inseam 100-1200 x wide_baggy/slim/flare x shorts/bermuda/cropped/full x cuff) — todos contornos simples (helper O(n^2) de no-auto-interseccion).
+- Trade-off documentado: en combos fisicamente imposibles (bermuda inseam 100 con extension de tiro 143mm) el matching de entrepierna puede exceder 3mm — contorno simple priorizado.
+- Auditoria del Ingeniero: APTO con gates frescos propios — trousers 37/37, build PASS, suite **31/31 con 776/776 tests**. Dirty state intacto.
+- Pendiente verificacion visual humana (regenerar la bermuda).
+
 ## 2026-09-08 - T-61 APTO: 3D Graceful Degradation + Polygon Cleanup
 
 - El Humano reporto cuarto fallo en vivo ("straw pirate denim shorts", tallas S-2XL): tras repair pass exitosa (`[schema-repair] trouser_pockets removed`), la triangulacion ear-clipping de una pieza con contorno degenerado lanzo y **cancelo TODA la generacion**, perdiendo entregables 2D ya escritos. Decision `D-2026-09-08-3D`, plan `PLAN_v1.8-3d-graceful-degradation.md`.
