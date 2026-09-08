@@ -344,7 +344,10 @@ export function getFallbackExplodeOffset(name) {
   if (n.includes('back_leg') || (n.includes('leg') && n.includes('back'))) return [0, -0.15, -0.08];
   if (n.includes('front_skirt') || (n.includes('skirt') && n.includes('front'))) return [0, -0.10, 0.08];
   if (n.includes('back_skirt') || (n.includes('skirt') && n.includes('back'))) return [0, -0.10, -0.08];
-  if (n.includes('sleeve') || n.includes('furisode')) return [0.25, 0, 0];
+  if (n.includes('sleeve') || n.includes('furisode')) {
+    if (n.includes('left')) return [-0.25, 0, 0];
+    return [0.25, 0, 0];
+  }
   if (n.includes('front')) return [0, 0, 0.12];
   if (n.includes('back')) return [0, 0, -0.12];
   if (n.includes('hood')) return [0, 0.18, 0];

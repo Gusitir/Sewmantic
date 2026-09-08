@@ -422,7 +422,11 @@ describe('Visor 3D WebGL, Streaming .GLB y Empaquetado Comercial 3D (T-24)', () 
       expect(getFallbackExplodeOffset('armhole_facing')).toEqual([0.08, 0, 0.04]);
       expect(getFallbackExplodeOffset('front_panel')).toEqual([0, 0, 0.12]);
       expect(getFallbackExplodeOffset('back_panel')).toEqual([0, 0, -0.12]);
-      expect(getFallbackExplodeOffset('left_sleeve')).toEqual([0.25, 0, 0]);
+      // T-59: fallback lateral para mangas (right → +X, left → -X)
+      expect(getFallbackExplodeOffset('right_sleeve')).toEqual([0.25, 0, 0]);
+      expect(getFallbackExplodeOffset('sleeve')).toEqual([0.25, 0, 0]);
+      expect(getFallbackExplodeOffset('left_sleeve')).toEqual([-0.25, 0, 0]);
+      expect(getFallbackExplodeOffset('furisode_sleeve_left')).toEqual([-0.25, 0, 0]);
       expect(getFallbackExplodeOffset('front_leg')).toEqual([0, -0.15, 0.08]);
       expect(getFallbackExplodeOffset('back_leg')).toEqual([0, -0.15, -0.08]);
 

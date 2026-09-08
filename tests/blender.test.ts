@@ -677,6 +677,96 @@ describe('Blender Headless Bridge & 3D Garment Mesh Engine (T-23)', () => {
       expect(backLeftFaces.outward).toBeGreaterThan(backLeftFaces.inward);
     });
 
+    it('should emit mirrored sleeve copies as separate _right/_left primitives with symmetric explode offsets (T-59)', () => {
+      const dressDna: PatternDna = {
+        concept_name: 'sleeve_explode_split_test',
+        garment_category: 'dress',
+        base_block: 'dress_sloper',
+        ease: { chest_ease_mm: 80, waist_ease_mm: 60 },
+        modifications: {
+          sleeves: { type: 'short', length_mm: 180 },
+          dress_details: { silhouette: 'a_line', skirt_length_mm: 650 },
+        },
+      };
+
+      const pattern = modifyPattern(dressDna, 'M');
+      expect(pattern.parts.sleeve).toBeDefined();
+
+      const mesh3D = generateTrueToPatternMesh(pattern, dressDna);
+      const sleeveRight = mesh3D.primitives!.find((p) => p.name === 'sleeve_right');
+      const sleeveLeft = mesh3D.primitives!.find((p) => p.name === 'sleeve_left');
+
+      // La primitiva única 'sleeve' ya no existe: se emiten dos copias con sufijo lateral
+      expect(sleeveRight).toBeDefined();
+      expect(sleeveLeft).toBeDefined();
+      expect(mesh3D.primitives!.some((p) => p.name === 'sleeve')).toBe(false);
+
+      // Offsets de despiece espejados
+      expect(sleeveRight!.explodeOffset).toEqual([0.25, 0, 0]);
+      expect(sleeveLeft!.explodeOffset).toEqual([-0.25, 0, 0]);
+      expect(sleeveRight!.partType).toBe('sleeve');
+      expect(sleeveLeft!.partType).toBe('sleeve');
+
+      // Separación lateral por signo de X (bounds coherentes por copia)
+      expect(sleeveRight!.bounds.minX).toBeGreaterThan(0);
+      expect(sleeveLeft!.bounds.maxX).toBeLessThan(0);
+
+      // Sin pérdida de geometría: ambas copias triangulan el mismo contorno 2D
+      expect(sleeveRight!.triangleCount).toBe(sleeveLeft!.triangleCount);
+      expect(sleeveRight!.triangleCount).toBeGreaterThan(0);
+      expect(sleeveRight!.vertexCount).toBe(sleeveLeft!.vertexCount);
+
+      // Simetría especular exacta copia a copia (mismo orden de contorno)
+      for (let i = 0; i < sleeveRight!.vertexCount; i++) {
+        expect(sleeveLeft!.positions[i * 3]).toBeCloseTo(-sleeveRight!.positions[i * 3], 6);
+        expect(sleeveLeft!.positions[i * 3 + 1]).toBeCloseTo(sleeveRight!.positions[i * 3 + 1], 6);
+        expect(sleeveLeft!.positions[i * 3 + 2]).toBeCloseTo(sleeveRight!.positions[i * 3 + 2], 6);
+      }
+
+      // Conservación global: la suma de primitivas sigue coincidiendo con la malla combinada
+      const totalPrimTriangles = mesh3D.primitives!.reduce((acc, p) => acc + p.triangleCount, 0);
+      const totalPrimVertices = mesh3D.primitives!.reduce((acc, p) => acc + p.vertexCount, 0);
+      expect(totalPrimTriangles).toBe(mesh3D.triangleCount);
+      expect(totalPrimVertices).toBe(mesh3D.vertexCount);
+    });
+
+    it('should split furisode sleeves into mirrored _right/_left primitives with symmetric explode offsets (T-59)', () => {
+      const kimonoDna: PatternDna = {
+        concept_name: 'furisode_explode_split_test',
+        garment_category: 'kimono',
+        base_block: 'dress_sloper',
+        ease: { chest_ease_mm: 120 },
+        modifications: {
+          sleeves: { type: 'kimono' },
+          kimono_details: { sleeve_style: 'furisode_square', collar_width_mm: 50, obi_belt: true },
+        },
+      };
+
+      const pattern = modifyPattern(kimonoDna, 'M');
+      expect(pattern.parts.furisode_sleeve).toBeDefined();
+
+      const mesh3D = generateTrueToPatternMesh(pattern, kimonoDna);
+      const furisodeRight = mesh3D.primitives!.find((p) => p.name === 'furisode_sleeve_right');
+      const furisodeLeft = mesh3D.primitives!.find((p) => p.name === 'furisode_sleeve_left');
+
+      expect(furisodeRight).toBeDefined();
+      expect(furisodeLeft).toBeDefined();
+      expect(mesh3D.primitives!.some((p) => p.name === 'furisode_sleeve')).toBe(false);
+
+      expect(furisodeRight!.explodeOffset).toEqual([0.25, 0, 0]);
+      expect(furisodeLeft!.explodeOffset).toEqual([-0.25, 0, 0]);
+
+      expect(furisodeRight!.bounds.minX).toBeGreaterThan(0);
+      expect(furisodeLeft!.bounds.maxX).toBeLessThan(0);
+
+      // Sin pérdida de geometría: right + left conservan los triángulos del contorno triangulado
+      expect(furisodeRight!.triangleCount).toBe(furisodeLeft!.triangleCount);
+      expect(furisodeRight!.triangleCount).toBeGreaterThan(0);
+
+      const totalPrimTriangles = mesh3D.primitives!.reduce((acc, p) => acc + p.triangleCount, 0);
+      expect(totalPrimTriangles).toBe(mesh3D.triangleCount);
+    });
+
     it('should export Pattern to glTF 2.0 .glb via exportPatternToGlb and buildGlbBuffer', () => {
       const vestDna: PatternDna = {
         concept_name: 'glb_export_pattern_test',

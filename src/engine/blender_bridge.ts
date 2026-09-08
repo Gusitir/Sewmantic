@@ -948,6 +948,12 @@ export function generateTrueToPatternMesh(
     const panelUvs: number[] = [];
     const panelIndices: number[] = [];
 
+    // Copia espejada independiente (mangas): se emite como primitiva separada
+    // para despiece simétrico izquierda/derecha en el visor 3D
+    const mirrorPositions: number[] = [];
+    const mirrorUvs: number[] = [];
+    const mirrorIndices: number[] = [];
+
     // 3. Proyección espacial anatómica envolvente
     if (isFrontFacing) {
       // Vista Delantera Interior (Front Facing) — posicionada entre delantero y el interior
@@ -1116,7 +1122,7 @@ export function generateTrueToPatternMesh(
         }
       }
     } else if (isFurisodeSleeve) {
-      // Manga Kimono Furisode colgante
+      // Manga Kimono Furisode colgante (copia derecha, X positivo)
       for (let k = 0; k < outline.length; k++) {
         const pt = outline[k];
         const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
@@ -1130,8 +1136,7 @@ export function generateTrueToPatternMesh(
       }
       panelIndices.push(...baseIndices);
 
-      // Manga Furisode Izquierda
-      const vOffset = outline.length;
+      // Manga Furisode Izquierda espejada (X negativo) — primitiva separada para despiece simétrico
       for (let k = 0; k < outline.length; k++) {
         const pt = outline[k];
         const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
@@ -1140,14 +1145,14 @@ export function generateTrueToPatternMesh(
         const Y = SHOULDER_Y - 0.03 - (pt.y - minY) / 1000;
         const Z = Math.sin(u * Math.PI) * 0.035 * (1.0 - 0.3 * v);
 
-        panelPositions.push(X, Y, Z);
-        panelUvs.push(1.0 - u, v);
+        mirrorPositions.push(X, Y, Z);
+        mirrorUvs.push(1.0 - u, v);
       }
       for (let i = 0; i < baseIndices.length; i += 3) {
-        panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
+        mirrorIndices.push(baseIndices[i], baseIndices[i + 2], baseIndices[i + 1]);
       }
     } else if (isSleeve) {
-      // Manga Anatómica envolvente A-Pose
+      // Manga Anatómica envolvente A-Pose (copia derecha, X positivo)
       const halfBicep = Math.max(Math.abs(minX), Math.abs(maxX), 50);
       const armAngle = (30 * Math.PI) / 180;
 
@@ -1172,8 +1177,7 @@ export function generateTrueToPatternMesh(
       }
       panelIndices.push(...baseIndices);
 
-      // Manga Izquierda Espejada
-      const vOffset = outline.length;
+      // Manga Izquierda Espejada (X negativo) — primitiva separada para despiece simétrico
       for (let k = 0; k < outline.length; k++) {
         const pt = outline[k];
         const u = Math.min(Math.max((pt.x - minX) / width_mm, 0), 1);
@@ -1190,11 +1194,11 @@ export function generateTrueToPatternMesh(
         const Y = SHOULDER_Y - 0.05 - d * Math.cos(armAngle) + yLoc;
         const Z = zLoc;
 
-        panelPositions.push(X, Y, Z);
-        panelUvs.push(1.0 - u, v);
+        mirrorPositions.push(X, Y, Z);
+        mirrorUvs.push(1.0 - u, v);
       }
       for (let i = 0; i < baseIndices.length; i += 3) {
-        panelIndices.push(baseIndices[i] + vOffset, baseIndices[i + 2] + vOffset, baseIndices[i + 1] + vOffset);
+        mirrorIndices.push(baseIndices[i], baseIndices[i + 2], baseIndices[i + 1]);
       }
     } else if (isFrontLeg) {
       // Pierna Frontal Pantalón/Bermuda (Cilindro anatómico envolvente)
@@ -1651,46 +1655,65 @@ export function generateTrueToPatternMesh(
       panelIndices.push(...baseIndices);
     }
 
-    // 4. Crear primitiva individual para soporte de Guía de Despiece en WebGL
-    const primNormals = computeSmoothNormals(panelPositions, panelIndices);
-    const primBounds = compute3DBounds(panelPositions);
+    // 4. Crear primitiva(s) individual(es) para soporte de Guía de Despiece en WebGL
+    // Las mangas emiten DOS primitivas espejadas (_right / _left) con offsets de despiece simétricos;
+    // las demás piezas mantienen la primitiva única con su explodeOffset original
+    const emissionUnits: Array<{
+      name: string;
+      positions: number[];
+      uvs: number[];
+      indices: number[];
+      explode: [number, number, number];
+    }> = mirrorIndices.length > 0
+      ? [
+          { name: `${partName}_right`, positions: panelPositions, uvs: panelUvs, indices: panelIndices, explode: [0.25, 0, 0] },
+          { name: `${partName}_left`, positions: mirrorPositions, uvs: mirrorUvs, indices: mirrorIndices, explode: [-0.25, 0, 0] },
+        ]
+      : [
+          { name: partName, positions: panelPositions, uvs: panelUvs, indices: panelIndices, explode: explodeOffset },
+        ];
 
-    const primitive: GarmentPrimitive3D = {
-      name: partName,
-      partType,
-      positions: panelPositions,
-      normals: primNormals,
-      uvs: panelUvs,
-      indices: panelIndices,
-      vertexCount: panelPositions.length / 3,
-      triangleCount: panelIndices.length / 3,
-      bounds: primBounds,
-      materialIndex,
-      fabric: materials[materialIndex] || materials[0],
-      explodeOffset,
-    };
-    primitives.push(primitive);
+    for (const unit of emissionUnits) {
+      const unitNormals = computeSmoothNormals(unit.positions, unit.indices);
+      const unitBounds = compute3DBounds(unit.positions);
 
-    // Integrar en arrays consolidados globales
-    const globalVOffset = combinedPositions.length / 3;
-    const globalIOffset = combinedIndices.length;
+      const primitive: GarmentPrimitive3D = {
+        name: unit.name,
+        partType,
+        positions: unit.positions,
+        normals: unitNormals,
+        uvs: unit.uvs,
+        indices: unit.indices,
+        vertexCount: unit.positions.length / 3,
+        triangleCount: unit.indices.length / 3,
+        bounds: unitBounds,
+        materialIndex,
+        fabric: materials[materialIndex] || materials[0],
+        explodeOffset: unit.explode,
+      };
+      primitives.push(primitive);
 
-    combinedPositions.push(...panelPositions);
-    combinedNormals.push(...primNormals);
-    combinedUvs.push(...panelUvs);
+      // Integrar en arrays consolidados globales
+      const globalVOffset = combinedPositions.length / 3;
+      const globalIOffset = combinedIndices.length;
 
-    for (let t = 0; t < panelIndices.length; t++) {
-      combinedIndices.push(panelIndices[t] + globalVOffset);
+      combinedPositions.push(...unit.positions);
+      combinedNormals.push(...unitNormals);
+      combinedUvs.push(...unit.uvs);
+
+      for (let t = 0; t < unit.indices.length; t++) {
+        combinedIndices.push(unit.indices[t] + globalVOffset);
+      }
+
+      panelsSummary.push({
+        name: unit.name,
+        vertexOffset: globalVOffset,
+        indexOffset: globalIOffset,
+        vertexCount: unit.positions.length / 3,
+        indexCount: unit.indices.length,
+        materialIndex,
+      });
     }
-
-    panelsSummary.push({
-      name: partName,
-      vertexOffset: globalVOffset,
-      indexOffset: globalIOffset,
-      vertexCount: panelPositions.length / 3,
-      indexCount: panelIndices.length,
-      materialIndex,
-    });
   }
 
   // 5. Cálculo de cotas globales envolventes
