@@ -283,3 +283,9 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Entrega del Obrero `276be1a` (1 ciclo): `capabilities/operator-sdk.ts` (`defineKernelCapability`, `runCapability` con validacion Zod previa y normalizacion de `OperatorRejection` a rechazo tipado), `capabilities/base.ts` (4 capacidades base `kernel.split-edge`, `kernel.insert-dart`, `kernel.cut`, `kernel.evaluate-constraints` registradas como `experimental` v0.1.0 con params Zod espejo de los operadores T-47), `capabilities/derivation.ts` (`generateToolSchemas` y `generatePromptFragment` 100% derivados del registry, orden por id, error tipado para tipos Zod no soportables).
 - Drift gate: snapshot versionado `tests/snapshots/capabilities-derivation.snapshot.json` con test de coincidencia y prueba negativa de mutacion (fallo con diff de paths). Regeneracion deliberada via `UPDATE_SNAPSHOTS=1`.
 - Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 18/18, build PASS, suite **27/27 con 698/698 tests**. Dirty state intacto.
+
+## 2026-09-07 - T-53 Recipe DSL + Executor APTO (tareas de Phase 12 completas)
+
+- Entrega del Obrero `ee75ff1` (1 ciclo): `src/engine/v2/recipes.ts` — `executeRecipe(registry, recipe, doc, options?)` con Recipe DSL Zod (`recipe.<name>`, semver, steps `[{capability, params}]`), preflight de existencia y draft-gate (`DRAFT_CAPABILITY_FORBIDDEN` por defecto, `allowDraft` explicito), ejecucion ordenada sobre clon profundo con rollback byte-identico y `failedStep`, diagnostics consolidados. Fixtures `fixtures/recipes/haori-fusion.v1.json` y `vest-welt.v1.json` componiendo las 4 capacidades base. 9 tests.
+- Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 9/9, build PASS, suite **28/28 con 707/707 tests**. Dirty state intacto.
+- Pendiente para el cierre formal de Phase 12: auditoria de fase independiente (sesion de auditorias dedicada) y savepoint.
