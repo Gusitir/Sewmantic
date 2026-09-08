@@ -329,6 +329,14 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Copiados y verificados por SHA-256 los 8 artefactos: savepoints gemini-oauth, phase11, phase12 y phase13 (bundle de historia completa + ZIP snapshot de 159/167/180/190 entradas). Todos HASH OK en Drive.
 - La accion humana de subida manual queda cerrada; futuros savepoints se copian directo a `F:\Mi unidad\backups\`.
 
+## 2026-09-07 - T-60 APTO: Union Recovery (tercera clase de fallo cubierta)
+
+- El Humano reporto un tercer fallo en vivo ("straw pirate denim shorts"): `invalid_union` en `modifications.trouter_pockets` (acepta objeto o array) con `type: "slash_with_coin"` alucinado — las pasadas T-50/T-58 no cubren issues anidados de uniones.
+- Decision `D-2026-09-07-UNION`, plan `PLAN_v1.7-union-repair.md`.
+- Entrega del Obrero `0155cac` (1 ciclo): sinonimos de `trouser_pockets.type` (`slash_with_coin->slash`, `jeans_pocket->in_seam`, etc. via `normalizeTrouserPocketTypeSynonyms` refactorizado sobre helper generico que tambien soporta arrays), walk de `unionErrors` con paths anidados, deletion-trial del valor y de la ruta completa del union como fallback, log `[schema-repair]` trazable. Clamps T-50 y sinonimos closure T-58 intactos; `parsePatternDna` estricto.
+- Auditoria del Ingeniero: APTO con gates frescos propios — schema 65/65, build PASS, suite **31/31 con 770/770 tests**. Dirty state intacto.
+- Limitacion documentada: `too_small`/`too_big` anidados dentro de uniones no se clampan (fallback elimina el campo opcional con log) — candidato a T futuro si se observa en produccion.
+
 ## 2026-09-07 - H-03-F VERIFICADO OK por el Humano
 
 - El Humano regenero pantalon/bermuda y confirmo: "el pantalon/bermuda ya funciona correctamente" — la pernera trasera ya apunta con el tiro hacia la entrepierna. `H-03-F` cerrado.

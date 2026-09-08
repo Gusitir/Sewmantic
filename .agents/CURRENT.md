@@ -45,12 +45,13 @@ backup: private GitHub + Google Drive VERIFIED (4 savepoints: gemini-oauth, phas
 
 ## Open findings
 
-- `H-03-H` (T-58 `86432ea`): resuelto en código — normalización de sinónimos de closure + deletion-trial genérico para enums alucinados. Pendiente verificación humana en vivo.
+- `H-03-H` (T-58) y union recovery (T-60): resueltos en código — sinónimos de closure/trouser_pockets + deletion-trial + union recovery. Pendiente verificación humana en vivo (regenerar la bermuda "straw pirate denim shorts").
 - Hallazgos menores de la auditoria Phase 13 (no bloqueantes): preflight de resolucion de capacidades en loop.ts (un tool call alucinado registra historial honesto antes de fallar), `currentDoc` redundante en el payload de sesion, `restoreRevisionManager` sin recorte hasta proximo commit, pinning de version por paso en recipes.
 - `isBackSkirt` repite el patron latente de espejado (invisible hoy, falda simetrica) — corregir por coherencia en proximo touch del bridge.
 - `front_leg` mesh tiene normales INWARD pre-existentes enmascaradas por material doubleSided — auditar convencion de orientacion de paneles (tarea futura).
 - `P11-GEO-01` riesgo residual: miter sin limite puede crear picos en angulos agudos.
-- T-58 pregunta abierta: incorporar sinónimos para otros enums (neckline/sleeve/hood) en T futuro — hoy solo closure.type normaliza.
+- T-58 pregunta abierta: incorporar sinónimos para otros enums (neckline/sleeve/hood) en T futuro — hoy closure.type y trouser_pockets.type normalizan.
+- T-60 limitación: `too_small`/`too_big` anidados dentro de uniones no se clampan (fallback elimina el campo con log) — candidato a T futuro si se observa en producción.
 
 ## Human actions
 
