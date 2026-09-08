@@ -307,3 +307,10 @@ suites_passing: 21/21 (548/548 tests PASS)
 
 - Entrega del Obrero `75a9018` (1 ciclo): `src/harness/tools.ts` (`capabilityToTool` con draft gating y normalizacion de rechazos, `registryToTools` id-sorted) y `src/harness/executor.ts` (`executeTurn` con variante atomica: todos los pasos sobre clon en memoria, UNA revision consolidada + turn resumen + decision solo si todo tiene exito; preflight maxSteps/CAPABILITY_GAP/draft/aprobacion humana antes de ejecutar). 14 tests.
 - Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 14/14, build PASS, suite **30/30 con 741/741 tests**. Dirty state intacto.
+
+## 2026-09-07 - T-56 AI Tool Loop APTO (tareas de Phase 13 completas)
+
+- Entrega del Obrero `beb095c` (1 ciclo): `src/harness/loop.ts` — `runConversationalTurn(session, registry, userMessage, options)` con `generateText` de Vercel AI SDK (`ai@7.0.77`, tipo `LanguageModel` — V1 no existe en v7), toolset derivado del registry via `capabilityToTool`, registro diferido de la sesion (solo se escribe tras respuesta valida + maxSteps + approval preflight), mapeos `MODEL_ERROR`/`BOUNDED_ABORT`/`LOOP_FAILED` con sesion byte-identica en cada camino de error, round-trip de sesion reproducible. Mock scripted `LanguageModelV3` (sin red). 8 tests.
+- Desviacion justificada: `LanguageModelV1` no existe en `ai@7.0.77` (V2/V3/V4); `maxTokens` mapea a `maxOutputTokens`.
+- Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 8/8, build PASS, suite **31/31 con 749/749 tests**. Dirty state intacto.
+- Pendiente para el cierre formal de Phase 13: auditoria de fase independiente (sesion de auditorias dedicada) y savepoint.
