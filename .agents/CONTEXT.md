@@ -277,3 +277,9 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Decision `D-2026-09-07-P12`, plan `PLAN_v1.4-phase12-operators-registry.md` (T-51 registry core, T-52 operator SDK + derivacion con drift gate, T-53 recipe DSL + executor).
 - Entrega T-51 `5625c16`: `src/engine/v2/registry.ts` — `CapabilityRegistry` con registro validado (id `kernel.<name>`, semver, status, paramsSchema Zod, operador), lookup por semver numerico, `CAPABILITY_GAP`/`DUPLICATE_ENTRY`/`INVALID_ENTRY`/`INVALID_TRANSITION`/`APPROVAL_REQUIRED` tipados, promocion draft->experimental->stable con aprobacion humana obligatoria para stable, inmutabilidad por copia congelada. 23 tests.
 - Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 23/23, build PASS, suite **26/26 con 680/680 tests**. Dirty state intacto.
+
+## 2026-09-07 - T-52 Operator SDK + Base Capabilities + Derivacion APTO
+
+- Entrega del Obrero `276be1a` (1 ciclo): `capabilities/operator-sdk.ts` (`defineKernelCapability`, `runCapability` con validacion Zod previa y normalizacion de `OperatorRejection` a rechazo tipado), `capabilities/base.ts` (4 capacidades base `kernel.split-edge`, `kernel.insert-dart`, `kernel.cut`, `kernel.evaluate-constraints` registradas como `experimental` v0.1.0 con params Zod espejo de los operadores T-47), `capabilities/derivation.ts` (`generateToolSchemas` y `generatePromptFragment` 100% derivados del registry, orden por id, error tipado para tipos Zod no soportables).
+- Drift gate: snapshot versionado `tests/snapshots/capabilities-derivation.snapshot.json` con test de coincidencia y prueba negativa de mutacion (fallo con diff de paths). Regeneracion deliberada via `UPDATE_SNAPSHOTS=1`.
+- Auditoria del Ingeniero: APTO con gates frescos propios — focalizado 18/18, build PASS, suite **27/27 con 698/698 tests**. Dirty state intacto.
