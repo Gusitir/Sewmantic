@@ -44,3 +44,26 @@ export {
   serializeDocument,
   deserializeDocument,
 } from './serialization.js';
+
+export {
+  DEFAULT_MAX_SEAM_DELTA_MM,
+  CONSTRAINT_IDS,
+  ConstraintResolutionError,
+  resolveStitchPair,
+  evaluateConstraints,
+  type ConstraintOptions,
+  type ConstraintFailureCode,
+} from './constraints.js';
+
+export {
+  splitEdge,
+  insertDart,
+  cut,
+  type SplitEdgeOptions,
+  type InsertDartOptions,
+  type CutOptions,
+  type OperatorResult,
+  type OperatorSuccess,
+  type OperatorRejection,
+  type OperatorRejectionCode,
+} from './operators.js';
