@@ -1304,6 +1304,8 @@ export function modifyTrouserPattern(
     knee_ease_mm: kneeEase,
     ankle_ease_mm: ankleEase,
     length_delta_mm: lengthDelta,
+    // T-62: inseam explícito autoritativo (invariante anti auto-intersección)
+    explicit_inseam_mm: trouserLegs?.inseam_mm,
     seam_allowance_mm: seamAllowance,
     hem_allowance_mm: hemAllowance,
     measurements,

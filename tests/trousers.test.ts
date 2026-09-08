@@ -14,8 +14,10 @@ import {
   generateBaseBlock,
   bezierLength,
   distance,
+  modifyPatternMultiSize,
+  type Point2D,
 } from '../src/index.js';
-import { StandardSize } from '../src/types/pattern.js';
+import { StandardSize, PatternDna } from '../src/types/pattern.js';
 import { TrouserLengthType } from '../src/engine/base_blocks/trousers.js';
 
 describe('Trouser & Shorts Parametric Sloper Engine', () => {
@@ -301,6 +303,176 @@ describe('Trouser & Shorts Parametric Sloper Engine', () => {
       expect(res.parts.back_leg).toBeDefined();
       expect(res.bounds.width).toBeGreaterThan(0);
       expect(res.bounds.height).toBeGreaterThan(0);
+    });
+  });
+
+  // =========================================================================
+  // 7. T-62: Garantía de Polígono Simple (Regresión Auto-Intersección Pernera)
+  //    Decision D-2026-09-08-LEG / PLAN v1.9
+  // =========================================================================
+  describe('T-62: Simple-Polygon Guarantee (Back Leg Self-Intersection Regression)', () => {
+    // Helper: intersección segmento-segmento (orientaciones + casos colineales)
+    const GEOM_EPS = 1e-6;
+
+    function orient(ax: number, ay: number, bx: number, by: number, cx: number, cy: number): number {
+      return (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+    }
+
+    function onSegment(a: Point2D, b: Point2D, p: Point2D): boolean {
+      return (
+        Math.min(a.x, b.x) - GEOM_EPS <= p.x &&
+        p.x <= Math.max(a.x, b.x) + GEOM_EPS &&
+        Math.min(a.y, b.y) - GEOM_EPS <= p.y &&
+        p.y <= Math.max(a.y, b.y) + GEOM_EPS
+      );
+    }
+
+    function segmentsIntersect(a1: Point2D, a2: Point2D, b1: Point2D, b2: Point2D): boolean {
+      // Segmentos degenerados (longitud cero) no participan
+      if (distance(a1, a2) < GEOM_EPS || distance(b1, b2) < GEOM_EPS) return false;
+
+      const o1 = orient(a1.x, a1.y, a2.x, a2.y, b1.x, b1.y);
+      const o2 = orient(a1.x, a1.y, a2.x, a2.y, b2.x, b2.y);
+      const o3 = orient(b1.x, b1.y, b2.x, b2.y, a1.x, a1.y);
+      const o4 = orient(b1.x, b1.y, b2.x, b2.y, a2.x, a2.y);
+
+      if (((o1 > GEOM_EPS && o2 < -GEOM_EPS) || (o1 < -GEOM_EPS && o2 > GEOM_EPS)) &&
+          ((o3 > GEOM_EPS && o4 < -GEOM_EPS) || (o3 < -GEOM_EPS && o4 > GEOM_EPS))) {
+        return true;
+      }
+      if (Math.abs(o1) <= GEOM_EPS && onSegment(a1, a2, b1)) return true;
+      if (Math.abs(o2) <= GEOM_EPS && onSegment(a1, a2, b2)) return true;
+      if (Math.abs(o3) <= GEOM_EPS && onSegment(b1, b2, a1)) return true;
+      if (Math.abs(o4) <= GEOM_EPS && onSegment(b1, b2, a2)) return true;
+      return false;
+    }
+
+    /** Un contorno es polígono simple si ningún par de segmentos no adyacentes se cruza. */
+    function isSimpleClosedOutline(outline: Point2D[]): boolean {
+      const n = outline.length;
+      if (n < 3) return false;
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 2; j < n; j++) {
+          if (i === 0 && j === n - 1) continue; // adyacentes en el anillo cerrado
+          const a1 = outline[i];
+          const a2 = outline[(i + 1) % n];
+          const b1 = outline[j];
+          const b2 = outline[(j + 1) % n];
+          if (segmentsIntersect(a1, a2, b1, b2)) return false;
+        }
+      }
+      return true;
+    }
+
+    function expectSimpleLegs(front: { outline: Point2D[] }, back: { outline: Point2D[] }, context: string) {
+      expect(isSimpleClosedOutline(front.outline), `front_leg outline self-intersects for ${context}`).toBe(true);
+      expect(isSimpleClosedOutline(back.outline), `back_leg outline self-intersects for ${context}`).toBe(true);
+    }
+
+    // ADN exacto del fallo en producción (output/pirate_captain_denim_bermuda)
+    const failingDna: PatternDna = {
+      concept_name: 'pirate_captain_denim_bermuda',
+      base_block: 'pants_sloper',
+      ease: {
+        chest_ease_mm: 0,
+        waist_ease_mm: 30,
+        hip_ease_mm: 70,
+      },
+      modifications: {
+        hem: { type: 'custom', allowance_mm: 50 },
+        waistband: { type: 'fitted', height_mm: 40 },
+        trouser_hem: { type: 'cuffed', cuff_height_mm: 45 },
+        trouser_legs: { type: 'wide_baggy', length_type: 'bermuda', inseam_mm: 340 },
+        closure: {
+          type: 'zipper',
+          overlap_mm: 35,
+          button_count: 1,
+          button_diameter_mm: 20,
+          buttonhole_orientation: 'horizontal',
+        },
+      },
+      sizing: {
+        size: 'M',
+        height_mm: 1780,
+        waist_circ_mm: 820,
+        hip_circ_mm: 980,
+        target_layers: ['XS', 'S', 'M', 'L', 'XL', '2XL'],
+        custom_measurements: {
+          chest_circumference_mm: 1040,
+          waist_circumference_mm: 820,
+          hip_circumference_mm: 980,
+          inseam_mm: 800,
+          sleeve_length_mm: 650,
+        },
+        chest_circ_mm: 1040,
+      },
+      custom_measurements: {
+        chest_circumference_mm: 1040,
+        waist_circumference_mm: 820,
+        hip_circumference_mm: 980,
+        inseam_mm: 800,
+        sleeve_length_mm: 650,
+      },
+    };
+
+    it('regression: real failing DNA (wide_baggy + bermuda inseam 340 + cuffed) produces simple outlines in all sizes', () => {
+      const sizes: StandardSize[] = ['S', 'M', 'L', 'XL', '2XL'];
+      const results = modifyPatternMultiSize(failingDna, sizes);
+
+      for (const size of sizes) {
+        const result = results.get(size);
+        expect(result, `no result for size ${size}`).toBeDefined();
+        const front = result!.parts.front_leg;
+        const back = result!.parts.back_leg;
+        expect(front).toBeDefined();
+        expect(back).toBeDefined();
+
+        // Hem por debajo del tiro (invariante básico de pierna)
+        expect(front.points.hem_in.y, `front hem above crotch for ${size}`).toBeGreaterThan(
+          front.points.crotch_tip.y
+        );
+        expect(back.points.hem_in.y, `back hem above crotch for ${size}`).toBeGreaterThan(
+          back.points.crotch_tip.y
+        );
+
+        expectSimpleLegs(front, back, `failing DNA size ${size}`);
+      }
+    });
+
+    it('extreme combos: inseam 100/1200 x silhouettes x lengths x cuff always produce simple outlines', () => {
+      const inseams = [100, 340, 1200];
+      const legTypes = ['wide_baggy', 'slim', 'flare'] as const;
+      const lengths = ['shorts', 'bermuda', 'cropped', 'full'] as const;
+
+      for (const inseam of inseams) {
+        for (const legType of legTypes) {
+          for (const lengthType of lengths) {
+            const dna: PatternDna = {
+              concept_name: `t62_extreme_${legType}_${lengthType}_${inseam}`,
+              base_block: 'pants_sloper',
+              ease: { waist_ease_mm: 30, hip_ease_mm: 70 },
+              modifications: {
+                trouser_hem: { type: 'cuffed', cuff_height_mm: 45 },
+                trouser_legs: { type: legType, length_type: lengthType, inseam_mm: inseam },
+              },
+              custom_measurements: {
+                chest_circumference_mm: 1040,
+                waist_circumference_mm: 820,
+                hip_circumference_mm: 980,
+                inseam_mm: 800,
+                sleeve_length_mm: 650,
+              },
+            };
+
+            const result = modifyPatternMultiSize(dna, ['M']).get('M')!;
+            expectSimpleLegs(
+              result.parts.front_leg,
+              result.parts.back_leg,
+              `${legType} + ${lengthType} + inseam ${inseam} + cuff`
+            );
+          }
+        }
+      }
     });
   });
 });

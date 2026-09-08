@@ -30,6 +30,12 @@ export interface TrouserSloperOptions {
   knee_ease_mm?: number;
   ankle_ease_mm?: number;
   length_delta_mm?: number;
+  /**
+   * T-62: Largo de entrepierna explícito solicitado (distancia tiro-bajo en mm).
+   * Cuando está presente, el bajo se sitúa exactamente a crotchDepth + inseam
+   * para cualquier tipología de longitud (invariante anti auto-intersección).
+   */
+  explicit_inseam_mm?: number;
   back_rise_mm?: number;
   seam_allowance_mm?: number;
   hem_allowance_mm?: number;
@@ -78,12 +84,20 @@ export function generateTrouserBlock(
   // Niveles verticales de referencia (Y crece hacia abajo)
   const crotchDepth = measurements.crotch_depth_mm + crotchEase;
   const hipDepth = crotchDepth * 0.65;
-  const fullInseam = measurements.inseam_mm + lengthDelta;
+  // T-62: el inseam explícito (trouser_legs.inseam_mm) es autoritativo; si no hay,
+  // el largo efectivo es el de cuerpo + delta de longitud.
+  const explicitInseam = options.explicit_inseam_mm;
+  const fullInseam = explicitInseam ?? measurements.inseam_mm + lengthDelta;
   const kneeDepth = crotchDepth + fullInseam * 0.52 - 20;
 
   // Cálculo de altura del bajo (hemY) según la tipología de longitud
   let hemY: number;
-  if (isShorts) {
+  if (explicitInseam !== undefined) {
+    // T-62: con largo explícito el bajo SIEMPRE queda a crotchDepth + inseam.
+    // Nunca se suma lengthDelta sobre kneeDepth (doble conteo que invertía el
+    // contorno y auto-intersectaba la pernera en combos wide_baggy+bermuda).
+    hemY = crotchDepth + fullInseam;
+  } else if (isShorts) {
     // Shorts / Bermuda: justo a la altura o ligeramente bajo la rodilla (+25mm)
     hemY = kneeDepth + 25 + (lengthDelta !== 0 ? lengthDelta : 0);
   } else if (isCropped) {
@@ -397,6 +411,12 @@ export function generateTrouserBlock(
   let lowY = crotchDepth - 80;
   let highY = crotchDepth + 80;
   let solvedCrotchY = crotchDepth + 12;
+
+  // T-62: la punta de tiro trasera nunca puede resolverse por debajo del objetivo
+  // de entrepierna (rodilla/bajo): el segmento se plegaría hacia atrás y el
+  // contorno se auto-intersectaría. Se acota el dominio de bisección dejando un
+  // margen de 60 mm sobre el objetivo.
+  highY = Math.min(highY, backInseamTarget.y - 60);
 
   for (let iter = 0; iter < 28; iter++) {
     const midY = (lowY + highY) / 2;
