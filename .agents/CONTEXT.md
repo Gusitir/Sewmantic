@@ -329,6 +329,11 @@ suites_passing: 21/21 (548/548 tests PASS)
 - Copiados y verificados por SHA-256 los 8 artefactos: savepoints gemini-oauth, phase11, phase12 y phase13 (bundle de historia completa + ZIP snapshot de 159/167/180/190 entradas). Todos HASH OK en Drive.
 - La accion humana de subida manual queda cerrada; futuros savepoints se copian directo a `F:\Mi unidad\backups\`.
 
+## 2026-09-07 - H-03-F VERIFICADO OK por el Humano
+
+- El Humano regenero pantalon/bermuda y confirmo: "el pantalon/bermuda ya funciona correctamente" — la pernera trasera ya apunta con el tiro hacia la entrepierna. `H-03-F` cerrado.
+- `H-03` queda con un unico hallazgo abierto: `H-03-H` (enum `closure.type` alucinado, ej. `wrap`), siendo atendido por T-58 (PLAN v1.6, `D-2026-09-07-ENUM`).
+
 ## 2026-09-07 - T-57 APTO: correccion H-03-F (pernera trasera espejada en 3D)
 
 - El Humano reporto de nuevo el sintoma visual; investigacion por subagente confirmo causa raiz unica: la rama `isBackLeg` de `generateTrueToPatternMesh` usaba `theta = (0.5 - u) * Math.PI` (mapeo horizontal invertido vs el front `(u - 0.5) * Math.PI`), volcando el borde de entrepierna (u=0) al lado exterior de la pierna. Defecto solo de proyeccion 3D; el patron 2D es correcto.

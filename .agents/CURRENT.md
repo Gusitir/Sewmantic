@@ -21,13 +21,12 @@ backup: private GitHub + Google Drive VERIFIED (4 savepoints: gemini-oauth, phas
 
 ## Next action
 
-1. **Humano:** Ejecutar `start_web_studio.bat`, regenerar un pantalón/bermuda y verificar visualmente la pernera trasera en el visor 3D (resolución de `H-03-F`).
-2. **Ingeniero:** Tras verificación humana de `H-03-F` (y si se resuelve también `H-03-H` o se decide su manejo), proceder al CLOSE de Fase 9.
-3. **Humano:** Aprobar la apertura de **Phase 14 — Pattern Knowledge RAG** con nuevo plan del Arquitecto (STOP de Phase 13 cumplido).
+1. **Ingeniero:** Despachar **T-58 — Enum Recovery** (PLAN v1.6, `D-2026-09-07-ENUM`): reparación de `invalid_enum_value` en la repair pass (sinónimos closure + deletion-trial genérico) — último bloqueo para el CLOSE de Fase 9.
+2. **Humano:** Tras T-48/T-58 APTO: proceder al **CLOSE de Fase 9** y decidir apertura de **Phase 14 — Pattern Knowledge RAG** con nuevo plan del Arquitecto (STOP de Phase 13 cumplido).
 
 ## Blockers
 
-- Phase 9 CLOSE bloqueado por `H-03-F` (resuelto en código, pendiente verificación humana) y `H-03-H` (deriva `pull_over` entre prompt y Zod).
+- Phase 9 CLOSE bloqueado por `H-03-H` (deriva `pull_over`/`wrap` entre prompt y Zod) — T-58 en ejecución. `H-03-F` ya VERIFICADO OK por el Humano.
 - Dirty state preservado y fuera de todo scope: `scripts/build_vest_blender.py`, `scripts/render_4_views_blender.py`, `IMAGENES/`, `scripts/run_mcp_bridge.py`.
 
 ## Current facts
@@ -46,12 +45,11 @@ backup: private GitHub + Google Drive VERIFIED (4 savepoints: gemini-oauth, phas
 
 ## Open findings
 
-- `H-03-F` RESUELTO EN CODIGO (T-57 `7044daf`): pernera trasera 3D ya no se espeja con el tiro hacia afuera — pendiente verificacion visual humana al regenerar.
+- `H-03-H` (ACTIVO, T-58): `invalid_enum_value` en enums alucinados por el LLM (ej. `closure.type: "wrap"`) rechaza el ADN — PLAN v1.6 con normalización de sinónimos + deletion-trial genérico.
 - Hallazgos menores de la auditoria Phase 13 (no bloqueantes): preflight de resolucion de capacidades en loop.ts (un tool call alucinado registra historial honesto antes de fallar), `currentDoc` redundante en el payload de sesion, `restoreRevisionManager` sin recorte hasta proximo commit, pinning de version por paso en recipes.
 - `isBackSkirt` repite el patron latente de espejado (invisible hoy, falda simetrica) — corregir por coherencia en proximo touch del bridge.
 - `front_leg` mesh tiene normales INWARD pre-existentes enmascaradas por material doubleSided — auditar convencion de orientacion de paneles (tarea futura).
 - `P11-GEO-01` riesgo residual: miter sin limite puede crear picos en angulos agudos.
-- `H-03-H`: el prompt ofrece `pull_over`, pero el esquema de cierre lo rechaza (corregido solo en el anchor `free`).
 
 ## Human actions
 
